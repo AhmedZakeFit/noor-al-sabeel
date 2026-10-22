@@ -1,7 +1,7 @@
 # NOTICE — Third-party components and data
 
-This file lists the third-party libraries, data and assets used by NOOR, together with
-their licenses. NOOR's own code is licensed under Apache-2.0 (see LICENSE).
+This file lists the third-party libraries, data and assets used by Noor Al-Sabeel, together with
+their licenses. Noor Al-Sabeel's own code is licensed under Apache-2.0 (see LICENSE).
 
 ## Libraries
 
@@ -15,7 +15,7 @@ their licenses. NOOR's own code is licensed under Apache-2.0 (see LICENSE).
 | JUnit (JUnit team) | EPL-1.0 | Unit tests only — not shipped in the APK |
 | org.json (JSON.org) | License-free / public-domain-style notice | Test-classpath JSON parsing (the Android platform's bundled copy is used at runtime) |
 
-All runtime dependencies are Apache-2.0 licensed, which is why NOOR ships under Apache-2.0.
+All runtime dependencies are Apache-2.0 licensed, which is why Noor Al-Sabeel ships under Apache-2.0.
 
 ## Data & services
 
@@ -39,9 +39,9 @@ All runtime dependencies are Apache-2.0 licensed, which is why NOOR ships under 
 
 - Launcher icons, splash icon, notification icon and the compass artwork were drawn for this
   project and are covered by the repository's Apache-2.0 license.
-- No fonts or audio files are bundled; NOOR uses system fonts and system notification sounds.
+- No fonts or audio files are bundled; Noor Al-Sabeel uses system fonts and system notification sounds.
 
 ## Trademarks
 
-"NOOR" is used as the name of this open-source project. Other applications named
+"Noor Al-Sabeel" is used as the name of this open-source project. Other applications named
 "Noor/TheNoor/Al Noor" exist on app stores and are unrelated to this project.

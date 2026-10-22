@@ -1,7 +1,7 @@
 package io.github.ahmedzakefit.noor.core.model
 
 /**
- * The six daily time entries computed by NOOR.
+ * The six daily time entries computed by Noor Al-Sabeel.
  * SUNRISE is informational (and the anchor for high-latitude adjustments) but is not a notifiable prayer.
  */
 enum class Prayer(val key: String, val notifiable: Boolean) {

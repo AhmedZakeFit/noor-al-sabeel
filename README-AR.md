@@ -1,4 +1,4 @@
-# نور — NOOR
+# نور السبيل — Noor Al-Sabeel
 
 **مواقيت الصلاة والقبلة والمساجد القريبة لأندرويد — مجاني ومفتوح المصدر.**
 بلا إعلانات. بلا اشتراكات. بلا حسابات. بلا تتبع.
@@ -29,7 +29,7 @@
 ## التثبيت
 
 نزّل أحدث APK موقّع من
-[إصدارات GitHub](https://github.com/AhmedZakeFit/noor/releases) وافتحه على هاتفك
+[إصدارات GitHub](https://github.com/AhmedZakeFit/noor-al-sabeel/releases) وافتحه على هاتفك
 (اسمح بالتثبيت من مصادر غير معروفة عند الطلب). لا حاجة لحساب Google Play.
 
 > التقديم إلى F-Droid مخطط له لاحقًا (انظر [خطة المستقبل](docs/ROADMAP.md))، والقبول
@@ -37,7 +37,7 @@
 
 ## الخصوصية
 
-نور لا يجمع أي شيء: لا إعلانات ولا تحليلات ولا حسابات ولا متتبعات. كل الإعدادات
+نور السبيل لا يجمع أي شيء: لا إعلانات ولا تحليلات ولا حسابات ولا متتبعات. كل الإعدادات
 والمواقع تبقى على جهازك. يستخدم التطبيق الشبكة فقط عند فتح الخريطة أو البحث عن
 المساجد أو البحث الاختياري عن المدن. التفاصيل الكاملة في
 [سياسة الخصوصية](PRIVACY.md).
@@ -55,8 +55,8 @@
 ## ابنِ التطبيق بنفسك
 
 ```bash
-git clone https://github.com/AhmedZakeFit/noor.git
-cd noor
+git clone https://github.com/AhmedZakeFit/noor-al-sabeel.git
+cd noor-al-sabeel
 ./gradlew :core:test :app:testDebugUnitTest   # تشغيل الاختبارات
 ./gradlew :app:assembleDebug                  # بناء الـ APK
 ```

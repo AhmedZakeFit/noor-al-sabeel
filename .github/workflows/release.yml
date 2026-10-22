@@ -70,10 +70,10 @@ jobs:
           mkdir -p release-out
           VERSION="${GITHUB_REF_NAME#v}"
           if [ -f app/build/outputs/apk/release/app-release.apk ]; then
-            cp app/build/outputs/apk/release/app-release.apk "release-out/noor-$VERSION.apk"
+            cp app/build/outputs/apk/release/app-release.apk "release-out/noor-al-sabeel-$VERSION.apk"
             SIGNED=1
           else
-            cp app/build/outputs/apk/release/app-release-unsigned.apk "release-out/noor-$VERSION-unsigned.apk"
+            cp app/build/outputs/apk/release/app-release-unsigned.apk "release-out/noor-al-sabeel-$VERSION-unsigned.apk"
             SIGNED=0
           fi
           cd release-out
@@ -88,4 +88,4 @@ jobs:
             release-out/*.apk
             release-out/*.sha256
           body: |
-            ${{ env.SIGNED == '1' && format('**NOOR v{0}** — signed release APK. See [CHANGELOG](https://github.com/AhmedZakeFit/noor/blob/main/CHANGELOG.md) and [install steps](https://github.com/AhmedZakeFit/noor#install).' , github.ref_name) || '**Unsigned build** — signing secrets were not configured; use the debug APK from CI or build it yourself (docs/BUILDING.md).' }}
+            ${{ env.SIGNED == '1' && format('**Noor Al-Sabeel (نور السبيل) v{0}** — signed release APK. See [CHANGELOG](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/CHANGELOG.md) and [install steps](https://github.com/AhmedZakeFit/noor-al-sabeel#install).' , github.ref_name) || '**Unsigned build** — signing secrets were not configured; use the debug APK from CI or build it yourself (docs/BUILDING.md).' }}

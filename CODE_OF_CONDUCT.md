@@ -2,7 +2,7 @@
 
 ## Our Pledge
 
-We as members, contributors, and leaders pledge to make participation in the NOOR project
+We as members, contributors, and leaders pledge to make participation in the Noor Al-Sabeel project
 a harassment-free experience for everyone, regardless of age, body size, visible or
 invisible disability, ethnicity, sex characteristics, gender identity and expression,
 level of experience, education, socio-economic status, nationality, personal appearance,
@@ -50,7 +50,7 @@ This Code of Conduct is adapted from the Contributor Covenant, version 2.1, avai
 
 ## ميثاق قواعد السلوك (ملخص بالعربية)
 
-يتعهد المشاركون في مشروع نور بجعل المشاركة تجربة خالية من المضايقات للجميع بلا
+يتعهد المشاركون في مشروع نور السبيل بجعل المشاركة تجربة خالية من المضايقات للجميع بلا
 تمييز. السلوك المقبول يشمل اللغة الترحيبية الشاملة واحترام وجهات النظر المختلفة
 وتقبّل النقد البنّاء، أما غير المقبول فيشمل الترول والإهانات والتحرش أو نشر معلومات
 الآخرين الخاصة دون إذن. يُبلَّغ عن التجاوزات سرًّا إلى مشرفي المشروع عبر GitHub

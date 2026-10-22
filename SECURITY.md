@@ -12,7 +12,7 @@
 ## Reporting a vulnerability
 
 Please report vulnerabilities **privately** using GitHub's
-["Report a vulnerability"](https://github.com/AhmedZakeFit/noor/security/advisories/new)
+["Report a vulnerability"](https://github.com/AhmedZakeFit/noor-al-sabeel/security/advisories/new)
 feature on the repository. If that is not possible, open a security advisory draft or
 contact the repository owner through GitHub.
 
@@ -29,7 +29,7 @@ CHANGELOG if you wish.
 
 ## Scope notes
 
-- NOOR stores everything locally and sends no identifiers; the realistic attack surface is
+- Noor Al-Sabeel stores everything locally and sends no identifiers; the realistic attack surface is
   small: notification/alarm handling, the two read-only public APIs (Overpass, Nominatim)
   and map tile loading.
 - Miscomputed prayer times are an accuracy issue (see docs/PRAYER_TIMES.md), not a security
@@ -49,7 +49,7 @@ CHANGELOG if you wish.
 ## الإبلاغ عن ثغرة
 
 أبلغ عن الثغرات **بسرية** عبر خاصية
-["Report a vulnerability"](https://github.com/AhmedZakeFit/noor/security/advisories/new)
+["Report a vulnerability"](https://github.com/AhmedZakeFit/noor-al-sabeel/security/advisories/new)
 في المستودع. أرفق وصفًا للأثر وخطوات الاستغلال وإصدار التطبيق وإصدار أندرويد.
 
 ينبغي أن تتلقى ردًا خلال أيام قليلة. تجنّب الإفصاح العام حتى صدور الإصلاح حفاظًا على
@@ -58,7 +58,7 @@ CHANGELOG if you wish.
 
 ## ملاحظات النطاق
 
-- يخزّن نور كل شيء محليًا ولا يرسل أي معرّفات، لذا سطح الهجوم صغير: معالجة الإشعارات
+- يخزّن نور السبيل كل شيء محليًا ولا يرسل أي معرّفات، لذا سطح الهجوم صغير: معالجة الإشعارات
   والتنبيهات، والواجهتان العامتان للقراءة فقط (Overpass وNominatim)، وتحميل مربعات
   الخريطة.
 - أخطاء حساب المواقيت مسألة دقة (انظر docs/PRAYER_TIMES.md) لا ثغرة أمنية، إلا إذا

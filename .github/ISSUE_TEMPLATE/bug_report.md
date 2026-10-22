@@ -27,7 +27,7 @@ body:
     id: prayer-details
     attributes:
       label: If a prayer time looks wrong / إذا بدا وقت صلاة خاطئًا
-      description: City, method, date, time NOOR shows, time your mosque shows / المدينة والطريقة والتاريخ ووقت نور ووقت مسجدك
+      description: City, method, date, time Noor Al-Sabeel shows, time your mosque shows / المدينة والطريقة والتاريخ ووقت نور السبيل ووقت مسجدك
   - type: textarea
     id: logs
     attributes:

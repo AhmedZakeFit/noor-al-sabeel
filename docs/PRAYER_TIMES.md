@@ -2,7 +2,7 @@
 
 **English** | [العربية بالأسفل](#العربية)
 
-This document explains exactly how NOOR computes prayer times, where the numbers come
+This document explains exactly how Noor Al-Sabeel computes prayer times, where the numbers come
 from, and what the known limits are. It exists so users can make informed comparisons
 with their mosques and other apps.
 
@@ -29,7 +29,7 @@ All computation runs **on your device** in the `core` module (`PrayerCalculator.
    ~48.5° with the MWL angles, higher with smaller angles), a night-portion rule is
    applied (Angle-based by default; Middle-of-the-night and Seventh-of-the-night are
    selectable). Above the polar circles in mid-summer/-winter even sunrise/sunset can
-   disappear; NOOR then approximates the day length as 24h and flags the times as
+   disappear; Noor Al-Sabeel then approximates the day length as 24h and flags the times as
    approximate on screen.
 6. **User offsets** — the ±30-minute per-prayer adjustments are applied last.
 
@@ -57,7 +57,7 @@ Asr defaults to the Standard (Shafi/Maliki/Hanbali) shadow factor; Hanafi is sel
 
 ## Verification (what CI actually checks)
 
-The test suite compares NOOR against independent references:
+The test suite compares Noor Al-Sabeel against independent references:
 
 - **288 prayer-time rows** generated from the AlAdhan API (which uses the adhan-java
   engine) across 9 cities (Cairo, Makkah, Istanbul, London, New York, Jakarta, Sydney,
@@ -73,14 +73,14 @@ The test suite compares NOOR against independent references:
 
 1. **Umm al-Qura isha:** AlAdhan's implementation uses maghrib + 120 minutes year-round
    (its Ramadan determination is a tabular calendar that can differ by a day at the
-   boundaries). NOOR follows the official Umm al-Qura convention: 90 minutes, 120 during
+   boundaries). Noor Al-Sabeel follows the official Umm al-Qura convention: 90 minutes, 120 during
    Ramadan (per the Umm al-Qura table). Difference: 30 minutes on some days.
 2. **Asr convention:** adhan-java/AlAdhan resolves the Asr shadow altitude against the
-   sun's *apparent* altitude (including refraction, ~+0.15° near the horizon); NOOR uses
+   sun's *apparent* altitude (including refraction, ~+0.15° near the horizon); Noor Al-Sabeel uses
    the *geometric* altitude, which the physical shadow definition requires. At normal
    latitudes the difference is under a minute; near the polar circles (where the winter
    Asr altitude is only a few degrees) it can reach 5–10 minutes.
-3. **Solar model precision:** NOOR's Meeus low-precision model differs from full
+3. **Solar model precision:** Noor Al-Sabeel's Meeus low-precision model differs from full
    SPA-based engines by up to ~0.05° in declination, which is amplified at extreme
    latitudes (minutes, not seconds). Sub-minute at normal latitudes.
 4. **High-latitude clamping:** where twilight does not occur, results depend on the
@@ -89,12 +89,12 @@ The test suite compares NOOR against independent references:
 5. **Rounding & conventions:** times are rounded to the minute; some authorities add 1–2
    minutes to dhuhr for zenith crossing. Use the per-prayer offsets to match your mosque.
 6. **Above the polar circles** in deep summer/winter, sunrise/sunset themselves vanish;
-   NOOR approximates and flags it.
+   Noor Al-Sabeel approximates and flags it.
 7. **The Hijri calendar** is the official Umm al-Qura civil calendar (1924–2076). Local
    moon sighting can differ by a day — use the ±2-day adjustment in settings. Outside
    the table's range an arithmetic approximation is flagged as approximate.
 
-**Bottom line:** NOOR is accurate to about a minute at normal latitudes for the standard
+**Bottom line:** Noor Al-Sabeel is accurate to about a minute at normal latitudes for the standard
 methods, and deliberately transparent about every edge case. Prayer times are a religious
 obligation — when in doubt, follow your local mosque and use the offsets.
 
@@ -111,7 +111,7 @@ itself (shown on screen) does not depend on the sensors and is reliable everywhe
 
 # العربية
 
-يشرح هذا المستند بدقة كيف يحسب نور المواقيت، ومن أين تأتي الأرقام، وما حدود الدقة
+يشرح هذا المستند بدقة كيف يحسب نور السبيل المواقيت، ومن أين تأتي الأرقام، وما حدود الدقة
 المعروفة، ليتمكن المستخدم من المقارنة المستنيرة مع مسجده والتطبيقات الأخرى.
 
 ## الخوارزمية
@@ -146,10 +146,10 @@ itself (shown on screen) does not depend on the sensors and is reliable everywhe
 
 ## الانحرافات والحدود المعروفة (موثقة لا مخفية)
 
-1. **إيشا أم القرى:** يستخدم AlAdhan مغربًا+120 دقيقة طوال العام، بينما يتبع نور
+1. **إيشا أم القرى:** يستخدم AlAdhan مغربًا+120 دقيقة طوال العام، بينما يتبع نور السبيل
    العُرف الرسمي (90 دقيقة، و120 في رمضان حسب جدول أم القرى) — فرق 30 دقيقة بعض
    الأيام.
-2. **عُرف العصر:** يحسب adhan-java الارتفاع *الظاهري* (مع الانكسار) بينما يستخدم نور
+2. **عُرف العصر:** يحسب adhan-java الارتفاع *الظاهري* (مع الانكسار) بينما يستخدم نور السبيل
    الارتفاع *الهندسي* الذي يتطلبه تعريف الظل فعليًا؛ الفرق أقل من دقيقة في العرض
    المعتاد وقد يبلغ 5–10 دقائق قرب الدوائر القطبية.
 3. **دقة النموذج الشمسي:** نموذج Meeus منخفض الدقة يختلف عن محركات SPA الكاملة
@@ -162,7 +162,7 @@ itself (shown on screen) does not depend on the sensors and is reliable everywhe
 7. **التقويم الهجري** هو أم القرى الرسمي (1924–2076) وقد تختلف الرؤية المحلية بيوم —
    استخدم تعديل ±2 يوم، وخارج المدى يستخدم تقريب حسابي مع وسم "تقريبي".
 
-**الخلاصة:** دقة نور تناهز الدقيقة في العروض المعتادة للطرق القياسية، مع شفافية
+**الخلاصة:** دقة نور السبيل تناهز الدقيقة في العروض المعتادة للطرق القياسية، مع شفافية
 كاملة في كل الحالات الحدية. والمواقيت عبادة — عند الشك اتبع مسجدك واستخدم الفروق.
 
 ## القبلة

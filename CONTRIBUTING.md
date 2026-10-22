@@ -1,8 +1,8 @@
-# Contributing to NOOR — المساهمة في نور
+# Contributing to Noor Al-Sabeel — المساهمة في نور السبيل
 
 **English** | [العربية بالأسفل](#العربية)
 
-Thank you for considering a contribution! NOOR is a small, focused project, and these
+Thank you for considering a contribution! Noor Al-Sabeel is a small, focused project, and these
 guidelines keep it healthy.
 
 ## Ground rules
@@ -38,7 +38,7 @@ guidelines keep it healthy.
 ## Reporting bugs
 
 Use the issue templates. For prayer-time discrepancies, please include: city, method,
-the time NOOR shows, the time your mosque/local source shows, and the date.
+the time Noor Al-Sabeel shows, the time your mosque/local source shows, and the date.
 
 ## Code of conduct
 
@@ -49,7 +49,7 @@ Be respectful. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues go 
 
 # العربية
 
-شكرًا لاهتمامك بالمساهمة! نور مشروع صغير ومركّز، وهذه الإرشادات تحافظ على صحته.
+شكرًا لاهتمامك بالمساهمة! نور السبيل مشروع صغير ومركّز، وهذه الإرشادات تحافظ على صحته.
 
 ## القواعد الأساسية
 
@@ -84,7 +84,7 @@ Be respectful. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues go 
 ## الإبلاغ عن الأخطاء
 
 استخدم قوالب المشكلات. عند وجود فرق في المواقيت أرفق: المدينة، الطريقة، الوقت الذي
-يعرضه نور، الوقت من مسجدك أو مصدرك المحلي، والتاريخ.
+يعرضه نور السبيل، الوقت من مسجدك أو مصدرك المحلي، والتاريخ.
 
 ## قواعد السلوك
 

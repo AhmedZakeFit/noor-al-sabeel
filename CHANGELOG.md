@@ -1,8 +1,24 @@
 # Changelog
 
-All notable changes to NOOR are documented here. The format follows
+All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
+
+## [1.0.1] — 2026-10-23
+
+### Changed
+
+- App renamed to **Noor Al-Sabeel** (نور السبيل). New display name in English and Arabic
+  across the app, notifications and documentation. No feature or behaviour changes.
+- Repository renamed to `AhmedZakeFit/noor-al-sabeel`; old links redirect automatically.
+- Release APK asset is now named `noor-al-sabeel-<version>.apk`.
+
+### Compatibility
+
+- The application ID stays `io.github.ahmedzakefit.noor` and the signing certificate is
+  unchanged, so this update installs directly over v1.0.0 with settings and data preserved.
+
+[1.0.1]: https://github.com/AhmedZakeFit/noor-al-sabeel/releases/tag/v1.0.1
 
 ## [1.0.0] — 2026-10-23
 
@@ -32,4 +48,4 @@ All notable changes to NOOR are documented here. The format follows
 - CI (GitHub Actions) running tests and builds on every push; signed release APK
   publishing on tags.
 
-[1.0.0]: https://github.com/AhmedZakeFit/noor/releases/tag/v1.0.0
+[1.0.0]: https://github.com/AhmedZakeFit/noor-al-sabeel/releases/tag/v1.0.0

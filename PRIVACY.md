@@ -4,13 +4,13 @@
 
 *Last updated: 2026-10-23*
 
-NOOR (نور) is a free, open-source Android application. This policy describes exactly what
+Noor Al-Sabeel (نور السبيل) is a free, open-source Android application. This policy describes exactly what
 the app does with data. Because the app contains no analytics or crash reporting, this
 document is based on the source code, which you can inspect yourself.
 
-## What NOOR stores
+## What Noor Al-Sabeel stores
 
-Everything NOOR stores stays **on your device** in Android's private app storage:
+Everything Noor Al-Sabeel stores stays **on your device** in Android's private app storage:
 
 - your selected location (coordinates, city label, time zone) — chosen by you via GPS,
   city search or manual entry;
@@ -20,7 +20,7 @@ Everything NOOR stores stays **on your device** in Android's private app storage
 This data is never sent anywhere and never leaves the device. Uninstalling the app removes
 it completely.
 
-## What NOOR sends
+## What Noor Al-Sabeel sends
 
 By default, nothing. The app uses the internet **only** when you actively use one of these
 features:
@@ -32,7 +32,7 @@ features:
   service (OpenStreetMap) when the offline catalog has no match.
 
 These services are operated by third parties (OpenStreetMap Foundation and Overpass API
-maintainers) and are governed by their own policies. NOOR sends no identifiers, no
+maintainers) and are governed by their own policies. Noor Al-Sabeel sends no identifiers, no
 advertising IDs and no usage statistics with these requests.
 
 ## Permissions and why
@@ -47,12 +47,12 @@ advertising IDs and no usage statistics with these requests.
 | Vibrate | Notification vibration (optional) |
 | Request ignore battery optimizations | Optional reliability step some vendors require |
 
-NOOR requests no contacts, no files, no camera, no microphone, no advertising IDs.
+Noor Al-Sabeel requests no contacts, no files, no camera, no microphone, no advertising IDs.
 
 ## No ads, no trackers, no accounts
 
 There are no ads, no analytics SDKs, no crash reporters, no accounts and no payments in
-NOOR — the source code contains none.
+Noor Al-Sabeel — the source code contains none.
 
 ## Changes
 
@@ -60,7 +60,7 @@ Material changes to this policy will be noted in the repository's CHANGELOG.
 
 ## Contact
 
-Open an issue at <https://github.com/AhmedZakeFit/noor/issues> for any privacy question.
+Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any privacy question.
 
 ---
 
@@ -68,13 +68,13 @@ Open an issue at <https://github.com/AhmedZakeFit/noor/issues> for any privacy q
 
 *آخر تحديث: 2026-10-23*
 
-نور تطبيق أندرويد مجاني ومفتوح المصدر، وهذه السياسة تصف بالضبط ما يفعله التطبيق
+نور السبيل تطبيق أندرويد مجاني ومفتوح المصدر، وهذه السياسة تصف بالضبط ما يفعله التطبيق
 بالبيانات. ولأن التطبيق لا يحتوي أي تحليلات أو تقارير أعطال، فإن هذا المستند مبني على
 الشيفرة المصدرية التي يمكنك فحصها بنفسك.
 
-## ما الذي يخزّنه نور؟
+## ما الذي يخزّنه نور السبيل؟
 
-كل ما يخزّنه نور يبقى **على جهازك** في وحدة التخزين الخاصة بالتطبيق:
+كل ما يخزّنه نور السبيل يبقى **على جهازك** في وحدة التخزين الخاصة بالتطبيق:
 
 - موقعك المختار (الإحداثيات واسم المدينة والمنطقة الزمنية) — تختاره بنفسك عبر GPS أو
   البحث أو الإدخال اليدوي؛
@@ -83,7 +83,7 @@ Open an issue at <https://github.com/AhmedZakeFit/noor/issues> for any privacy q
 
 هذه البيانات لا تُرسل إلى أي مكان ولا تترك الجهاز أبدًا، وحذف التطبيق يمحوها تمامًا.
 
-## ما الذي يرسله نور؟
+## ما الذي يرسله نور السبيل؟
 
 افتراضيًا: لا شيء. يستخدم التطبيق الإنترنت **فقط** عند استخدامك إحدى هذه الميزات:
 
@@ -94,7 +94,7 @@ Open an issue at <https://github.com/AhmedZakeFit/noor/issues> for any privacy q
   العامة (OpenStreetMap) عندما لا يجد الفهرس المدمج نتيجة مطابقة.
 
 هذه الخدمات يشغّلها طرف ثالث (مؤسسة OpenStreetMap ومشغّلو Overpass) وتحكمها سياستهم
-الخاصة. لا يرسل نور معها أي معرّفات ولا معرّفات إعلانية ولا إحصاءات استخدام.
+الخاصة. لا يرسل نور السبيل معها أي معرّفات ولا معرّفات إعلانية ولا إحصاءات استخدام.
 
 ## الأذونات وسببها
 
@@ -108,11 +108,11 @@ Open an issue at <https://github.com/AhmedZakeFit/noor/issues> for any privacy q
 | الاهتزاز | اهتزاز الإشعار (اختياري) |
 | طلب تجاوز تحسين البطارية | خطوة موثوقية اختيارية تتطلبها بعض الشركات |
 
-لا يطلب نور أيّ اتصالات أو ملفات أو كاميرا أو ميكروفون أو معرّفات إعلانية.
+لا يطلب نور السبيل أيّ اتصالات أو ملفات أو كاميرا أو ميكروفون أو معرّفات إعلانية.
 
 ## بلا إعلانات ولا متتبعات ولا حسابات
 
-لا يوجد في نور إعلانات ولا أدوات تحليلات ولا مراسلات أعطال ولا حسابات ولا مدفوعات —
+لا يوجد في نور السبيل إعلانات ولا أدوات تحليلات ولا مراسلات أعطال ولا حسابات ولا مدفوعات —
 الشيفرة المصدرية لا تحتوي أيًّا منها.
 
 ## التغييرات
@@ -121,4 +121,4 @@ Open an issue at <https://github.com/AhmedZakeFit/noor/issues> for any privacy q
 
 ## التواصل
 
-افتح مشكلة في <https://github.com/AhmedZakeFit/noor/issues> لأي سؤال يخص الخصوصية.
+افتح مشكلة في <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> لأي سؤال يخص الخصوصية.

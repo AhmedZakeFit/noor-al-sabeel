@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">نور</string>
+    <string name="app_name">نور السبيل</string>
 
     <!-- Bottom navigation -->
     <string name="nav_times">المواقيت</string>
@@ -139,7 +139,7 @@
     <string name="exact_alarm_blocked">التنبيه الدقيق معطّل — قد تتأخر الإشعارات دقائق.</string>
     <string name="allow_exact_alarms">السماح</string>
     <string name="battery_reliability_title">موثوقية الإشعارات</string>
-    <string name="battery_reliability_body">بعض الشركات تؤجّل التنبيهات لتوفير البطارية. استثناء نور من تحسين البطارية يجعل إشعارات الصلاة أكثر موثوقية.</string>
+    <string name="battery_reliability_body">بعض الشركات تؤجّل التنبيهات لتوفير البطارية. استثناء نور السبيل من تحسين البطارية يجعل إشعارات الصلاة أكثر موثوقية.</string>
     <string name="disable_battery_optimization">فتح إعدادات البطارية</string>
 
     <!-- Notifications content -->
@@ -152,7 +152,7 @@
     <string name="notif_reminder_title">اقترب وقت صلاة %1$s</string>
     <string name="notif_reminder_body">باقٍ %1$d دقيقة • الموعد %2$s</string>
     <string name="notif_test_title">إشعار تجريبي</string>
-    <string name="notif_test_body">إشعارات نور تعمل بشكل سليم.</string>
+    <string name="notif_test_body">إشعارات نور السبيل تعمل بشكل سليم.</string>
 
     <!-- Settings: appearance -->
     <string name="section_appearance">المظهر</string>

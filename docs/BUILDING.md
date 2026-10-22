@@ -1,4 +1,4 @@
-# Building NOOR — تعليمات البناء
+# Building Noor Al-Sabeel — تعليمات البناء
 
 **English instructions** (العربية موجزة بالأسفل).
 
@@ -12,8 +12,8 @@
 ## Setup
 
 ```bash
-git clone https://github.com/AhmedZakeFit/noor.git
-cd noor
+git clone https://github.com/AhmedZakeFit/noor-al-sabeel.git
+cd noor-al-sabeel
 ```
 
 Create `local.properties` pointing at your SDK (Android Studio does this for you):

@@ -1,4 +1,4 @@
-# NOOR — نور
+# Noor Al-Sabeel — نور السبيل
 
 **Free, open-source prayer times, qibla compass and nearby mosques for Android.**
 No ads. No subscriptions. No accounts. No tracking.
@@ -6,11 +6,11 @@ No ads. No subscriptions. No accounts. No tracking.
 **العربية:** [اقرأ الوثائق بالعربية](README-AR.md)
 
 <p>
-  <img src="art/icon-512.png" width="96" alt="NOOR logo" />
+  <img src="art/icon-512.png" width="96" alt="Noor Al-Sabeel logo" />
 </p>
 
-[![CI](https://github.com/AhmedZakeFit/noor/actions/workflows/ci.yml/badge.svg)](https://github.com/AhmedZakeFit/noor/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/AhmedZakeFit/noor)](https://github.com/AhmedZakeFit/noor/releases)
+[![CI](https://github.com/AhmedZakeFit/noor-al-sabeel/actions/workflows/ci.yml/badge.svg)](https://github.com/AhmedZakeFit/noor-al-sabeel/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/AhmedZakeFit/noor-al-sabeel)](https://github.com/AhmedZakeFit/noor-al-sabeel/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 ## Features
@@ -37,15 +37,15 @@ No ads. No subscriptions. No accounts. No tracking.
 ## Install
 
 Download the latest signed APK from
-[GitHub Releases](https://github.com/AhmedZakeFit/noor/releases) and open it on your phone
+[GitHub Releases](https://github.com/AhmedZakeFit/noor-al-sabeel/releases) and open it on your phone
 (allow "install from unknown sources" when asked). No Google Play account is needed.
 
-> Submitting NOOR to F-Droid is planned (see the [roadmap](docs/ROADMAP.md)). Acceptance is
+> Submitting Noor Al-Sabeel to F-Droid is planned (see the [roadmap](docs/ROADMAP.md)). Acceptance is
 > not guaranteed and is up to the F-Droid maintainers.
 
 ## Privacy
 
-NOOR collects nothing. There are no ads, no analytics, no accounts and no trackers. All
+Noor Al-Sabeel collects nothing. There are no ads, no analytics, no accounts and no trackers. All
 settings and locations stay on your device. The app only touches the network when you open the
 map, search for mosques, or use the optional online city search. See
 [PRIVACY.md](PRIVACY.md) for the full policy.
@@ -64,8 +64,8 @@ limits.
 ## Build it yourself
 
 ```bash
-git clone https://github.com/AhmedZakeFit/noor.git
-cd noor
+git clone https://github.com/AhmedZakeFit/noor-al-sabeel.git
+cd noor-al-sabeel
 ./gradlew :core:test :app:testDebugUnitTest   # run the test suite
 ./gradlew :app:assembleDebug                  # build the APK
 ```

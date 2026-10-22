@@ -22,7 +22,7 @@ import java.time.ZonedDateTime
  *
  * Known deviation: AlAdhan applies Umm al-Qura isha = maghrib + 120 minutes during its own
  * Ramadan determination (which uses a tabular calendar and can differ from the official
- * Umm al-Qura table by a day at the boundaries); NOOR follows the official convention
+ * Umm al-Qura table by a day at the boundaries); Noor Al-Sabeel follows the official convention
  * (90 minutes, 120 in Ramadan per the Umm al-Qura table), so Umm al-Qura isha rows use a
  * 35-minute tolerance and exact behaviour is pinned by the dedicated engine tests.
  */
@@ -102,7 +102,7 @@ class PrayerCalculatorFixtureTest {
             assertClose("$label dhuhr", row["dhuhr"]!!, times.dhuhr, tolerance)
             // Asr convention note: adhan-java/AlAdhan resolves the Asr shadow altitude against
             // the sun's APPARENT altitude (including atmospheric refraction, ~+0.15 deg near the
-            // horizon), while NOOR uses the GEOMETRIC altitude as the physical shadow definition
+            // horizon), while Noor Al-Sabeel uses the GEOMETRIC altitude as the physical shadow definition
             // requires (refraction does not change real shadows; praytimes.org does the same).
             // The difference is under a minute at normal latitudes but amplifies near the polar
             // circles where the winter Asr altitude is only a few degrees, hence this tolerance.
