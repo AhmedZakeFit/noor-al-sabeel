@@ -1,0 +1,202 @@
+<resources>
+    <string name="app_name">NOOR</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_times">Times</string>
+    <string name="nav_qibla">Qibla</string>
+    <string name="nav_mosques">Mosques</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Common -->
+    <string name="common_ok">OK</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_save">Save</string>
+    <string name="common_close">Close</string>
+    <string name="common_search">Search</string>
+    <string name="loading">Loading…</string>
+    <string name="retry">Retry</string>
+
+    <!-- Prayer names -->
+    <string name="prayer_fajr">Fajr</string>
+    <string name="prayer_sunrise">Sunrise</string>
+    <string name="prayer_dhuhr">Dhuhr</string>
+    <string name="prayer_asr">Asr</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isha</string>
+
+    <!-- Home -->
+    <string name="next_prayer">Next prayer</string>
+    <string name="remaining_time">%1$dh %2$dm left</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="additional_times">Additional times</string>
+    <string name="midnight">Midnight</string>
+    <string name="last_third">Last third of night</string>
+    <string name="show_more">More</string>
+    <string name="show_less">Less</string>
+    <string name="high_lat_note">Approximate times: the sun does not reach the twilight angle at this latitude; a night-portion rule is applied.</string>
+    <string name="location_not_set">Location is not set</string>
+    <string name="set_location_now">Set location</string>
+    <string name="current_location">Current location</string>
+
+    <!-- Qibla -->
+    <string name="qibla_distance_from_kaaba">%1$s km to the Kaaba</string>
+    <string name="qibla_bearing_value">Bearing: %1$s°</string>
+    <string name="declination_applied">Magnetic declination applied: %1$s°</string>
+    <string name="compass_calibration_title">Calibrate the compass</string>
+    <string name="compass_calibration_body">Move the phone in a figure-8 pattern a few times, then rotate it fully once around each axis. Keep away from metal and magnets.</string>
+    <string name="accuracy_high">Compass: high accuracy</string>
+    <string name="accuracy_medium">Compass: medium accuracy — calibrate</string>
+    <string name="accuracy_low">Compass: low accuracy — calibrate</string>
+    <string name="accuracy_unreliable">Compass unreliable — recalibrate</string>
+    <string name="sensor_missing">This device has no compass sensor. The qibla bearing from your location is shown instead.</string>
+    <string name="aligned_with_qibla">You are facing the qibla</string>
+
+    <!-- Directions -->
+    <string name="dir_n">N</string>
+    <string name="dir_ne">NE</string>
+    <string name="dir_e">E</string>
+    <string name="dir_se">SE</string>
+    <string name="dir_s">S</string>
+    <string name="dir_sw">SW</string>
+    <string name="dir_w">W</string>
+    <string name="dir_nw">NW</string>
+
+    <!-- Mosques -->
+    <string name="search_nearby_mosques">Find nearby mosques</string>
+    <string name="search_radius">Search radius: %1$d km</string>
+    <string name="mosques_results_count">Results: %1$d</string>
+    <string name="no_mosques_found">No mosques found within this radius.</string>
+    <string name="mosques_search_failed">Mosque search failed. Please try again.</string>
+    <string name="mosques_need_internet">Mosque search needs an internet connection (map tiles and OpenStreetMap data).</string>
+    <string name="mosque_distance_km">%1$s km</string>
+    <string name="mosque_distance_m">%1$s m</string>
+    <string name="navigate">Navigate</string>
+    <string name="show_on_map">Show on map</string>
+    <string name="osm_attribution">© OpenStreetMap contributors</string>
+    <string name="mosque_unnamed">Unnamed mosque</string>
+
+    <!-- Settings: location -->
+    <string name="section_location">Location</string>
+    <string name="change_location">Change location</string>
+    <string name="pick_location">Pick location</string>
+    <string name="tab_search">City search</string>
+    <string name="tab_coordinates">Coordinates</string>
+    <string name="use_gps">Use current location (GPS)</string>
+    <string name="locating">Locating…</string>
+    <string name="gps_failed">Could not determine your location.</string>
+    <string name="gps_permission_denied">Location permission was not granted. You can still pick a city or enter coordinates.</string>
+    <string name="search_city_hint">Search for a city…</string>
+    <string name="city_search_note">Offline results are bundled; online search adds more places when internet is available.</string>
+    <string name="no_results">No results</string>
+    <string name="manual_coordinates">Manual coordinates</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="invalid_coordinates">Invalid coordinates</string>
+    <string name="timezone_label">Time zone</string>
+    <string name="same_as_device">Same as device (%1$s)</string>
+
+    <!-- Settings: calculation -->
+    <string name="section_calculation">Calculation</string>
+    <string name="calculation_method">Calculation method</string>
+    <string name="method_mwl">Muslim World League</string>
+    <string name="method_egypt">Egyptian General Authority of Survey</string>
+    <string name="method_isna">Islamic Society of North America (ISNA)</string>
+    <string name="method_umm_alqura">Umm al-Qura, Makkah</string>
+    <string name="method_karachi">University of Islamic Sciences, Karachi</string>
+    <string name="method_gulf">Gulf region</string>
+    <string name="method_kuwait">Kuwait</string>
+    <string name="method_qatar">Qatar</string>
+    <string name="method_singapore">MUIS Singapore</string>
+    <string name="method_turkey">Diyanet, Turkey</string>
+    <string name="method_france">UOIF, France</string>
+    <string name="method_custom">Custom angles</string>
+    <string name="asr_method">Asr method</string>
+    <string name="asr_standard">Standard (Shafi, Maliki, Hanbali)</string>
+    <string name="asr_hanafi">Hanafi</string>
+    <string name="fajr_angle">Fajr angle</string>
+    <string name="isha_angle">Isha angle</string>
+    <string name="angle_degrees">%1$s°</string>
+    <string name="prayer_offsets">Adjust times (minutes)</string>
+    <string name="offsets_explanation">Shift individual times to match your local mosque.</string>
+    <string name="high_latitude_rule">High-latitude rule</string>
+    <string name="hlr_angle">Angle-based (twilight fraction of night)</string>
+    <string name="hlr_middle">Middle of the night</string>
+    <string name="hlr_seventh">Seventh of the night</string>
+
+    <!-- Settings: notifications -->
+    <string name="section_notifications">Notifications</string>
+    <string name="notifications_master">Prayer notifications</string>
+    <string name="per_prayer_toggles">Enable per prayer</string>
+    <string name="pre_prayer_reminder">Reminder before prayer</string>
+    <string name="reminder_none">Off</string>
+    <string name="reminder_minutes">%1$d minutes before</string>
+    <string name="sound">Sound</string>
+    <string name="pick_sound">Choose ringtone</string>
+    <string name="default_sound">Default sound</string>
+    <string name="vibrate">Vibration</string>
+    <string name="test_notification">Send a test notification</string>
+    <string name="exact_alarm_ok">Exact alarms enabled</string>
+    <string name="exact_alarm_blocked">Exact alarms are blocked — notifications may be delayed by a few minutes.</string>
+    <string name="allow_exact_alarms">Allow</string>
+    <string name="battery_reliability_title">Notification reliability</string>
+    <string name="battery_reliability_body">Some vendors delay alarms to save battery. Excluding NOOR from battery optimization makes prayer notifications more reliable.</string>
+    <string name="disable_battery_optimization">Open battery settings</string>
+
+    <!-- Notifications content -->
+    <string name="notif_channel_prayer">Prayer times</string>
+    <string name="notif_channel_prayer_desc">Notifications at prayer times</string>
+    <string name="notif_channel_reminder">Pre-prayer reminders</string>
+    <string name="notif_channel_reminder_desc">Reminders shortly before each prayer</string>
+    <string name="notif_prayer_title">Time for %1$s</string>
+    <string name="notif_prayer_body">Prayer time: %1$s • %2$s</string>
+    <string name="notif_reminder_title">%1$s is approaching</string>
+    <string name="notif_reminder_body">%1$d minutes left • %2$s</string>
+    <string name="notif_test_title">Test notification</string>
+    <string name="notif_test_body">NOOR notifications are working correctly.</string>
+
+    <!-- Settings: appearance -->
+    <string name="section_appearance">Appearance</string>
+    <string name="theme_label">Theme</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="language_label">Language</string>
+    <string name="lang_system">Follow system</string>
+    <string name="lang_ar">العربية</string>
+    <string name="lang_en">English</string>
+    <string name="digits_label">Numerals</string>
+    <string name="digits_follow">Follow language</string>
+    <string name="digits_arabic">٠١٢٣٤٥٦٧٨٩</string>
+    <string name="digits_latin">0123456789</string>
+
+    <!-- Settings: calendar -->
+    <string name="section_calendar">Calendar</string>
+    <string name="hijri_offset_label">Hijri date adjustment</string>
+    <string name="hijri_offset_value">%1$d day(s)</string>
+    <string name="hijri_offset_hint">Align the Hijri date with local moon sighting.</string>
+    <string name="hijri_ah">AH</string>
+
+    <!-- Settings: about -->
+    <string name="section_about">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_tagline">Free, open source, no ads, no tracking.</string>
+    <string name="about_privacy">Privacy policy</string>
+    <string name="about_licenses">Open-source licenses</string>
+    <string name="about_accuracy">Calculation sources and accuracy</string>
+    <string name="about_github">GitHub repository</string>
+    <string name="licenses_content" translatable="false"></string>
+    <string-array name="hijri_months">
+        <item>Muharram</item>
+        <item>Safar</item>
+        <item>Rabi al-Awwal</item>
+        <item>Rabi al-Thani</item>
+        <item>Jumada al-Awwal</item>
+        <item>Jumada al-Thani</item>
+        <item>Rajab</item>
+        <item>Shaban</item>
+        <item>Ramadan</item>
+        <item>Shawwal</item>
+        <item>Dhul-Qadah</item>
+        <item>Dhul-Hijjah</item>
+    </string-array>
+</resources>

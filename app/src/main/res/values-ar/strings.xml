@@ -1,0 +1,201 @@
+<resources>
+    <string name="app_name">نور</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_times">المواقيت</string>
+    <string name="nav_qibla">القبلة</string>
+    <string name="nav_mosques">المساجد</string>
+    <string name="nav_settings">الإعدادات</string>
+
+    <!-- Common -->
+    <string name="common_ok">حسنًا</string>
+    <string name="common_cancel">إلغاء</string>
+    <string name="common_save">حفظ</string>
+    <string name="common_close">إغلاق</string>
+    <string name="common_search">بحث</string>
+    <string name="loading">جارٍ التحميل…</string>
+    <string name="retry">إعادة المحاولة</string>
+
+    <!-- Prayer names -->
+    <string name="prayer_fajr">الفجر</string>
+    <string name="prayer_sunrise">الشروق</string>
+    <string name="prayer_dhuhr">الظهر</string>
+    <string name="prayer_asr">العصر</string>
+    <string name="prayer_maghrib">المغرب</string>
+    <string name="prayer_isha">العشاء</string>
+
+    <!-- Home -->
+    <string name="next_prayer">الصلاة القادمة</string>
+    <string name="remaining_time">باقٍ %1$d س %2$d د</string>
+    <string name="tomorrow">غدًا</string>
+    <string name="additional_times">مواقيت إضافية</string>
+    <string name="midnight">منتصف الليل</string>
+    <string name="last_third">الثلث الأخير من الليل</string>
+    <string name="show_more">المزيد</string>
+    <string name="show_less">أقل</string>
+    <string name="high_lat_note">مواقيت تقريبية: الشمس لا تبلغ زاوية الشفق عند هذا خط العرض، فطُبّقت قاعدة نصيب الليل.</string>
+    <string name="location_not_set">لم يُحدَّد الموقع بعد</string>
+    <string name="set_location_now">تحديد الموقع</string>
+    <string name="current_location">الموقع الحالي</string>
+
+    <!-- Qibla -->
+    <string name="qibla_distance_from_kaaba">%1$s كم إلى الكعبة</string>
+    <string name="qibla_bearing_value">الاتجاه: %1$s°</string>
+    <string name="declination_applied">تصحيح الانحراف المغناطيسي: %1$s°</string>
+    <string name="compass_calibration_title">معايرة البوصلة</string>
+    <string name="compass_calibration_body">حرّك الهاتف على شكل ٨ عدة مرات، ثم أدره دورة كاملة حول كل محور. ابتعد عن المعادن والمغناطيس.</string>
+    <string name="accuracy_high">البوصلة: دقة عالية</string>
+    <string name="accuracy_medium">البوصلة: دقة متوسطة — قم بالمعايرة</string>
+    <string name="accuracy_low">البوصلة: دقة منخفضة — قم بالمعايرة</string>
+    <string name="accuracy_unreliable">البوصلة غير موثوقة — أعد المعايرة</string>
+    <string name="sensor_missing">لا يوجد مستشعر بوصلة في هذا الجهاز. يُعرض اتجاه القبلة من موقعك بدلًا منها.</string>
+    <string name="aligned_with_qibla">أنت مواجه القبلة</string>
+
+    <!-- Directions -->
+    <string name="dir_n">ش</string>
+    <string name="dir_ne">ش ق</string>
+    <string name="dir_e">ق</string>
+    <string name="dir_se">ج ق</string>
+    <string name="dir_s">ج</string>
+    <string name="dir_sw">ج غ</string>
+    <string name="dir_w">غ</string>
+    <string name="dir_nw">ش غ</string>
+
+    <!-- Mosques -->
+    <string name="search_nearby_mosques">ابحث عن المساجد القريبة</string>
+    <string name="search_radius">نطاق البحث: %1$d كم</string>
+    <string name="mosques_results_count">عدد النتائج: %1$d</string>
+    <string name="no_mosques_found">لا توجد مساجد داخل هذا النطاق.</string>
+    <string name="mosques_search_failed">فشل البحث عن المساجد. حاول مرة أخرى.</string>
+    <string name="mosques_need_internet">البحث عن المساجد يحتاج اتصالًا بالإنترنت (مربعات الخريطة وبيانات OpenStreetMap).</string>
+    <string name="mosque_distance_km">%1$s كم</string>
+    <string name="mosque_distance_m">%1$s م</string>
+    <string name="navigate">فتح الملاحة</string>
+    <string name="show_on_map">عرض على الخريطة</string>
+    <string name="osm_attribution">© مساهمو OpenStreetMap</string>
+    <string name="mosque_unnamed">مسجد بلا اسم</string>
+
+    <!-- Settings: location -->
+    <string name="section_location">الموقع</string>
+    <string name="change_location">تغيير الموقع</string>
+    <string name="pick_location">اختيار الموقع</string>
+    <string name="tab_search">بحث بالمدينة</string>
+    <string name="tab_coordinates">إحداثيات</string>
+    <string name="use_gps">استخدام الموقع الحالي (GPS)</string>
+    <string name="locating">جارٍ تحديد الموقع…</string>
+    <string name="gps_failed">تعذّر تحديد موقعك.</string>
+    <string name="gps_permission_denied">لم يُمنح إذن الموقع. يمكنك اختيار مدينة أو إدخال الإحداثيات يدويًا.</string>
+    <string name="search_city_hint">ابحث عن مدينة…</string>
+    <string name="city_search_note">النتائج المدمجة تعمل دون إنترنت، والبحث عبر الإنترنت يضيف المزيد عند توفر الاتصال.</string>
+    <string name="no_results">لا توجد نتائج</string>
+    <string name="manual_coordinates">إحداثيات يدوية</string>
+    <string name="latitude">خط العرض</string>
+    <string name="longitude">خط الطول</string>
+    <string name="invalid_coordinates">إحداثيات غير صالحة</string>
+    <string name="timezone_label">المنطقة الزمنية</string>
+    <string name="same_as_device">نفس الجهاز (%1$s)</string>
+
+    <!-- Settings: calculation -->
+    <string name="section_calculation">طريقة الحساب</string>
+    <string name="calculation_method">الطريقة المعتمدة</string>
+    <string name="method_mwl">رابطة العالم الإسلامي</string>
+    <string name="method_egypt">الهيئة المصرية العامة للمساحة</string>
+    <string name="method_isna">الجمعية الإسلامية لأمريكا الشمالية (ISNA)</string>
+    <string name="method_umm_alqura">أم القرى — مكة المكرمة</string>
+    <string name="method_karachi">جامعة العلوم الإسلامية بكراتشي</string>
+    <string name="method_gulf">منطقة الخليج</string>
+    <string name="method_kuwait">الكويت</string>
+    <string name="method_qatar">قطر</string>
+    <string name="method_singapore">سنغافورة (MUIS)</string>
+    <string name="method_turkey">ديانت — تركيا</string>
+    <string name="method_france">الاتحاد الفرنسي (UOIF)</string>
+    <string name="method_custom">زوايا مخصصة</string>
+    <string name="asr_method">طريقة العصر</string>
+    <string name="asr_standard">قياسي (شافعي ومالكي وحنبلي)</string>
+    <string name="asr_hanafi">حنفي</string>
+    <string name="fajr_angle">زاوية الفجر</string>
+    <string name="isha_angle">زاوية العشاء</string>
+    <string name="angle_degrees">%1$s°</string>
+    <string name="prayer_offsets">تعديل المواقيت (دقائق)</string>
+    <string name="offsets_explanation">أزح مواقيت بعينها لتوافق مسجدك المحلي.</string>
+    <string name="high_latitude_rule">قاعدة خطوط العرض العليا</string>
+    <string name="hlr_angle">حسب الزاوية (نصيب الشفق من الليل)</string>
+    <string name="hlr_middle">منتصف الليل</string>
+    <string name="hlr_seventh">سُبع الليل</string>
+
+    <!-- Settings: notifications -->
+    <string name="section_notifications">الإشعارات</string>
+    <string name="notifications_master">تنبيهات المواقيت</string>
+    <string name="per_prayer_toggles">تفعيل لكل صلاة</string>
+    <string name="pre_prayer_reminder">تذكير قبل الصلاة</string>
+    <string name="reminder_none">مغلق</string>
+    <string name="reminder_minutes">%1$d دقيقة قبل</string>
+    <string name="sound">الصوت</string>
+    <string name="pick_sound">اختيار النغمة</string>
+    <string name="default_sound">النغمة الافتراضية</string>
+    <string name="vibrate">الاهتزاز</string>
+    <string name="test_notification">إرسال إشعار تجريبي</string>
+    <string name="exact_alarm_ok">التنبيه الدقيق مفعّل</string>
+    <string name="exact_alarm_blocked">التنبيه الدقيق معطّل — قد تتأخر الإشعارات دقائق.</string>
+    <string name="allow_exact_alarms">السماح</string>
+    <string name="battery_reliability_title">موثوقية الإشعارات</string>
+    <string name="battery_reliability_body">بعض الشركات تؤجّل التنبيهات لتوفير البطارية. استثناء نور من تحسين البطارية يجعل إشعارات الصلاة أكثر موثوقية.</string>
+    <string name="disable_battery_optimization">فتح إعدادات البطارية</string>
+
+    <!-- Notifications content -->
+    <string name="notif_channel_prayer">مواقيت الصلاة</string>
+    <string name="notif_channel_prayer_desc">إشعارات عند دخول أوقات الصلاة</string>
+    <string name="notif_channel_reminder">تذكيرات قبل الصلاة</string>
+    <string name="notif_channel_reminder_desc">تذكير قبل كل صلاة بوقت قصير</string>
+    <string name="notif_prayer_title">حان وقت صلاة %1$s</string>
+    <string name="notif_prayer_body">الموعد %1$s • %2$s</string>
+    <string name="notif_reminder_title">اقترب وقت صلاة %1$s</string>
+    <string name="notif_reminder_body">باقٍ %1$d دقيقة • الموعد %2$s</string>
+    <string name="notif_test_title">إشعار تجريبي</string>
+    <string name="notif_test_body">إشعارات نور تعمل بشكل سليم.</string>
+
+    <!-- Settings: appearance -->
+    <string name="section_appearance">المظهر</string>
+    <string name="theme_label">السمة</string>
+    <string name="theme_system">حسب النظام</string>
+    <string name="theme_light">فاتحة</string>
+    <string name="theme_dark">داكنة</string>
+    <string name="language_label">اللغة</string>
+    <string name="lang_system">حسب النظام</string>
+    <string name="lang_ar">العربية</string>
+    <string name="lang_en">English</string>
+    <string name="digits_label">الأرقام</string>
+    <string name="digits_follow">حسب اللغة</string>
+    <string name="digits_arabic">٠١٢٣٤٥٦٧٨٩</string>
+    <string name="digits_latin">0123456789</string>
+
+    <!-- Settings: calendar -->
+    <string name="section_calendar">التقويم</string>
+    <string name="hijri_offset_label">تعديل التاريخ الهجري</string>
+    <string name="hijri_offset_value">%1$d يوم</string>
+    <string name="hijri_offset_hint">طابِق التاريخ الهجري مع الرؤية المحلية للهلال.</string>
+    <string name="hijri_ah">هـ</string>
+
+    <!-- Settings: about -->
+    <string name="section_about">حول التطبيق</string>
+    <string name="about_version">الإصدار %1$s</string>
+    <string name="about_tagline">مجاني، مفتوح المصدر، بلا إعلانات ولا تتبع.</string>
+    <string name="about_privacy">سياسة الخصوصية</string>
+    <string name="about_licenses">تراخيص المصادر المفتوحة</string>
+    <string name="about_accuracy">مصادر الحساب ودقته</string>
+    <string name="about_github">مستودع GitHub</string>
+    <string-array name="hijri_months">
+        <item>محرم</item>
+        <item>صفر</item>
+        <item>ربيع الأول</item>
+        <item>ربيع الآخر</item>
+        <item>جمادى الأولى</item>
+        <item>جمادى الآخرة</item>
+        <item>رجب</item>
+        <item>شعبان</item>
+        <item>رمضان</item>
+        <item>شوال</item>
+        <item>ذو القعدة</item>
+        <item>ذو الحجة</item>
+    </string-array>
+</resources>
