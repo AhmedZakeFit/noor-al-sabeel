@@ -50,6 +50,7 @@ jobs:
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/release.keystore"
+            sha256sum "$GITHUB_WORKSPACE/release.keystore"
             echo "KEYSTORE_PRESENT=true" >> "$GITHUB_ENV"
           else
             echo "KEYSTORE_PRESENT=false" >> "$GITHUB_ENV"
