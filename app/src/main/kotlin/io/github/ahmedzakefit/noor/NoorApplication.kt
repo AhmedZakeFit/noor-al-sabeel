@@ -46,7 +46,7 @@ class NoorApplication : Application() {
 
         // OpenStreetMap tile usage policy: identify the app; keep cache app-private.
         org.osmdroid.config.Configuration.getInstance().apply {
-            userAgentValue = "NoorAlSabeel/1.0.1 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
+            userAgentValue = "NoorAlSabeel/1.0.2 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
             osmdroidBasePath = File(cacheDir, "osmdroid")
             osmdroidTileCache = File(cacheDir, "osmdroid/tiles")
         }

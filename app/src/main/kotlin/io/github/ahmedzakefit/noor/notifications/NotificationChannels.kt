@@ -18,6 +18,9 @@ object NotificationChannels {
     const val CHANNEL_PRAYER = "prayer_times"
     const val CHANNEL_REMINDER = "pre_prayer_reminders"
 
+    /** Silent channel for adhan alerts: the MediaPlayer stream is the sound. */
+    const val CHANNEL_ADHAN = "adhan"
+
     fun ensure(context: Context) {
         if (Build.VERSION.SDK_INT < 26) return
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
@@ -40,6 +43,24 @@ object NotificationChannels {
                     NotificationManager.IMPORTANCE_DEFAULT,
                 ).apply {
                     description = context.getString(io.github.ahmedzakefit.noor.R.string.notif_channel_reminder_desc)
+                },
+            )
+        }
+        if (nm.getNotificationChannel(CHANNEL_ADHAN) == null) {
+            nm.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ADHAN,
+                    context.getString(io.github.ahmedzakefit.noor.R.string.notif_channel_adhan),
+                    NotificationManager.IMPORTANCE_HIGH,
+                ).apply {
+                    description = context.getString(io.github.ahmedzakefit.noor.R.string.notif_channel_adhan_desc)
+                    // No channel sound: the adhan audio itself plays through
+                    // MediaPlayer on the alarm stream. A short initial buzz
+                    // makes the heads-up (with its Stop button) noticeable even
+                    // at zero alarm volume.
+                    setSound(null, null)
+                    enableVibration(true)
+                    vibrationPattern = longArrayOf(0, 250)
                 },
             )
         }

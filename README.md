@@ -26,6 +26,10 @@ No ads. No subscriptions. No accounts. No tracking.
   handoff to any installed navigation app.
 - **Customizable notifications** — per-prayer toggles, a pre-prayer reminder, sound and
   vibration choices, exact alarms, and a test button.
+- **Full adhan (audio prayer call)** — choose the complete adhan instead of a short sound;
+  Fajr uses its own dawn adhan. Bundled and fully offline, plays on the alarm volume with
+  the screen off, and can be stopped from the notification. See [NOTICE](NOTICE.md) for the
+  public-domain recordings.
 - **Hijri calendar** (official Umm al-Qura table for 1924–2076) with a manual day adjustment
   for local moon sighting.
 - **Arabic (RTL) and English (LTR)** from the first release, including notifications and

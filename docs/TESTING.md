@@ -31,7 +31,9 @@
 - **App unit tests** — digit localization (both directions), clock formatting (12/24h),
   countdown formatting, Hijri display formatting, Overpass JSON parsing (nodes, ways,
   unnamed, malformed, non-Islamic filtering), Nominatim parsing, settings→parameters
-  mapping incl. the Ramadan rule and custom angles.
+  mapping incl. the Ramadan rule and custom angles, adhan routing (mode/reminder/prayer
+  matrix, per-prayer gating), and the bundled adhan assets (both MP3s present, valid,
+  non-empty, distinct, size-bounded).
 
 ## Manual test matrix (for releases / on your phone)
 
@@ -54,15 +56,24 @@ on the app:
 7. **Notifications:** send the test notification; check sound, vibration, per-prayer
    toggles and the pre-prayer reminder; verify arrival at the exact minute when exact
    alarms are allowed.
-8. **Battery optimization:** on vendor ROMs (Xiaomi/Samsung/Huawei...), check whether
+8. **Adhan (audio alert style):** in Settings → Notifications choose “Full adhan” and tap
+   “Test the adhan” — the standard adhan should play on the alarm volume with an ongoing
+   notification offering a Stop action. Then verify on a real prayer time: the correct
+   recording plays (dawn adhan with “as-salatu khayrun min an-nawm” for Fajr), playback
+   continues with the screen locked/turned off and in Doze, the Stop action works from
+   the lock screen, the notification leaves an auto-cancel record when the adhan finishes,
+   disabled prayers stay silent, reminders remain short notifications, and after a reboot
+   the next adhan still fires. With the alarm volume set to zero the adhan is silent but the
+   heads-up notification still appears.
+9. **Battery optimization:** on vendor ROMs (Xiaomi/Samsung/Huawei...), check whether
    notifications are delayed; the settings screen offers the exemption dialog.
-9. **Qibla:** compare the bearing number against a known value for your city; check the
+10. **Qibla:** compare the bearing number against a known value for your city; check the
    compass responds, calibration hint appears after figure-8 motion, declination is
    displayed.
-10. **Mosque search:** search in a city centre; verify distances, one-tap navigation opens
+11. **Mosque search:** search in a city centre; verify distances, one-tap navigation opens
     a navigation app; check the OSM attribution line.
-11. **Hijri date:** compare with your local calendar; adjust ±1–2 days if needed.
-12. **Upgrade path:** install a new version over the old one — settings survive.
+12. **Hijri date:** compare with your local calendar; adjust ±1–2 days if needed.
+13. **Upgrade path:** install a new version over the old one — settings survive.
 
 ## Rebuilding the fixtures (maintainers only)
 
@@ -101,8 +112,15 @@ in docs/PRAYER_TIMES.md.
 5. **إعادة تشغيل الهاتف:** تستمر الإشعارات دون فتح التطبيق.
 6. **تغيير المنطقة الزمنية أو السفر.**
 7. **الإشعارات:** التجربة، الصوت، الاهتزاز، التفعيل لكل صلاة، التذكير المسبق.
-8. **تحسين البطارية** على رومات الشركات.
-9. **القبلة:** قارن رقم الاتجاه بقيمة معروفة لمدينتك، واستجابة البوصلة والمعايرة.
-10. **المساجد:** المسافة والملاحة والإسناد.
-11. **التاريخ الهجري** مع التعديل اليدوي.
-12. **الترقية فوق نسخة قائمة** مع بقاء الإعدادات.
+8. **الأذان (أسلوب التنبيه الصوتي):** اختر «أذان كامل» في الإعدادات ثم اضغط «تجربة
+   الأذان» — يجب أن يُرفَع الأذان العادي على مستوى صوت المنبّه مع إشعار مستمر فيه زر
+   إيقاف. ثم تحقّق عند صلاة حقيقية: يُرفَع التسجيل الصحيح (أذان الفجر بعبارة «الصلاةُ
+   خيرٌ من النوم» للفجر)، ويستمر التشغيل مع قفل الشاشة/إطفائها وفي وضع Doze، ويعمل زر
+   الإيقاف من شاشة القفل، ويترك الإشعار سجلًا يُلغى باللمس بعد انتهاء الأذان، وتبقى
+   الصلوات المعطّلة صامتة، ويبقى التذكير المسبق إشعارًا قصيرًا، ويظل الأذان يعمل بعد
+   إعادة التشغيل. مع تصویر مستوى المنبّه إلى الصفر يسكت الصوت لكن يبقى الإشعار ظاهرًا.
+9. **تحسين البطارية** على رومات الشركات.
+10. **القبلة:** قارن رقم الاتجاه بقيمة معروفة لمدينتك، واستجابة البوصلة والمعايرة.
+11. **المساجد:** المسافة والملاحة والإسناد.
+12. **التاريخ الهجري** مع التعديل اليدوي.
+13. **الترقية فوق نسخة قائمة** مع بقاء الإعدادات.

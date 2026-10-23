@@ -45,6 +45,7 @@ advertising IDs and no usage statistics with these requests.
 | Receive boot completed | Re-scheduling prayer notifications after the phone restarts |
 | Exact alarms | Ringing prayer notifications at the precise time |
 | Vibrate | Notification vibration (optional) |
+| Foreground service + media playback + wake lock | Playing the full adhan at prayer time (only when you choose that alert style); keeps it audible with the screen off |
 | Request ignore battery optimizations | Optional reliability step some vendors require |
 
 Noor Al-Sabeel requests no contacts, no files, no camera, no microphone, no advertising IDs.
@@ -106,6 +107,7 @@ Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any
 | استقبال اكتمال الإقلاع | إعادة جدولة إشعارات الصلاة بعد إعادة تشغيل الهاتف |
 | التنبيهات الدقيقة | رنين إشعارات الصلاة في الوقت المحدد بدقة |
 | الاهتزاز | اهتزاز الإشعار (اختياري) |
+| الخدمة الأمامية + تشغيل الوسائط + قفل التنبيه | رفع الأذان الكامل عند دخول الوقت (فقط عند اختيارك هذا الأسلوب)؛ يبقى مسموعًا والشاشة مغلقة |
 | طلب تجاوز تحسين البطارية | خطوة موثوقية اختيارية تتطلبها بعض الشركات |
 
 لا يطلب نور السبيل أيّ اتصالات أو ملفات أو كاميرا أو ميكروفون أو معرّفات إعلانية.

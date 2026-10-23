@@ -39,7 +39,31 @@ All runtime dependencies are Apache-2.0 licensed, which is why Noor Al-Sabeel sh
 
 - Launcher icons, splash icon, notification icon and the compass artwork were drawn for this
   project and are covered by the repository's Apache-2.0 license.
-- No fonts or audio files are bundled; Noor Al-Sabeel uses system fonts and system notification sounds.
+- No fonts are bundled; Noor Al-Sabeel uses system fonts. Regular (non-adhan) notifications
+  use system notification sounds chosen by the user.
+
+### Adhan audio
+
+The full-adhan alert style bundles two recordings from the same reciter (Fouad Charif,
+“Adhan Fouad Adan”), published on archive.org with the **Creative Commons Public Domain
+Mark 1.0** applied by the author when uploading — i.e. dedicated by the reciter himself to
+the public domain, which permits unrestricted redistribution, including inside this app
+(<https://creativecommons.org/publicdomain/mark/1.0/>).
+
+| Bundled file | Source recording | Author | License |
+|---|---|---|---|
+| `app/src/main/res/raw/adhan.mp3` | [AdanAlfajrFouadAdan — `Mp3.mp3` (standard adhan)](https://archive.org/details/AdanAlfajrFouadAdan) | Fouad Charif (“Adhan Fouad Adan”) | Public Domain Mark 1.0 |
+| `app/src/main/res/raw/adhan_fajr.mp3` | [AdanAlfajrFouadAdan — `adan alfajr fouad adan.mp3` (dawn adhan)](https://archive.org/details/AdanAlfajrFouadAdan) | Fouad Charif (“Adhan Fouad Adan”) | Public Domain Mark 1.0 |
+
+Both recordings were content-verified before bundling: the standard adhan carries the full
+structure (takbīr, both shahādas, both ḥayya ʿalā phrases, the closing takbīr and tawḥīd)
+without the dawn phrase, while the Fajr recording adds “aṣ-ṣalātu khayrun min an-nawm” —
+transcription-checked with an automated speech-recognition pass over head, middle and tail
+segments of each file.
+
+Changes applied to the bundled copies: leading silence trimmed from the standard adhan,
+and both recordings loudness-normalized (EBU R128, linear two-pass, −16 LUFS) and transcoded
+to 128 kbps MP3 at 44.1 kHz. The recitations themselves are otherwise unmodified.
 
 ## Trademarks
 

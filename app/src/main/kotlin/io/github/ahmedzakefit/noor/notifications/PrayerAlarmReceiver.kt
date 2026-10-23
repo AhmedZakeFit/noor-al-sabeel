@@ -9,6 +9,7 @@ import io.github.ahmedzakefit.noor.appContainer
 import io.github.ahmedzakefit.noor.core.model.GeoPosition
 import io.github.ahmedzakefit.noor.core.model.Prayer
 import io.github.ahmedzakefit.noor.data.calculationParametersFor
+import io.github.ahmedzakefit.noor.notifications.AdhanAudio.shouldPlayAdhan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -61,6 +62,24 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
                         Notifier.showReminderNotification(
                             context, prayer, settings.reminderMinutes, timeLabel, locationLabel,
                         )
+                    } else if (shouldPlayAdhan(settings.adhanMode, isReminder = false, prayer)) {
+                        // Full adhan via a mediaPlayback foreground service. If the
+                        // system blocks the service start (background FGS
+                        // restrictions), fall back to the regular audible alert so
+                        // the prayer time is never missed silently.
+                        val started = AdhanService.start(
+                            context,
+                            prayer,
+                            preview = false,
+                            timeLabel = timeLabel,
+                            locationLabel = locationLabel,
+                        )
+                        if (!started) {
+                            Notifier.showPrayerNotification(
+                                context, prayer, timeLabel, locationLabel,
+                                arabicDigits = settings.digits != io.github.ahmedzakefit.noor.data.DigitSetting.LATIN,
+                            )
+                        }
                     } else {
                         Notifier.showPrayerNotification(
                             context, prayer, timeLabel, locationLabel,

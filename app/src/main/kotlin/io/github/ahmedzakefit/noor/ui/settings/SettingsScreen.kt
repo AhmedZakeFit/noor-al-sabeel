@@ -49,6 +49,7 @@ import io.github.ahmedzakefit.noor.core.calc.CalculationMethod
 import io.github.ahmedzakefit.noor.core.calc.HighLatitudeRule
 import io.github.ahmedzakefit.noor.core.model.Prayer
 import io.github.ahmedzakefit.noor.data.AppSettings
+import io.github.ahmedzakefit.noor.data.AdhanMode
 import io.github.ahmedzakefit.noor.data.CalculationMethodLabels
 import io.github.ahmedzakefit.noor.data.DigitSetting
 import io.github.ahmedzakefit.noor.data.LanguageSetting
@@ -241,6 +242,36 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
             vm.update { it.copy(notificationsMaster = on) }
         }
         if (settings.notificationsMaster) {
+            HorizontalDivider()
+            Text(
+                stringResource(R.string.adhan_style),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            RadioRow(
+                title = "",
+                options = listOf(
+                    stringResource(R.string.adhan_style_regular) to AdhanMode.REGULAR,
+                    stringResource(R.string.adhan_style_adhan) to AdhanMode.ADHAN,
+                ),
+                selected = settings.adhanMode,
+                onSelect = { mode -> vm.update { it.copy(adhanMode = mode) } },
+            )
+            if (settings.adhanMode == AdhanMode.ADHAN) {
+                Text(
+                    stringResource(R.string.adhan_fajr_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    stringResource(R.string.adhan_volume_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = { vm.testAdhan() }) {
+                    Text(stringResource(R.string.test_adhan))
+                }
+            }
             HorizontalDivider()
             Text(stringResource(R.string.per_prayer_toggles), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             for (prayer in listOf(Prayer.FAJR, Prayer.DHUHR, Prayer.ASR, Prayer.MAGHRIB, Prayer.ISHA)) {

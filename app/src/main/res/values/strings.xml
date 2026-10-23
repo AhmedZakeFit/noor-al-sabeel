@@ -135,6 +135,12 @@
     <string name="default_sound">Default sound</string>
     <string name="vibrate">Vibration</string>
     <string name="test_notification">Send a test notification</string>
+    <string name="adhan_style">Alert style</string>
+    <string name="adhan_style_regular">Notification (short system sound)</string>
+    <string name="adhan_style_adhan">Full adhan (audio)</string>
+    <string name="adhan_fajr_note">Fajr uses the dawn adhan, which adds “as-salatu khayrun min an-nawm”.</string>
+    <string name="adhan_volume_hint">The adhan plays on the alarm volume — check your alarm volume and Do-Not-Disturb settings.</string>
+    <string name="test_adhan">Test the adhan</string>
     <string name="exact_alarm_ok">Exact alarms enabled</string>
     <string name="exact_alarm_blocked">Exact alarms are blocked — notifications may be delayed by a few minutes.</string>
     <string name="allow_exact_alarms">Allow</string>
@@ -147,8 +153,14 @@
     <string name="notif_channel_prayer_desc">Notifications at prayer times</string>
     <string name="notif_channel_reminder">Pre-prayer reminders</string>
     <string name="notif_channel_reminder_desc">Reminders shortly before each prayer</string>
+    <string name="notif_channel_adhan">Adhan</string>
+    <string name="notif_channel_adhan_desc">Full adhan audio at prayer times (bundled offline recordings)</string>
     <string name="notif_prayer_title">Time for %1$s</string>
     <string name="notif_prayer_body">Prayer time: %1$s • %2$s</string>
+    <string name="notif_adhan_body">The adhan is being recited • %1$s</string>
+    <string name="notif_adhan_stop">Stop the adhan</string>
+    <string name="notif_adhan_test_title">Test adhan</string>
+    <string name="notif_adhan_test_body">This is how the adhan sounds at prayer time. You can stop it from this notification.</string>
     <string name="notif_reminder_title">%1$s is approaching</string>
     <string name="notif_reminder_body">%1$d minutes left • %2$s</string>
     <string name="notif_test_title">Test notification</string>

@@ -23,6 +23,13 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Adhan playback: a mediaPlayback foreground service keeps the full adhan
+         audible with the screen off; the wake lock is held by MediaPlayer itself. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <!-- Offered as an optional reliability step for users whose vendor kills alarms. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -60,6 +67,12 @@
         <receiver
             android:name=".notifications.PrayerAlarmReceiver"
             android:exported="false" />
+
+        <!-- Full-adhan playback at prayer times (exact-alarm exempt FGS start). -->
+        <service
+            android:name=".notifications.AdhanService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <receiver
             android:name=".notifications.SystemEventsReceiver"

@@ -13,6 +13,9 @@ enum class LanguageSetting { SYSTEM, ARABIC, ENGLISH }
 
 enum class DigitSetting { FOLLOW_LOCALE, ARABIC_INDIC, LATIN }
 
+/** Alert style for prayer-time notifications: short system sound or full adhan audio. */
+enum class AdhanMode { REGULAR, ADHAN }
+
 /** The location the user selected (auto-detected, city search, or manual coordinates). */
 data class AppLocation(
     val latitude: Double,
@@ -46,6 +49,8 @@ data class AppSettings(
     ),
     /** Minutes before each prayer for the reminder notification; 0 disables it. */
     val reminderMinutes: Int = 10,
+    /** Whether prayer-time alerts recite the full bundled adhan (Fajr uses its own dawn adhan). */
+    val adhanMode: AdhanMode = AdhanMode.REGULAR,
     val soundEnabled: Boolean = true,
     val soundUri: String? = null,
     val vibrate: Boolean = true,

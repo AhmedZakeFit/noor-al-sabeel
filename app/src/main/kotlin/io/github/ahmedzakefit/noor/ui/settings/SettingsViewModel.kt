@@ -54,6 +54,19 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         Notifier.showTestNotification(container.appContext)
     }
 
+    /**
+     * Plays the standard adhan through the same foreground service a real
+     * prayer-time alert uses, so the user can verify volume and sound before
+     * relying on it. Stop from the notification at any time.
+     */
+    fun testAdhan() {
+        io.github.ahmedzakefit.noor.notifications.AdhanService.start(
+            container.appContext,
+            io.github.ahmedzakefit.noor.core.model.Prayer.DHUHR,
+            preview = true,
+        )
+    }
+
     fun canScheduleExactAlarms(): Boolean = container.alarmScheduler.canScheduleExact()
 
     companion object {

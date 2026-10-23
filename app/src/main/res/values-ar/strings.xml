@@ -135,6 +135,12 @@
     <string name="default_sound">النغمة الافتراضية</string>
     <string name="vibrate">الاهتزاز</string>
     <string name="test_notification">إرسال إشعار تجريبي</string>
+    <string name="adhan_style">أسلوب التنبيه</string>
+    <string name="adhan_style_regular">إشعار عادي (نغمة قصيرة)</string>
+    <string name="adhan_style_adhan">أذان كامل (صوتي)</string>
+    <string name="adhan_fajr_note">يُستخدم في الفجر أذان الفجر الخاص الذي يزيد «الصلاةُ خيرٌ من النوم».</string>
+    <string name="adhan_volume_hint">يُرفَع الأذان على مستوى صوت المنبّه — تحقّق من مستوى صوت المنبّه وإعدادات عدم الإزعاج.</string>
+    <string name="test_adhan">تجربة الأذان</string>
     <string name="exact_alarm_ok">التنبيه الدقيق مفعّل</string>
     <string name="exact_alarm_blocked">التنبيه الدقيق معطّل — قد تتأخر الإشعارات دقائق.</string>
     <string name="allow_exact_alarms">السماح</string>
@@ -147,8 +153,14 @@
     <string name="notif_channel_prayer_desc">إشعارات عند دخول أوقات الصلاة</string>
     <string name="notif_channel_reminder">تذكيرات قبل الصلاة</string>
     <string name="notif_channel_reminder_desc">تذكير قبل كل صلاة بوقت قصير</string>
+    <string name="notif_channel_adhan">الأذان</string>
+    <string name="notif_channel_adhan_desc">صوت الأذان الكامل عند دخول وقت الصلاة (تسجيلات مضمّنة تعمل دون اتصال)</string>
     <string name="notif_prayer_title">حان وقت صلاة %1$s</string>
     <string name="notif_prayer_body">الموعد %1$s • %2$s</string>
+    <string name="notif_adhan_body">يُرفَع الأذان الآن • %1$s</string>
+    <string name="notif_adhan_stop">إيقاف الأذان</string>
+    <string name="notif_adhan_test_title">تجربة الأذان</string>
+    <string name="notif_adhan_test_body">هكذا يُسمَع الأذان عند دخول وقت الصلاة، ويمكن إيقافه من هذا الإشعار.</string>
     <string name="notif_reminder_title">اقترب وقت صلاة %1$s</string>
     <string name="notif_reminder_body">باقٍ %1$d دقيقة • الموعد %2$s</string>
     <string name="notif_test_title">إشعار تجريبي</string>

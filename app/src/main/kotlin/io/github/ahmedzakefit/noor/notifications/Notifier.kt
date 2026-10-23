@@ -101,6 +101,81 @@ object Notifier {
         post(context, 999, notification)
     }
 
+    /**
+     * Notification shown while the adhan is being recited: silent (the
+     * MediaPlayer stream is the sound), ongoing, with a Stop action that stays
+     * available on the lock screen.
+     */
+    fun adhanNotification(
+        context: Context,
+        prayer: Prayer,
+        preview: Boolean,
+        timeLabel: String?,
+        locationLabel: String?,
+        playing: Boolean,
+    ): Notification {
+        val ctx = context.localized()
+        val title = if (preview) {
+            ctx.getString(R.string.notif_adhan_test_title)
+        } else {
+            ctx.getString(R.string.notif_prayer_title, prayerName(ctx, prayer))
+        }
+        val body = when {
+            preview -> ctx.getString(R.string.notif_adhan_test_body)
+            playing -> ctx.getString(R.string.notif_adhan_body, locationLabel ?: "")
+            else -> ctx.getString(
+                R.string.notif_prayer_body,
+                timeLabel ?: "",
+                locationLabel ?: "",
+            )
+        }
+        val builder = baseBuilder(ctx, NotificationChannels.CHANNEL_ADHAN)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(playing)
+            .setAutoCancel(!playing)
+        if (playing) {
+            builder.addAction(
+                NotificationCompat.Action.Builder(
+                    0,
+                    ctx.getString(R.string.notif_adhan_stop),
+                    adhanStopPendingIntent(ctx, prayer),
+                ).build(),
+            )
+        }
+        if (Build.VERSION.SDK_INT < 26) {
+            // Channel-less devices: brief buzz only; the player is the sound.
+            builder.setVibrate(longArrayOf(0, 250))
+            builder.setDefaults(0)
+        }
+        return builder.build()
+    }
+
+    /** After the adhan finishes: a normal auto-cancel record of the prayer time. */
+    fun showAdhanFinishedNotification(
+        context: Context,
+        prayer: Prayer,
+        timeLabel: String?,
+        locationLabel: String?,
+    ) {
+        val notification = adhanNotification(
+            context, prayer, preview = false,
+            timeLabel = timeLabel, locationLabel = locationLabel, playing = false,
+        )
+        post(context, io.github.ahmedzakefit.noor.notifications.AdhanService.notificationId(prayer), notification)
+    }
+
+    private fun adhanStopPendingIntent(ctx: Context, prayer: Prayer): PendingIntent =
+        PendingIntent.getService(
+            ctx,
+            prayer.ordinal,
+            Intent(ctx, AdhanService::class.java)
+                .setAction(AdhanService.ACTION_STOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
     private fun baseBuilder(ctx: Context, channel: String): NotificationCompat.Builder {
         val builder = NotificationCompat.Builder(ctx, channel)
             .setSmallIcon(R.drawable.ic_notification)
@@ -128,6 +203,7 @@ object Notifier {
             for (prayer in Prayer.entries) {
                 cancel(prayer.ordinal)
                 cancel(100 + prayer.ordinal)
+                cancel(500 + prayer.ordinal)
             }
         }
     }
