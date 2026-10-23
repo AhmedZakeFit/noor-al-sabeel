@@ -69,6 +69,29 @@ class UpdateManager(
     }.getOrNull()
 
     suspend fun check(manual: Boolean): CheckResult {
+        // Rate-limit-aware pre-check: the plain website redirect resolves the
+        // latest version without the 60 req/h API quota, so up-to-date
+        // clients (the overwhelming majority of checks) never touch the API.
+        try {
+            val latestVersion = Http.finalRedirectUrl(LATEST_RELEASE_PAGE_URL)
+                ?.let { UpdateParser.versionFromRedirectUrl(it) }
+            if (latestVersion != null) {
+                if (!UpdateParser.isNewer(latestVersion, installedVersionName())) {
+                    return CheckResult.UpToDate
+                }
+                if (!manual && repository.updatePostponedVersion.first() == latestVersion) {
+                    // User postponed exactly this version — no nagging.
+                    return CheckResult.UpToDate
+                }
+            }
+            // Unknown/unreachable redirect or a genuinely newer version:
+            // fall through and fetch the full release document.
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
+            // Pre-check is best-effort; the API path decides.
+        }
+
         return try {
             val outcome = Http.call(
                 url = LATEST_RELEASE_URL,
@@ -239,5 +262,7 @@ class UpdateManager(
     companion object {
         internal const val LATEST_RELEASE_URL =
             "https://api.github.com/repos/AhmedZakeFit/noor-al-sabeel/releases/latest"
+        internal const val LATEST_RELEASE_PAGE_URL =
+            "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/latest"
     }
 }

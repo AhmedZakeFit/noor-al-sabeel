@@ -77,4 +77,42 @@ internal object Http {
             }
         }
     }
+
+    /**
+     * Cheap HEAD probe: returns the URL a redirecting endpoint finally lands
+     * on. Used by the update check to resolve "/releases/latest" without
+     * touching the rate-limited API in the common "no update" case — the
+     * plain website endpoint is not subject to the 60 req/h API quota.
+     */
+    suspend fun finalRedirectUrl(
+        url: String,
+        connectTimeoutMs: Int = 6_000,
+        readTimeoutMs: Int = 8_000,
+    ): String? = suspendCancellableCoroutine { cont ->
+        val conn: HttpURLConnection
+        try {
+            conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = connectTimeoutMs
+                readTimeout = readTimeoutMs
+                requestMethod = "HEAD"
+                instanceFollowRedirects = true
+                setRequestProperty("User-Agent", USER_AGENT)
+            }
+        } catch (t: Throwable) {
+            if (cont.isActive) cont.resumeWithException(t)
+            return@suspendCancellableCoroutine
+        }
+        cont.invokeOnCancellation { runCatching { conn.disconnect() } }
+        thread(isDaemon = true, name = "noor-http") {
+            try {
+                val code = conn.responseCode
+                // After following redirects, conn.url is the final address.
+                if (cont.isActive) cont.resume(if (code in 200..399) conn.url.toString() else null)
+            } catch (t: Throwable) {
+                if (cont.isActive) cont.resumeWithException(t)
+            } finally {
+                runCatching { conn.disconnect() }
+            }
+        }
+    }
 }

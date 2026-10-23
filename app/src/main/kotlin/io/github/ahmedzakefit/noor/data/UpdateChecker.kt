@@ -34,6 +34,16 @@ object UpdateParser {
         return t
     }
 
+    /**
+     * Version read from where the "/releases/latest" redirect landed, e.g.
+     * "https://github.com/o/r/releases/tag/v1.0.4" -> "1.0.4". Lets the app
+     * learn the latest version without a (rate-limited) API call.
+     */
+    fun versionFromRedirectUrl(url: String): String? {
+        val m = Regex("""/releases/tag/(v?\d+(?:\.\d+)*)/?$""").find(url.trim()) ?: return null
+        return versionNameFromTag(m.groupValues[1])
+    }
+
     /** Segment-wise "is candidate strictly newer than installed". */
     fun isNewer(candidate: String, installed: String): Boolean {
         val a = candidate.split('.').mapNotNull { it.toIntOrNull() }

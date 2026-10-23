@@ -47,7 +47,8 @@
   posted, notification IDs are distinct and stable, and prayers without scheduled alarms
   get their notifications cleaned up.
 - **Update-check tests (`UpdateParserTest` / `UpdateVerifierTest`)** — tag/version parsing,
-  newer-version detection (numeric, not lexicographic), release-JSON parsing (APK +
+  version resolution from the `/releases/latest` redirect (the rate-limit-free pre-check
+  path), newer-version detection (numeric, not lexicographic), release-JSON parsing (APK +
   checksum asset URLs, size, changelog summary stripping), sha256sum-format checksum
   parsing, the HTTPS host allowlist, and the full decision matrix: newer → available,
   same/older → up to date, connection failure → silent up-to-date in auto mode but a

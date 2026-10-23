@@ -29,6 +29,23 @@ class UpdateParserTest {
     }
 
     @Test
+    fun `redirect target of releases-latest yields the version`() {
+        // The rate-limit-free pre-check path: resolve /releases/latest by
+        // redirect and read the tag out of the final URL.
+        assertEquals(
+            "1.0.4",
+            UpdateParser.versionFromRedirectUrl("https://github.com/AhmedZakeFit/noor-al-sabeel/releases/tag/v1.0.4"),
+        )
+        assertEquals(
+            "2.0",
+            UpdateParser.versionFromRedirectUrl("https://github.com/o/r/releases/tag/2.0/"),
+        )
+        assertNull(UpdateParser.versionFromRedirectUrl("https://github.com/o/r/releases/latest"))
+        assertNull(UpdateParser.versionFromRedirectUrl("https://github.com/o/r/releases/tag/v1.0-beta"))
+        assertNull(UpdateParser.versionFromRedirectUrl("https://example.com/no-tag-here"))
+    }
+
+    @Test
     fun `newer version detection across shapes`() {
         assertTrue(UpdateParser.isNewer("1.0.4", "1.0.3"))
         assertTrue(UpdateParser.isNewer("1.1", "1.0.9"))
