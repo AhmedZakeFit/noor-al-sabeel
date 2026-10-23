@@ -19,6 +19,12 @@ name: Verify download link
 # fully-published release, whose stable asset carries the same name.
 
 on:
+  # Called by the Release workflow right after it publishes (releases created
+  # with GITHUB_TOKEN do NOT fire the `release` event — GitHub suppresses
+  # token-triggered events to prevent recursion — so the explicit call is the
+  # reliable path).
+  workflow_call:
+  # Bonus coverage for releases published manually (web UI / PAT).
   release:
     types: [published]
   schedule:

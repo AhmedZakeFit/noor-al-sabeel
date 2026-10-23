@@ -95,3 +95,16 @@ jobs:
             release-out/*.sha256
           body: |
             ${{ env.SIGNED == '1' && format('**Noor Al-Sabeel (نور السبيل) v{0}** — signed release APK. See [CHANGELOG](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/CHANGELOG.md) and [install steps](https://github.com/AhmedZakeFit/noor-al-sabeel#install).' , github.ref_name) || '**Unsigned build** — signing secrets were not configured; use the debug APK from CI or build it yourself (docs/BUILDING.md).' }}
+
+  verify-download-link:
+    # Runs immediately after the release is published: downloads the APK
+    # through the landing page's fixed direct link, verifies it (magic bytes,
+    # size, SHA-256 against the versioned asset and the published checksum)
+    # and only then refreshes the landing page's release.json. The `release`
+    # event itself never fires for releases created with GITHUB_TOKEN, hence
+    # this explicit call.
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/verify-download.yml
+    permissions:
+      contents: write
