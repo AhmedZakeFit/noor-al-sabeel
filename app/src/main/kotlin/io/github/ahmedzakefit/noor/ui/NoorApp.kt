@@ -42,7 +42,6 @@ private data class BottomDestination(
 @Composable
 fun NoorApp(
     onRequestNotificationPermission: () -> Unit,
-    onRequestLocationPermission: () -> Unit,
 ) {
     val container = androidx.compose.ui.platform.LocalContext.current.appContainer
     val settings by container.settingsRepository.settings
@@ -74,7 +73,16 @@ fun NoorApp(
                     composable("qibla") { QiblaScreen() }
                     composable("mosques") { MosquesScreen() }
                     composable("settings") {
-                        SettingsScreen(onRequestLocationPermission = onRequestLocationPermission)
+                        SettingsScreen(
+                            onFirstLocationSet = {
+                                navController.navigate("home") {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                            },
+                        )
                     }
                 }
             }

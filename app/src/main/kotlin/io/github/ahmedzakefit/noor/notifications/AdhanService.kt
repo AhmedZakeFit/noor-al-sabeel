@@ -123,6 +123,7 @@ class AdhanService : Service() {
     }
 
     private fun startAdhan() {
+        AdhanPlayback.setPlaying(true)
         // 1) Enter the foreground immediately (5-second window) with a silent
         //    notification; the MediaPlayer below is the actual sound.
         val resId = if (prayer == Prayer.FAJR) {
@@ -228,6 +229,7 @@ class AdhanService : Service() {
     private fun finalize(stopService: Boolean, postFinal: Boolean) {
         if (finalized) return
         finalized = true
+        AdhanPlayback.setPlaying(false)
         handler.removeCallbacks(watchdog)
         abandonFocus()
         releasePlayer()
@@ -249,6 +251,7 @@ class AdhanService : Service() {
     }
 
     override fun onDestroy() {
+        AdhanPlayback.setPlaying(false)
         handler.removeCallbacksAndMessages(null)
         abandonFocus()
         releasePlayer()

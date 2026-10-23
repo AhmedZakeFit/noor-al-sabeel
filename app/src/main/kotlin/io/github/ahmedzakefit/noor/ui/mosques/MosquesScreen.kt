@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -53,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.ahmedzakefit.noor.R
 import io.github.ahmedzakefit.noor.core.qibla.QiblaMath
+import io.github.ahmedzakefit.noor.data.OverpassClient
 import io.github.ahmedzakefit.noor.ui.common.Formatters
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -82,6 +85,7 @@ fun MosquesScreen() {
             .statusBarsPadding(),
     ) {
         // Radius chips + search button
+        val distancePattern = stringResource(R.string.mosque_distance_km)
         Row(
             Modifier
                 .fillMaxWidth()
@@ -95,8 +99,7 @@ fun MosquesScreen() {
                     selected = state.radiusKm == option,
                     onClick = { vm.setRadius(option) },
                     label = {
-                        val km = stringResource(R.string.mosque_distance_km, option.toString())
-                        Text(km.substringAfter(" ").ifBlank { option.toString() })
+                        Text(MosquesViewModel.radiusChipLabel(option, arabicDigits, distancePattern))
                     },
                 )
             }
@@ -109,7 +112,10 @@ fun MosquesScreen() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                stringResource(R.string.search_radius, state.radiusKm),
+                stringResource(
+                    R.string.search_radius,
+                    Formatters.digits(state.radiusKm.toString(), arabicDigits),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -178,7 +184,30 @@ fun MosquesScreen() {
                 }
             }
             MosquesViewModel.SearchState.Empty -> InfoText(stringResource(R.string.no_mosques_found))
-            is MosquesViewModel.SearchState.Error -> InfoText(stringResource(R.string.mosques_search_failed))
+            is MosquesViewModel.SearchState.Error -> {
+                // Explain what actually went wrong and offer an explicit retry
+                // instead of failing silently after the loading spinner.
+                Column(
+                    Modifier.fillMaxWidth().padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        reasonMessage(search.reason),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    TextButton(onClick = { vm.search() }) {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.retry))
+                    }
+                }
+            }
             is MosquesViewModel.SearchState.Ready -> {
                 Text(
                     stringResource(R.string.mosques_results_count, search.items.size),
@@ -255,6 +284,14 @@ private fun MosqueRow(
             )
         }
     }
+}
+
+@Composable
+private fun reasonMessage(reason: OverpassClient.Reason): String = when (reason) {
+    OverpassClient.Reason.NO_NETWORK -> stringResource(R.string.mosque_search_failed_offline)
+    OverpassClient.Reason.TIMEOUT -> stringResource(R.string.mosque_search_failed_timeout)
+    OverpassClient.Reason.SERVER_BUSY -> stringResource(R.string.mosque_search_failed_busy)
+    OverpassClient.Reason.OTHER -> stringResource(R.string.mosques_search_failed)
 }
 
 @Composable

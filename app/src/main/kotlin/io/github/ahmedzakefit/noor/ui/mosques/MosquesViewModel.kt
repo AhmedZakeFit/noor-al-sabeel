@@ -9,6 +9,7 @@ import io.github.ahmedzakefit.noor.AppContainer
 import io.github.ahmedzakefit.noor.core.qibla.QiblaMath
 import io.github.ahmedzakefit.noor.data.AppLocation
 import io.github.ahmedzakefit.noor.data.OverpassClient
+import io.github.ahmedzakefit.noor.ui.common.Formatters
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +31,8 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
         data object Loading : SearchState
         data class Ready(val items: List<MosqueItem>) : SearchState
         data object Empty : SearchState
-        data class Error(val message: String?) : SearchState
+        /** [reason] drives the localized message; the UI offers a retry button. */
+        data class Error(val reason: OverpassClient.Reason) : SearchState
     }
 
     data class UiState(
@@ -50,12 +52,13 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
         UiState(location = settings.location, searchState = search, radiusKm = radius)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
 
-    val radiusOptions = listOf(1, 2, 3, 5, 10)
+    val radiusOptions: List<Int> = RADIUS_OPTIONS_KM
 
     fun setRadius(km: Int) {
         radiusKm.value = km
     }
 
+    /** Same entry point for a fresh search and for the retry button. */
     fun search() {
         val location = uiState.value.location ?: return
         if (searchState.value is SearchState.Loading) return
@@ -79,12 +82,24 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
                     }.sortedBy { it.distanceKm }
                     if (items.isEmpty()) SearchState.Empty else SearchState.Ready(items)
                 }
-                is OverpassClient.Result.Error -> SearchState.Error(result.message)
+                is OverpassClient.Result.Error -> SearchState.Error(result.reason)
             }
         }
     }
 
     companion object {
+        /** Search-radius choices, a clean 1..10 km ladder. */
+        val RADIUS_OPTIONS_KM: List<Int> = (1..10).toList()
+
+        /**
+         * Builds one radius-chip label from the localized distance pattern
+         * (e.g. "%1$s km" / "%1$s كم") so every chip shows its own number
+         * followed by the unit. Replaces the old substring hack that stripped
+         * the number and left every chip showing only "km"/"كم".
+         */
+        fun radiusChipLabel(km: Int, arabicDigits: Boolean, localizedPattern: String): String =
+            localizedPattern.format(Formatters.digits(km.toString(), arabicDigits))
+
         val Factory: ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {

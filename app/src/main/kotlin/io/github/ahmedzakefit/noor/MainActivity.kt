@@ -18,14 +18,15 @@ class MainActivity : AppCompatActivity() {
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
-    private val locationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        // Notification permission is requested when the user first lands on the
+        // prayer-times screen with alerts enabled (see HomeScreen); the location
+        // permission is requested inside the location picker at the moment the
+        // user taps "use GPS", so every request happens in context.
         val requestNotificationPermission: () -> Unit = {
             if (Build.VERSION.SDK_INT >= 33) {
                 val granted = ContextCompat.checkSelfPermission(
@@ -34,19 +35,11 @@ class MainActivity : AppCompatActivity() {
                 if (!granted) notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-        val requestLocationPermission: () -> Unit = {
-            val perms = arrayOf(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-            )
-            locationPermissionLauncher.launch(perms)
-        }
 
         setContent {
             NOORTheme {
                 NoorApp(
                     onRequestNotificationPermission = requestNotificationPermission,
-                    onRequestLocationPermission = requestLocationPermission,
                 )
             }
         }

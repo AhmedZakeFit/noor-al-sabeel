@@ -1,5 +1,8 @@
 package io.github.ahmedzakefit.noor.ui.settings
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -62,11 +65,15 @@ private val COMMON_TIMEZONES = listOf(
 
 private enum class GpsState { Idle, Locating, Done, Failed, Denied }
 
+private val LOCATION_PERMISSIONS = arrayOf(
+    Manifest.permission.ACCESS_COARSE_LOCATION,
+    Manifest.permission.ACCESS_FINE_LOCATION,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationPickerDialog(
     onDismiss: () -> Unit,
-    onRequestLocationPermission: () -> Unit,
     onLocationSelected: (AppLocation) -> Unit,
 ) {
     val context = LocalContext.current
@@ -78,6 +85,7 @@ fun LocationPickerDialog(
     var query by remember { mutableStateOf("") }
     var onlineResults by remember { mutableStateOf<List<NominatimClient.OnlinePlace>>(emptyList()) }
     var gpsState by remember { mutableStateOf(GpsState.Idle) }
+    var showGpsRationale by remember { mutableStateOf(false) }
     var latText by remember { mutableStateOf("") }
     var lonText by remember { mutableStateOf("") }
     var tzSelection by remember { mutableStateOf(ZoneId.systemDefault().id) }
@@ -138,10 +146,7 @@ fun LocationPickerDialog(
         onDismiss()
     }
 
-    fun useGps() {
-        if (!container.locationProvider.hasPermission()) {
-            onRequestLocationPermission()
-        }
+    fun startLocating() {
         gpsState = GpsState.Locating
         scope.launch {
             val fix = withContext(Dispatchers.IO) { container.locationProvider.getCurrentFix() }
@@ -165,6 +170,30 @@ fun LocationPickerDialog(
                 gpsState = GpsState.Done
                 onDismiss()
             }
+        }
+    }
+
+    // The result callback re-checks the grant and resumes the flow the user
+    // actually asked for: granting the dialog starts locating immediately, so
+    // first-run setup never dead-ends until the app is restarted.
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        if (grants.values.any { it }) {
+            startLocating()
+        } else {
+            gpsState = GpsState.Denied
+        }
+    }
+
+    fun useGps() {
+        // Never assume the permission: check at the moment of use, ask in the
+        // system dialog (with a short in-app explanation first), and only run
+        // the location lookup while a grant is actually held.
+        if (container.locationProvider.hasPermission()) {
+            startLocating()
+        } else {
+            showGpsRationale = true
         }
     }
 
@@ -329,4 +358,25 @@ fun LocationPickerDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
         },
     )
+
+    // Composed AFTER the picker so it layers on top of it: a short "why do
+    // you need this?" explanation shown before the system permission dialog.
+    if (showGpsRationale) {
+        AlertDialog(
+            onDismissRequest = { showGpsRationale = false },
+            title = { Text(stringResource(R.string.use_gps)) },
+            text = { Text(stringResource(R.string.gps_permission_rationale)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showGpsRationale = false
+                    locationPermissionLauncher.launch(LOCATION_PERMISSIONS)
+                }) { Text(stringResource(R.string.common_continue)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGpsRationale = false }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            },
+        )
+    }
 }

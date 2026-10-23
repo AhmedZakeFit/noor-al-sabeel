@@ -14,6 +14,7 @@
     <string name="common_close">Close</string>
     <string name="common_search">Search</string>
     <string name="loading">Loading…</string>
+    <string name="common_continue">Continue</string>
     <string name="retry">Retry</string>
 
     <!-- Prayer names -->
@@ -63,10 +64,13 @@
 
     <!-- Mosques -->
     <string name="search_nearby_mosques">Find nearby mosques</string>
-    <string name="search_radius">Search radius: %1$d km</string>
+    <string name="search_radius">Search radius: %1$s km</string>
     <string name="mosques_results_count">Results: %1$d</string>
     <string name="no_mosques_found">No mosques found within this radius.</string>
     <string name="mosques_search_failed">Mosque search failed. Please try again.</string>
+    <string name="mosque_search_failed_offline">No internet connection. Check your connection and try again.</string>
+    <string name="mosque_search_failed_busy">The mosque search service is busy right now. Please try again in a moment.</string>
+    <string name="mosque_search_failed_timeout">The search took too long. Please try again.</string>
     <string name="mosques_need_internet">Mosque search needs an internet connection (map tiles and OpenStreetMap data).</string>
     <string name="mosque_distance_km">%1$s km</string>
     <string name="mosque_distance_m">%1$s m</string>
@@ -85,6 +89,7 @@
     <string name="locating">Locating…</string>
     <string name="gps_failed">Could not determine your location.</string>
     <string name="gps_permission_denied">Location permission was not granted. You can still pick a city or enter coordinates.</string>
+    <string name="gps_permission_rationale">Your location is used only on this device to compute prayer times and find nearby mosques, and is never sent anywhere. Allow access so it can be detected automatically.</string>
     <string name="search_city_hint">Search for a city…</string>
     <string name="city_search_note">Offline results are bundled; online search adds more places when internet is available.</string>
     <string name="no_results">No results</string>

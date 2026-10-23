@@ -75,15 +75,24 @@ fun HomeScreen(
     val arabicDigits = Formatters.useArabicDigits(state.settings.digits, locale)
     var showExtras by rememberSaveable { mutableStateOf(false) }
 
-    // One-time notification permission request (Android 13+).
-    LaunchedEffect(state.settings.notificationsMaster, state.settings.location) {
+    // One-time notification permission request (Android 13+), asked only
+    // after setup completes (location set + alerts on) and at most once per
+    // install. If denied, the system dialog is never spammed again; granting
+    // later from system settings simply makes future notifications appear —
+    // posting always re-checks the live grant, never an assumption.
+    LaunchedEffect(
+        state.settings.notificationsMaster,
+        state.settings.location,
+        state.notifPermAsked,
+    ) {
         if (Build.VERSION.SDK_INT >= 33 && state.settings.notificationsMaster &&
-            state.settings.location != null
+            state.settings.location != null && !state.notifPermAsked
         ) {
             val granted = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
             if (!granted) {
+                vm.markNotificationPermissionAsked()
                 onRequestNotificationPermission()
             }
         }

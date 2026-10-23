@@ -1,20 +1,29 @@
 package io.github.ahmedzakefit.noor.data
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.URLEncoder
+import java.net.UnknownHostException
 
 /**
  * Nearby-mosque search via the Overpass API (OpenStreetMap data, ODbL).
  *
  * Queries are manual (user taps "find nearby mosques") with a bounded radius,
- * a 20-second timeout and a 50-result cap, respecting the public instance's
- * usage policy. No API key and no user data is sent beyond the search center.
+ * bounded timeouts and a 50-result cap, respecting the public instances'
+ * usage policy. The primary public instance regularly answers rate-limited
+ * (HTTP 429) or briefly overloaded (5xx) status codes, which used to fail the
+ * search outright; transient failures are now retried against official mirror
+ * endpoints before giving up, and every failure is classified into a
+ * user-presentable [Result.Error.reason] so the UI can explain what happened
+ * and offer a retry. No API key and no user data is sent beyond the search
+ * center.
  */
 class OverpassClient {
 
@@ -28,8 +37,11 @@ class OverpassClient {
 
     sealed interface Result {
         data class Ok(val mosques: List<Mosque>) : Result
-        data class Error(val message: String?) : Result
+        data class Error(val reason: Reason, val message: String?) : Result
     }
+
+    /** Failure categories mapped to localized, actionable messages in the UI. */
+    enum class Reason { NO_NETWORK, TIMEOUT, SERVER_BUSY, OTHER }
 
     suspend fun findMosques(latitude: Double, longitude: Double, radiusMeters: Int): Result =
         withContext(Dispatchers.IO) {
@@ -37,29 +49,41 @@ class OverpassClient {
                 "(node(around:$radiusMeters,$latitude,$longitude)[amenity=place_of_worship]" +
                 "[religion=islam];way(around:$radiusMeters,$latitude,$longitude)" +
                 "[amenity=place_of_worship][religion=islam];);out center tags 50;"
-            try {
-                val conn = URL("https://overpass-api.de/api/interpreter").openConnection() as HttpURLConnection
+            var lastError = Result.Error(Reason.OTHER, null)
+            for ((index, endpoint) in ENDPOINTS.withIndex()) {
+                if (index > 0) delay(MIRROR_PAUSE_MS)
+                var conn: HttpURLConnection? = null
                 try {
-                    conn.connectTimeout = 10_000
-                    conn.readTimeout = 25_000
-                    conn.requestMethod = "POST"
-                    conn.doOutput = true
-                    conn.setRequestProperty("User-Agent", USER_AGENT)
-                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                    conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 10_000
+                        readTimeout = 25_000
+                        requestMethod = "POST"
+                        doOutput = true
+                        setRequestProperty("User-Agent", USER_AGENT)
+                        setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                    }
                     OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { w ->
                         w.write("data=" + URLEncoder.encode(query, "UTF-8"))
                     }
-                    if (conn.responseCode != 200) {
-                        return@withContext Result.Error("HTTP ${conn.responseCode}")
+                    val code = conn.responseCode
+                    if (code == 200) {
+                        return@withContext Result.Ok(parse(conn.inputStream.bufferedReader(Charsets.UTF_8).readText()))
                     }
-                    val body = conn.inputStream.bufferedReader(Charsets.UTF_8).readText()
-                    Result.Ok(parse(body))
+                    // 4xx other than 429 means our request is wrong — mirrors
+                    // will answer the same, so fail fast instead of hammering.
+                    if (!isRetryableHttp(code)) {
+                        return@withContext Result.Error(classifyHttp(code), "HTTP $code")
+                    }
+                    lastError = Result.Error(classifyHttp(code), "HTTP $code")
+                } catch (e: Exception) {
+                    // Network-level failures may be specific to one endpoint
+                    // (DNS/routing/TLS hiccup) — fall through to the next mirror.
+                    lastError = Result.Error(classifyException(e), e.message)
                 } finally {
-                    conn.disconnect()
+                    conn?.disconnect()
                 }
-            } catch (e: Exception) {
-                Result.Error(e.message)
             }
+            lastError
         }
 
     internal fun parse(body: String): List<Mosque> {
@@ -102,6 +126,30 @@ class OverpassClient {
 
     companion object {
         private const val USER_AGENT =
-            "NoorAlSabeel/1.0.1 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
+            "NoorAlSabeel/1.0.3 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
+
+        /** Public Overpass endpoints: primary first, then official mirrors. */
+        internal val ENDPOINTS = listOf(
+            "https://overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter",
+            "https://overpass.private.coffee/api/interpreter",
+        )
+
+        /** politeness pause between mirror attempts (ms). */
+        private const val MIRROR_PAUSE_MS = 500L
+
+        /** 429 (rate limit) and 5xx (overload) are transient — a mirror may serve. */
+        internal fun isRetryableHttp(code: Int): Boolean = code == 429 || code >= 500
+
+        internal fun classifyHttp(code: Int): Reason = when {
+            code == 429 || code >= 500 -> Reason.SERVER_BUSY
+            else -> Reason.OTHER
+        }
+
+        internal fun classifyException(t: Throwable): Reason = when (t) {
+            is UnknownHostException, is java.net.ConnectException -> Reason.NO_NETWORK
+            is SocketTimeoutException -> Reason.TIMEOUT
+            else -> Reason.OTHER
+        }
     }
 }

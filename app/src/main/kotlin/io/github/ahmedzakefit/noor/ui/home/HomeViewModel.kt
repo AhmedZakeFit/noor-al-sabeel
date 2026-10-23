@@ -35,6 +35,8 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         val nextTime: ZonedDateTime? = null,
         val nextIsTomorrow: Boolean = false,
         val remainingMinutes: Long? = null,
+        /** POST_NOTIFICATIONS already requested once this install. */
+        val notifPermAsked: Boolean = false,
     )
 
     private val ticker = flow {
@@ -45,8 +47,11 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     val uiState: StateFlow<UiState> =
-        combine(container.settingsRepository.settings, ticker) { s, _ -> s }
-            .map(::build)
+        combine(
+            container.settingsRepository.settings,
+            container.settingsRepository.notificationPermissionAsked,
+            ticker,
+        ) { s, asked, _ -> build(s).copy(notifPermAsked = asked) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
 
     init {

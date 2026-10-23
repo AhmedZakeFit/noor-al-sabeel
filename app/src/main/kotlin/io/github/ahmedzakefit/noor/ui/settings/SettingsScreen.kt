@@ -15,15 +15,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -59,7 +62,7 @@ import io.github.ahmedzakefit.noor.ui.home.prayerLabel
 import java.util.Locale
 
 @Composable
-fun SettingsScreen(onRequestLocationPermission: () -> Unit) {
+fun SettingsScreen(onFirstLocationSet: (() -> Unit)? = null) {
     val vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
     val settings by vm.settings.collectAsStateWithLifecycle()
     var showLocationPicker by remember { mutableStateOf(false) }
@@ -83,8 +86,14 @@ fun SettingsScreen(onRequestLocationPermission: () -> Unit) {
     if (showLocationPicker) {
         LocationPickerDialog(
             onDismiss = { showLocationPicker = false },
-            onRequestLocationPermission = onRequestLocationPermission,
-            onLocationSelected = { location -> vm.setLocation(location) },
+            onLocationSelected = { location ->
+                val firstSetup = settings.location == null
+                vm.setLocation(location)
+                // First-run flow: once the very first location is saved, leave
+                // setup behind and land straight on the prayer-times screen —
+                // no need to close and reopen the app.
+                if (firstSetup) onFirstLocationSet?.invoke()
+            },
         )
     }
     if (showMethodPicker) {
@@ -268,8 +277,25 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TextButton(onClick = { vm.testAdhan() }) {
-                    Text(stringResource(R.string.test_adhan))
+                // Toggle: while the adhan (test or real) is reciting, the button
+                // becomes an immediate stop — always visible here, even when the
+                // notification (and its stop action) is hidden by a missing
+                // POST_NOTIFICATIONS grant on Android 13+.
+                val adhanPlaying by vm.adhanPlaying.collectAsStateWithLifecycle()
+                if (adhanPlaying) {
+                    TextButton(onClick = { vm.stopAdhan() }) {
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(stringResource(R.string.notif_adhan_stop))
+                    }
+                } else {
+                    TextButton(onClick = { vm.testAdhan() }) {
+                        Text(stringResource(R.string.test_adhan))
+                    }
                 }
             }
             HorizontalDivider()

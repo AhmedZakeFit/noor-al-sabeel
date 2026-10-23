@@ -4,6 +4,43 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] — 2026-10-23
+
+### Fixed
+
+- **Stopping the test adhan.** The settings screen now swaps “Test the adhan” for a live
+  “Stop the adhan” button while the adhan is reciting, which stops the sound and the foreground
+  service completely. This matters on Android 13+ when notification permission has not been
+  granted: the service notification (and its stop action) is invisible there, which previously
+  left no way at all to stop a test adhan.
+- **Nearby-mosque search failures.** The search now retries the official Overpass mirror
+  endpoints when the primary public instance answers rate-limited (HTTP 429) or overloaded
+  (5xx) status, or a connection fails. Instead of a dead-end message, the failure screen
+  explains what happened (no connection / service busy / timeout / other) and offers an
+  explicit retry button.
+- **Distance options.** The radius chips above the mosque map showed duplicated, garbled text
+  (the number was stripped by a formatting hack, so every chip read just “km”/“كم”). The
+  options are now a clean 1–10 km ladder, each chip showing its own localized value and unit,
+  with the selected value marked.
+- **First-run flow.** After picking the very first location in Settings, the app now jumps
+  straight to the prayer-times screen — no need to close and reopen the app.
+- **Permission sequencing.** “Use current location (GPS)” no longer races the system permission
+  dialog: it explains why the permission is needed, then opens the official system dialog, and
+  starts locating immediately when the user grants. Denial shows a clear message and the city
+  search / manual coordinates paths remain available; a later grant (from app settings) is
+  picked up because the permission is re-checked at the moment of use, never assumed.
+- **Notification permission.** On Android 13+ the POST_NOTIFICATIONS dialog is now asked at
+  most once per install (previously it could re-appear on every tab switch after a denial);
+  granting it later from system settings simply enables notifications.
+
+### Compatibility
+
+- The application ID stays `io.github.ahmedzakefit.noor` and the signing certificate is
+  unchanged, so this update installs directly over v1.0.0–v1.0.2 with settings and data
+  preserved. No new permissions.
+
+[1.0.3]: https://github.com/AhmedZakeFit/noor-al-sabeel/releases/tag/v1.0.3
+
 ## [1.0.2] — 2026-10-23
 
 ### Added

@@ -57,7 +57,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     /**
      * Plays the standard adhan through the same foreground service a real
      * prayer-time alert uses, so the user can verify volume and sound before
-     * relying on it. Stop from the notification at any time.
+     * relying on it. Stop at any time from the notification or the settings
+     * screen's stop button (visible while the preview is playing).
      */
     fun testAdhan() {
         io.github.ahmedzakefit.noor.notifications.AdhanService.start(
@@ -65,6 +66,27 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             io.github.ahmedzakefit.noor.core.model.Prayer.DHUHR,
             preview = true,
         )
+    }
+
+    /** Live flag: true while the adhan service is reciting (test or real). */
+    val adhanPlaying: StateFlow<Boolean> =
+        io.github.ahmedzakefit.noor.notifications.AdhanPlayback.isPlaying
+
+    /**
+     * Stops the running adhan immediately — sound, foreground service and
+     * notification all the way down. Uses a plain startService delivery of
+     * ACTION_STOP: the app is in the foreground when the user taps this, and
+     * if the service already died the stop intent simply no-ops, so there is
+     * no spurious startForeground obligation.
+     */
+    fun stopAdhan() {
+        val context = container.appContext
+        val intent = android.content.Intent(
+            context, io.github.ahmedzakefit.noor.notifications.AdhanService::class.java,
+        ).apply {
+            action = io.github.ahmedzakefit.noor.notifications.AdhanService.ACTION_STOP
+        }
+        runCatching { context.startService(intent) }
     }
 
     fun canScheduleExactAlarms(): Boolean = container.alarmScheduler.canScheduleExact()

@@ -14,6 +14,7 @@
     <string name="common_close">إغلاق</string>
     <string name="common_search">بحث</string>
     <string name="loading">جارٍ التحميل…</string>
+    <string name="common_continue">متابعة</string>
     <string name="retry">إعادة المحاولة</string>
 
     <!-- Prayer names -->
@@ -63,10 +64,13 @@
 
     <!-- Mosques -->
     <string name="search_nearby_mosques">ابحث عن المساجد القريبة</string>
-    <string name="search_radius">نطاق البحث: %1$d كم</string>
+    <string name="search_radius">نطاق البحث: %1$s كم</string>
     <string name="mosques_results_count">عدد النتائج: %1$d</string>
     <string name="no_mosques_found">لا توجد مساجد داخل هذا النطاق.</string>
     <string name="mosques_search_failed">فشل البحث عن المساجد. حاول مرة أخرى.</string>
+    <string name="mosque_search_failed_offline">لا يوجد اتصال بالإنترنت. تحقق من الاتصال ثم أعد المحاولة.</string>
+    <string name="mosque_search_failed_busy">خدمة البحث عن المساجد مشغولة حاليًا. أعد المحاولة بعد قليل.</string>
+    <string name="mosque_search_failed_timeout">استغرق البحث وقتًا طويلًا. أعد المحاولة من فضلك.</string>
     <string name="mosques_need_internet">البحث عن المساجد يحتاج اتصالًا بالإنترنت (مربعات الخريطة وبيانات OpenStreetMap).</string>
     <string name="mosque_distance_km">%1$s كم</string>
     <string name="mosque_distance_m">%1$s م</string>
@@ -85,6 +89,7 @@
     <string name="locating">جارٍ تحديد الموقع…</string>
     <string name="gps_failed">تعذّر تحديد موقعك.</string>
     <string name="gps_permission_denied">لم يُمنح إذن الموقع. يمكنك اختيار مدينة أو إدخال الإحداثيات يدويًا.</string>
+    <string name="gps_permission_rationale">يُستخدم موقعك على هذا الجهاز فقط لحساب مواقيت الصلاة والبحث عن المساجد القريبة، ولا يُرسل إلى أي جهة. امنح الإذن ليُحدَّد موقعك تلقائيًا.</string>
     <string name="search_city_hint">ابحث عن مدينة…</string>
     <string name="city_search_note">النتائج المدمجة تعمل دون إنترنت، والبحث عبر الإنترنت يضيف المزيد عند توفر الاتصال.</string>
     <string name="no_results">لا توجد نتائج</string>
