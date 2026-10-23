@@ -38,10 +38,16 @@
   present, valid, non-empty, distinct, size-bounded).
 - **Mosque-search reliability tests (`MosqueSearchTest`)** — Nominatim keyword-response
   parsing against a fixture copied from a live Cairo response (Islamic filtering keeps
-  churches out, keeps landuse/religious mosques, collapses exact duplicates), the bounded
-  viewbox (dot decimals, corner order, center inside), the overall 20 s deadline and the
-  per-mirror socket budgets beneath it, failure-reason ranking (offline > timeout > busy),
-  and the Overpass fallback parser.
+  churches out, keeps landuse/religious mosques, collapses exact duplicates), **Photon
+  GeoJSON parsing** against another live fixture (junk streets and church entries dropped,
+  lon/lat order respected, dedup), the bounded viewbox and the Photon bbox (documented
+  minLon,minLat,maxLon,maxLat order), the keyword per UI language with `lang` provably
+  never sent to Photon (it rejects unsupported values with HTTP 400), the **parallel race
+  itself** (a stalled source never delays the healthy one — both directions; the loser's
+  request is cancelled), the Overpass fallback when both independent sources fail, the
+  honest empty answer, the overall 15 s deadline firing while everything stalls, the
+  tier-1/mirror socket budgets beneath that deadline, failure-reason ranking
+  (offline > timeout > busy), and the Overpass fallback parser.
 - **Reminder countdown tests (`ReminderRulesTest`)** — the reminder spec targets the prayer
   time with a counting-down chronometer, stale reminders (target already passed) are never
   posted, notification IDs are distinct and stable, and prayers without scheduled alarms
@@ -49,12 +55,18 @@
 - **Update-check tests (`UpdateParserTest` / `UpdateVerifierTest`)** — tag/version parsing,
   version resolution from the `/releases/latest` redirect (the rate-limit-free pre-check
   path), newer-version detection (numeric, not lexicographic), release-JSON parsing (APK +
-  checksum asset URLs, size, changelog summary stripping), sha256sum-format checksum
-  parsing, the HTTPS host allowlist, and the full decision matrix: newer → available,
+  checksum asset URLs, size, changelog summary stripping, and deterministic preference of
+  the versioned APK asset over the stable-named copy in any asset order), sha256sum-format
+  checksum parsing, the HTTPS host allowlist, and the full decision matrix: newer → available,
   same/older → up to date, connection failure → silent up-to-date in auto mode but a
   visible failure for manual checks, postponed version silenced in auto mode only. The
   verifier matrix blocks install on checksum unknown/mismatch, wrong package, non-newer
   versionCode, or a mismatched signing certificate.
+- **Post-release link check (`verify-download` workflow)** — after every release publish
+  (and weekly) the fixed landing-page link `/releases/latest/download/noor-al-sabeel.apk`
+  is downloaded through and verified: HTTP 200, ZIP magic bytes, plausible size, and SHA-256
+  equal to both the versioned release asset and the published `.sha256` checksum. Only a
+  verified release updates the landing page's `release.json` metadata.
 
 ## Manual test matrix (for releases / on your phone)
 
@@ -75,10 +87,12 @@ on the app:
 5. **Airplane mode:** prayer times, qibla bearing and Hijri date still work; mosque search
    shows the "no internet connection" error with a Retry button; map tiles do not load.
 6. **Mosque search resilience:** on mobile data, search a city centre — results should
-   arrive quickly via the Nominatim source even when every Overpass endpoint is
-   unreachable (v1.0.3's failure mode); the total wait never exceeds ~20 s; leaving the
-   screen mid-search stops the spinner immediately; when everything fails the error
-   screen states the reason and offers Retry; the radius chips show every value 1–10 km
+   arrive within a few seconds via whichever of the two parallel sources (Nominatim /
+   Photon) is healthy on that network, even when the other one and every Overpass endpoint
+   are unreachable (v1.0.3/v1.0.4's failure mode); the total wait never exceeds ~15 s;
+   leaving the screen mid-search stops the spinner immediately; when everything fails the
+   error screen states the reason and offers Retry; in the Arabic UI the mosque names
+   should mostly be Arabic; the radius chips show every value 1–10 km
    with its unit (Arabic and English), and the selected value is marked.
 7. **Reboot:** notifications for the next prayers still fire without opening the app
    (boot receiver reschedules).
@@ -122,8 +136,11 @@ on the app:
     and prayer functions are unaffected.
 17. **Landing page:** open <https://ahmedzakefit.github.io/noor-al-sabeel/> — Arabic by
     default, the language toggle flips direction (RTL/LTR) and persists, the download
-    button leads to `/releases/latest`, and the page renders on a phone-width screen
-    without horizontal scrolling.
+    button downloads the APK file directly (no intermediate release page; on Android a
+    download notification appears and the file opens into the install flow), the version /
+    size / date line appears under the button (only when the release metadata was verified
+    by the post-release workflow), the secondary “All releases” link opens the releases
+    list, and the page renders on a phone-width screen without horizontal scrolling.
 
 ## Rebuilding the fixtures (maintainers only)
 
@@ -154,8 +171,13 @@ in docs/PRAYER_TIMES.md.
   مسافة ١–١٠ كم، وعَلم تشغيل الأذان الذي يقود زر الإيقاف).
 - **موثوقية بحث المساجد (`MosqueSearchTest`)** — تحليل استجابة Nominatim على عينة حقيقية
   من وسط القاهرة (ترشيح الإسلام يُخرج الكنائس ويُبقي مساجد landuse/religious ويُزيل
-  التكرارات)، صندوق البحث المحيط بنقاط عشرية وترتيب أركان سليم، مهلة الإجمالية
-  20 ثانية وحدود المنافذ أدنى منها، وترتيب أسباب الفشل (الانقطاع ثم المهلة ثم الانشغال).
+  التكرارات)، وتحليل GeoJSON لـ Photon على عينة حقيقية أخرى (إسقاط الشوارع والكنائس،
+  ترتيب الطول/العرض، إزالة التكرار)، صندوقا البحث بنقاط عشرية وترتيب أركان سليم
+  (ترتيب Nominatim وترتيب Photon الموثّق)، الكلمة المفتاحية حسب لغة الواجهة مع عدم
+  إرسال lang إلى Photon أبدًا (تردّ 400)، **التسابق التوازي نفسه** (المصدر المتعطّل
+  لا يؤخر السليم — في الاتجاهين، ويُلغى طلب الخاسر)، احتياطي Overpass عند فشل
+  المصدرين، الإجابة الفارغة الصادقة، المهلة الإجمالية 15 ثانية مع تعطّل كل شيء،
+  حدود المنافذ أدنى منها، وترتيب أسباب الفشل (الانقطاع ثم المهلة ثم الانشغال).
 - **عدّ التذكير التنازلي (`ReminderRulesTest`)** — الهدف هو وقت الصلاة بعدّاد حيّ نازل،
   ولا يُنشر تذكير فات وقته أصلًا، والمعرّفات ثابتة ومتمايزة، وتُنظّف إشعارات الصلوات
   التي لم تعد مجدولة.
@@ -163,7 +185,13 @@ in docs/PRAYER_TIMES.md.
   والإصدار، كشف الأحدث رقميًا، تحليل JSON للإصدار وروابط APK والبصمة، قالب sha256sum،
   قائمة النطاقات المسموحة، ومصفوفة القرار كاملة (الأحدث ← متاح، المثل/الأقدم ← محدّث،
   فشل الاتصال ← صمت تلقائي ورسالة يدويًا، المؤجَّل يُسكت تلقائيًا فقط)، ومصفوفة الرفض
-  قبل التثبيت (بصمة غائبة/مخالفة، حزمة أخرى، إصدار غير أحدث، توقيع مخالف).
+  قبل التثبيت (بصمة غائبة/مخالفة، حزمة أخرى، إصدار غير أحدث، توقيع مخالف)، وتفضيل
+  ملف APK المُوسوم بالإصدار تحديدًا على النسخة ثابتة الاسم مهما كان ترتيب الأصول.
+- **فحص رابط التنزيل بعد النشر (سير عمل `verify-download`)** — بعد كل نشر إصدار (وأسبوعيًا)
+  يُنزَّل الملف عبر الرابط الثابت `/releases/latest/download/noor-al-sabeel.apk` ويُتحقق
+  منه: HTTP 200 وبايتات ZIP الفعلية وحجم معقول وبصمة SHA-256 مطابقة لأصل الإصدار
+  المُوسوم ولملف البصمة المنشور. ولا يُحدَّث `release.json` الذي تقرأه صفحة الهبوط
+  إلا بعد نجاح هذا التحقق كله.
 
 ## مصفوفة الاختبار اليدوي (على هاتفك)
 
@@ -176,10 +204,12 @@ in docs/PRAYER_TIMES.md.
    مواقيت الصلاة دون حاجة لإغلاقه وإعادة فتحه.
 5. **وضع الطيران:** المواقيت والقبلة والهجري تعمل، ويظهر خطأ «لا اتصال بالإنترنت»
    مع زر إعادة المحاولة في بحث المساجد.
-6. **متانة بحث المساجد:** على بيانات الهاتف ابحث في وسط مدينة — تصل النتائج سريعًا من
-   مصدر Nominatim حتى لو تعذّرت كل نقاط Overpass (حالة v1.0.3)؛ لا يتجاوز انتظارك
-   ٢٠ ثانية إجمالًا؛ مغادرة الشاشة أثناء البحث توقف المؤشر فورًا؛ وعند فشل كل المصادر
-   يُذكر السبب مع زر إعادة المحاولة؛ وريقات المسافة تعرض ١–١٠ كم برقم ووحدة سليمين
+6. **متانة بحث المساجد:** على بيانات الهاتف ابحث في وسط مدينة — تصل النتائج خلال
+   ثوانٍ من أيّ المصدرين المتوازيين (Nominatim / Photon) السليم على تلك الشبكة حتى
+   لو تعذّر الآخر وكل نقاط Overpass (حالة v1.0.3/v1.0.4)؛ لا يتجاوز انتظارك
+   ١٥ ثانية إجمالًا؛ مغادرة الشاشة أثناء البحث توقف المؤشر فورًا؛ وعند فشل كل
+   المصادر يُذكر السبب مع زر إعادة المحاولة؛ وفي الواجهة العربية تكون أسماء
+   المساجد عربية في الغالب؛ وريقات المسافة تعرض ١–١٠ كم برقم ووحدة سليمين
    (عربي/إنجليزي) مع تحديد القيمة المختارة.
 7. **إعادة تشغيل الهاتف:** تستمر الإشعارات دون فتح التطبيق.
 8. **تغيير المنطقة الزمنية أو السفر.**

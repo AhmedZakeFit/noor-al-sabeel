@@ -4,6 +4,45 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] — 2026-10-23
+
+### Fixed
+
+- **Nearby-mosque search (the phone-timeout report).** v1.0.4 made Nominatim the first source,
+  but on the reporter's phone the search still waited the full deadline and then failed. Live
+  probes with the app's exact request explain why: Nominatim and Photon both answer in ~1 s
+  while **all three Overpass endpoints answer nothing at all** (HTTP 000; two of them accept
+  the TCP connection and then stall) — and v1.0.4 ran Nominatim as a *sequential* gate in front
+  of that dead family, so whenever Nominatim itself was unreachable on a given mobile network
+  the cascade burned its socket timeouts and hit the overall deadline: the reported
+  "the search took too long". The search now runs **two genuinely independent sources in
+  parallel** — Nominatim (OpenStreetMap Foundation, Fastly) and Photon (komoot, IPv4-only,
+  which also sidesteps broken-IPv6 carriers) — and the first to answer with mosques wins while
+  the loser's request is cancelled: the death of either provider now costs the user nothing.
+  The Arabic UI searches Photon with the Arabic keyword "مسجد", which finds the Arabic-named
+  mosques a Latin keyword misses (Photon's `lang` parameter is never sent — it rejects
+  unsupported values with HTTP 400). Overpass mirrors remain as a last chance with tighter
+  3 s/6 s budgets, the overall deadline dropped from 20 s to 15 s, and every failure path
+  still ends in an explainable message with a retry button.
+- **Landing-page download button.** The button used to open the GitHub Releases *page*,
+  which is confusing for non-technical users. It is now a fixed direct link
+  (`/releases/latest/download/noor-al-sabeel.apk`) that downloads the latest stable signed
+  APK immediately — no intermediate pages — and it keeps pointing at the newest release
+  automatically because every release now also uploads a stable-named copy of the same APK.
+  If a release fails to publish, `/releases/latest` still resolves to the previous release,
+  so the link stays valid. "All releases" and the source code remain clear secondary links,
+  and the version/size/date line on the page is rendered only from metadata that the
+  release workflow has actually verified by downloading the APK back through that same link
+  (magic bytes, size, SHA-256 equal to the published checksums).
+
+### Added
+
+- **Automated post-release link check** (`verify-download` workflow): after every release
+  publish (and weekly) the fixed download link is resolved, the APK is downloaded through it,
+  and its SHA-256 is compared against the versioned asset and the published `.sha256`
+  checksum before the landing page's release metadata is updated. A broken or half-published
+  release turns the workflow red and never leaks into the page.
+
 ## [1.0.4] — 2026-10-23
 
 ### Fixed

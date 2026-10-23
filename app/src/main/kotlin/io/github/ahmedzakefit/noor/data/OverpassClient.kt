@@ -128,11 +128,16 @@ class OverpassClient {
         )
 
         /** politeness pause between mirror attempts (ms). */
-        private const val MIRROR_PAUSE_MS = 400L
+        private const val MIRROR_PAUSE_MS = 300L
 
-        /** Tight per-mirror budgets — the overall deadline is enforced by [MosqueSearchClient]. */
-        internal const val CONNECT_TIMEOUT_MS = 6_000
-        internal const val READ_TIMEOUT_MS = 9_000
+        /**
+         * Tight per-mirror budgets — this client is now only the LAST-resort
+         * tier behind two parallel independent sources ([MosqueSearchClient]),
+         * and the overall deadline is the hard stop, so these budgets must
+         * never let one dead mirror eat the user's patience.
+         */
+        internal const val CONNECT_TIMEOUT_MS = 3_000
+        internal const val READ_TIMEOUT_MS = 6_000
 
         /** 429 (rate limit) and 5xx (overload) are transient — a mirror may serve. */
         internal fun isRetryableHttp(code: Int): Boolean = code == 429 || code >= 500

@@ -94,6 +94,51 @@ class UpdateParserTest {
         assertNull(UpdateParser.parseRelease("""{"assets":[{"name":"a.apk","browser_download_url":"https://github.com/x/a.apk"}]}"""))
     }
 
+    // --- new asset layout: versioned + stable-named copies -----------------
+
+    @Test
+    fun `versioned apk asset wins over the stable copy regardless of order`() {
+        // Both assets exist (v1.0.5 release layout); whichever order the API
+        // returns them in, the in-app updater must deterministically pick the
+        // versioned pair — same bytes, unambiguous in caches and logs.
+        val versioned = """{"name": "noor-al-sabeel-1.0.5.apk", "size": 12900000,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.5/noor-al-sabeel-1.0.5.apk"},
+            {"name": "noor-al-sabeel-1.0.5.apk.sha256", "size": 91,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.5/noor-al-sabeel-1.0.5.apk.sha256"}"""
+        val stable = """{"name": "noor-al-sabeel.apk", "size": 12900000,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.5/noor-al-sabeel.apk"},
+            {"name": "noor-al-sabeel.apk.sha256", "size": 91,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.5/noor-al-sabeel.apk.sha256"}"""
+        for (order in listOf("$stable,$versioned", "$versioned,$stable")) {
+            val info = UpdateParser.parseRelease("""{"tag_name": "v1.0.5", "assets": [$order]}""")!!
+            assertTrue(info.apkUrl.endsWith("noor-al-sabeel-1.0.5.apk"))
+            assertTrue(info.sha256Url!!.endsWith("noor-al-sabeel-1.0.5.apk.sha256"))
+            assertEquals(12900000L, info.apkSizeBytes)
+            assertEquals("1.0.5", info.versionName)
+        }
+    }
+
+    @Test
+    fun `a stable-asset-only release still yields a usable update`() {
+        // Safety net: even if a future release somehow carries only the
+        // stable-named asset, the updater still finds an APK to download.
+        val info = UpdateParser.parseRelease("""
+        {
+          "tag_name": "v1.0.6",
+          "assets": [
+            {"name": "noor-al-sabeel.apk", "size": 13000000,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.6/noor-al-sabeel.apk"},
+            {"name": "noor-al-sabeel.apk.sha256", "size": 91,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.6/noor-al-sabeel.apk.sha256"}
+          ]
+        }
+        """.trimIndent())!!
+        assertTrue(info.apkUrl.endsWith("/noor-al-sabeel.apk"))
+        assertTrue(info.sha256Url!!.endsWith("noor-al-sabeel.apk.sha256"))
+        assertEquals("1.0.6", info.versionName)
+        assertEquals(UpdateParser.STABLE_APK_ASSET, "noor-al-sabeel.apk")
+    }
+
     // --- checksum file --------------------------------------------------------
 
     @Test

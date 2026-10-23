@@ -26,7 +26,7 @@ internal sealed interface HttpOutcome {
 internal object Http {
 
     const val USER_AGENT =
-        "NoorAlSabeel/1.0.4 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
+        "NoorAlSabeel/1.0.5 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
 
     suspend fun call(
         url: String,

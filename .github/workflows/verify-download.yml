@@ -1,0 +1,140 @@
+name: Verify download link
+
+# Automated post-release test of the landing page's fixed direct APK link:
+#   https://github.com/<repo>/releases/latest/download/noor-al-sabeel.apk
+#
+# After every release publish (and weekly as a drift check) this workflow:
+#   1. resolves the true latest stable release via the API;
+#   2. downloads the APK THROUGH the fixed link the landing page uses;
+#   3. verifies it is a real APK: HTTP 200, ZIP magic bytes (PK\x03\x04),
+#      plausible size, and a SHA-256 identical to the versioned release
+#      asset and to the published .sha256 checksum;
+#   4. only then updates gh-pages/release.json (version / size / date the
+#      landing page displays). If ANY verification fails, the workflow goes
+#      red and the landing page keeps showing the last VERIFIED release —
+#      a broken or half-published release never leaks into the page.
+#
+# The download button itself is a static fixed URL, so a failed or partial
+# publish cannot break it: /releases/latest still points at the previous
+# fully-published release, whose stable asset carries the same name.
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: APK link serves the latest signed release
+    runs-on: ubuntu-latest
+    env:
+      STABLE_ASSET: noor-al-sabeel.apk
+    steps:
+      - name: Resolve the latest stable release and its assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${{ github.repository }}/releases/latest" > latest.json
+          TAG="$(jq -r .tag_name latest.json)"
+          VERSION="${TAG#v}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "PUBLISHED_AT=$(jq -r .published_at latest.json)" >> "$GITHUB_ENV"
+          echo "Latest stable release: $TAG"
+
+          jq -e '.assets[] | select(.name == env.STABLE_ASSET)' latest.json > /dev/null \
+            || { echo "::error::latest release has no '$STABLE_ASSET' asset — the landing page's fixed link would 404"; exit 1; }
+          jq -e '.assets[] | select(.name == "noor-al-sabeel-'$VERSION'.apk")' latest.json > /dev/null \
+            || { echo "::error::latest release has no versioned APK asset"; exit 1; }
+          jq -e '.assets[] | select(.name == "noor-al-sabeel-'$VERSION'.apk.sha256")' latest.json > /dev/null \
+            || { echo "::error::latest release has no published .sha256 checksum asset"; exit 1; }
+
+      - name: Download through the landing page's fixed link and verify
+        run: |
+          set -euo pipefail
+          FIXED_URL="https://github.com/${{ github.repository }}/releases/latest/download/${STABLE_ASSET}"
+          VERSIONED_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/noor-al-sabeel-${VERSION}.apk"
+          echo "Probing: $FIXED_URL"
+
+          CODE="$(curl -sSL -o stable.apk -w '%{http_code}' "$FIXED_URL")"
+          [ "$CODE" = "200" ] || { echo "::error::fixed link answered HTTP $CODE, expected 200"; exit 1; }
+
+          # A real APK is a ZIP archive starting with the local-file-header
+          # magic — an HTML error page or a redirect page would not.
+          MAGIC="$(head -c 4 stable.apk | od -An -tx1 | tr -d ' \n')"
+          [ "$MAGIC" = "504b0304" ] || { echo "::error::downloaded file is not a ZIP/APK (magic: $MAGIC)"; exit 1; }
+
+          SIZE="$(stat -c %s stable.apk)"
+          [ "$SIZE" -gt 5000000 ] || { echo "::error::APK implausibly small: $SIZE bytes"; exit 1; }
+
+          # The fixed link must serve exactly the latest release's APK:
+          # identical SHA-256 as the versioned asset …
+          curl -sSL -o versioned.apk "$VERSIONED_URL"
+          STABLE_SHA="$(sha256sum stable.apk | cut -d' ' -f1)"
+          VERSIONED_SHA="$(sha256sum versioned.apk | cut -d' ' -f1)"
+          [ "$STABLE_SHA" = "$VERSIONED_SHA" ] \
+            || { echo "::error::stable-asset bytes differ from the versioned asset ($STABLE_SHA vs $VERSIONED_SHA)"; exit 1; }
+
+          # … and as the published .sha256 checksum asset.
+          curl -sSL -o published.sha256 \
+            "https://github.com/${{ github.repository }}/releases/download/${TAG}/noor-al-sabeel-${VERSION}.apk.sha256"
+          PUBLISHED_SHA="$(awk '{print tolower($1)}' published.sha256)"
+          [ "$PUBLISHED_SHA" = "$STABLE_SHA" ] \
+            || { echo "::error::fixed-link APK does not match the published checksum ($PUBLISHED_SHA)"; exit 1; }
+
+          echo "SIZE=$SIZE" >> "$GITHUB_ENV"
+          echo "SHA256=$STABLE_SHA" >> "$GITHUB_ENV"
+          echo "Verified: the fixed link serves the signed $TAG APK ($SIZE bytes)."
+
+      - name: Check the landing page points at the fixed link
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Landing page uses the fixed link (repo + live)
+        run: |
+          set -euo pipefail
+          grep -q "releases/latest/download/${STABLE_ASSET}" gh-pages/index.html \
+            || { echo "::error::gh-pages/index.html does not use the fixed download link"; exit 1; }
+          # The live page (Pages rebuild can lag a minute) — retry politely.
+          LIVE="https://ahmedzakefit.github.io/noor-al-sabeel/"
+          for i in $(seq 1 10); do
+            if curl -fsSL "$LIVE" | grep -q "releases/latest/download/${STABLE_ASSET}"; then
+              echo "Live page serves the fixed link."; exit 0
+            fi
+            echo "live page not updated yet (attempt $i/10); waiting…"
+            sleep 30
+          done
+          echo "::warning::live landing page did not show the fixed link within 5 minutes — check Pages deployment"
+
+      - name: Publish verified release metadata (release.json)
+        run: |
+          set -euo pipefail
+          cd gh-pages
+          printf 'release.json content:\n'
+          jq -n \
+            --arg tag "$TAG" \
+            --arg version "$VERSION" \
+            --argjson size "$SIZE" \
+            --arg published "$PUBLISHED_AT" \
+            --arg sha "$SHA256" \
+            '{tag:$tag, version:$version, sizeBytes:$size, publishedAt:$published, sha256:$sha}' > release.json
+          cat release.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.json
+          if git diff --staged --quiet; then
+            echo "release.json already up to date — no commit (no Pages rebuild churn)."
+          else
+            git commit -m "release.json: verified $TAG (post-release link check)"
+            git push
+            echo "Pushed verified release.json for $TAG — the landing page will show it after the Pages rebuild."
+          fi

@@ -28,9 +28,11 @@ By default, nothing. The app uses the internet **only** when you actively use on
 features:
 
 - **Mosque search / map screen** — your search center (the coordinates you selected) is sent
-  to the public Nominatim service (OpenStreetMap), which proved far more reachable than
-  Overpass on mobile networks; if that fails, the request goes to the public Overpass API
-  mirrors instead. Map tiles are fetched from OpenStreetMap servers for the visible area.
+  **in parallel** to two independent public services: Nominatim (OpenStreetMap Foundation)
+  and Photon (komoot). Whichever answers with results first wins and the other request is
+  cancelled, so the search no longer depends on the health of any single provider. Only if
+  both fail does the request go to the public Overpass API mirrors as a last chance. Map
+  tiles are fetched from OpenStreetMap servers for the visible area.
 - **Optional online city search** — the text you type is sent to the public Nominatim
   service (OpenStreetMap) when the offline catalog has no match.
 - **Update check** — on app open (and when you tap "check for updates") the app contacts
@@ -39,7 +41,7 @@ features:
   APK comes from the project's own GitHub Releases page. Nothing about you is sent — no
   identifiers, no usage data; it is a plain version lookup.
 
-These services are operated by third parties (OpenStreetMap Foundation, Overpass API
+These services are operated by third parties (OpenStreetMap Foundation, komoot, Overpass API
 maintainers and GitHub) and are governed by their own policies. Noor Al-Sabeel sends no
 identifiers, no advertising IDs and no usage statistics with these requests.
 
@@ -99,10 +101,11 @@ Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any
 
 افتراضيًا: لا شيء. يستخدم التطبيق الإنترنت **فقط** عند استخدامك إحدى هذه الميزات:
 
-- **البحث عن المساجد / شاشة الخريطة** — يُرسل مركز البحث (الإحداثيات التي اخترتها) إلى
-  خدمة Nominatim العامة (OpenStreetMap) وقد أثبتت وصولًا أفضل بكثير من Overpass على شبكات
-  الهاتف المحمول، وعند تعذرها يُرسل الطلب إلى مرايا خدمة Overpass العامة بدلًا منها. وتُجلب
-  مربعات الخريطة من خوادم OpenStreetMap للمنطقة الظاهرة.
+- **البحث عن المساجد / شاشة الخريطة** — يُرسل مركز البحث (الإحداثيات التي اخترتها)
+  **بالتوازي** إلى خدمتين عامتين مستقلتين: Nominatim‏ (مؤسسة OpenStreetMap) و
+  Photon‏ (komoot)؛ وأيّهما يرد بالنتائج أولًا يفوز ويُلغى الطلب الآخر، فلا يعتمد البحث
+  بعد الآن على جاهزية مزوّد واحد. وعند تعذّر الاثنين معًا يُرسل الطلب إلى مرايا Overpass
+  العامة كفرصة أخيرة. وتُجلب مربعات الخريطة من خوادم OpenStreetMap للمنطقة الظاهرة.
 - **البحث الاختياري عن المدن عبر الإنترنت** — يُرسل النص الذي تكتبه إلى خدمة Nominatim
   العامة (OpenStreetMap) عندما لا يجد الفهرس المدمج نتيجة مطابقة.
 - **التحقق من التحديثات** — عند فتح التطبيق (وعند ضغطك «التحقق من وجود تحديثات») يتصل
@@ -111,7 +114,7 @@ Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any
   Releases الخاصة بالمشروع نفسه. لا يُرسل شيء يخصك — لا معرّفات ولا بيانات استخدام؛
   إنها مطابقة رقم إصدار فحسب.
 
-هذه الخدمات يشغّلها طرف ثالث (مؤسسة OpenStreetMap ومشغّلو Overpass وGitHub) وتحكمها سياستهم
+هذه الخدمات يشغّلها طرف ثالث (مؤسسة OpenStreetMap وkomoot ومشغّلو Overpass وGitHub) وتحكمها سياستهم
 الخاصة. لا يرسل نور السبيل معها أي معرّفات ولا معرّفات إعلانية ولا إحصاءات استخدام.
 
 ## الأذونات وسببها

@@ -76,12 +76,26 @@ object UpdateParser {
         return s
     }
 
-    /** Parses the /releases/latest JSON; null when unusable (no tag/APK). */
+    /** Stable asset names — the landing page's fixed direct-download link
+     * points at the stable APK name under /releases/latest/download/.
+     */
+    internal const val STABLE_APK_ASSET = "noor-al-sabeel.apk"
+
+    /** Parses the /releases/latest JSON; null when unusable (no tag/APK).
+     *
+     * Releases carry up to four APK-related assets: the versioned APK
+     * (noor-al-sabeel-<version>.apk) + checksum, and the stable-named copies
+     * (noor-al-sabeel.apk + checksum) that the landing page links to. The
+     * versioned pair is preferred — identical bytes, unambiguous in caches
+     * and logs — with the stable pair as fallback, deterministically instead
+     * of whatever order the assets happen to come in.
+     */
     fun parseRelease(json: String): ReleaseInfo? {
         val obj = JSONObject(json)
         val tag = obj.optString("tag_name")
         val version = versionNameFromTag(tag) ?: return null
         val assets = obj.optJSONArray("assets") ?: return null
+        val versionedApk = "noor-al-sabeel-$version.apk"
         var apkUrl: String? = null
         var apkSize = 0L
         var shaUrl: String? = null
@@ -90,8 +104,18 @@ object UpdateParser {
             val name = a.optString("name")
             val url = a.optString("browser_download_url")
             when {
-                name.endsWith(".apk.sha256") -> shaUrl = url
-                name.endsWith(".apk") && apkUrl == null -> {
+                name == "$versionedApk.sha256" -> shaUrl = url
+                name == "$STABLE_APK_ASSET.sha256" -> if (shaUrl == null) shaUrl = url
+                name == versionedApk -> {
+                    apkUrl = url
+                    apkSize = a.optLong("size")
+                }
+                name == STABLE_APK_ASSET -> if (apkUrl == null) {
+                    apkUrl = url
+                    apkSize = a.optLong("size")
+                }
+                name.endsWith(".apk.sha256") -> if (shaUrl == null) shaUrl = url
+                name.endsWith(".apk") -> if (apkUrl == null) {
                     apkUrl = url
                     apkSize = a.optLong("size")
                 }

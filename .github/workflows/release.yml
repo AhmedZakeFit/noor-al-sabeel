@@ -71,6 +71,12 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           if [ -f app/build/outputs/apk/release/app-release.apk ]; then
             cp app/build/outputs/apk/release/app-release.apk "release-out/noor-al-sabeel-$VERSION.apk"
+            # Stable-named copy for the landing page's fixed direct link:
+            # https://github.com/…/releases/latest/download/noor-al-sabeel.apk
+            # always resolves to this asset of the newest release, so the
+            # landing page never needs editing after a release. Identical
+            # bytes (and sha256) as the versioned asset above.
+            cp app/build/outputs/apk/release/app-release.apk "release-out/noor-al-sabeel.apk"
             SIGNED=1
           else
             cp app/build/outputs/apk/release/app-release-unsigned.apk "release-out/noor-al-sabeel-$VERSION-unsigned.apk"

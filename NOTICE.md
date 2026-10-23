@@ -20,17 +20,24 @@ All runtime dependencies are Apache-2.0 licensed, which is why Noor Al-Sabeel sh
 ## Data & services
 
 - **OpenStreetMap** — map tiles rendered in the mosques screen, and place data returned by
-  the Nominatim search service (primary) with the Overpass API mirrors as fallback. ©
-  OpenStreetMap contributors, ODbL 1.0. Attribution is shown on the map screen. Requests are
-  manual, bounded (radius ≤ 10 km, ≤ 50 results, 20 s overall deadline) and respect the
-  public instances' usage policies.
+  the Nominatim search service and the Photon geocoder (the two independent parallel
+  sources of the nearby-mosque search), with the Overpass API mirrors as a last-chance
+  fallback. © OpenStreetMap contributors, ODbL 1.0. Attribution is shown on the map
+  screen. Requests are manual, bounded (radius ≤ 10 km, ≤ 50 results, 15 s overall
+  deadline) and respect the public instances' usage policies.
 - **GeoNames** — the bundled offline city catalog (`app/src/main/assets/cities.csv`) is derived
   from GeoNames `cities5000` plus alternate Arabic names. Licensed CC-BY-4.0; attribution
   given here and in the app's About section. <https://www.geonames.org>
-- **Nominatim** (OpenStreetMap) — optional online city search when the user's query is not
-  covered by the offline catalog, and the primary source for the nearby-mosque search (a
-  bounded `mosque` keyword query inside the search radius). Usage policy respected
-  (identified app, manual low-volume queries).
+- **Nominatim** (OpenStreetMap Foundation) — optional online city search when the user's query
+  is not covered by the offline catalog, and one of the two parallel primary sources for the
+  nearby-mosque search (a bounded `mosque` keyword query inside the search radius, which as
+  a category search also finds Arabic-named mosques). Usage policy respected (identified
+  app, manual low-volume queries).
+- **Photon** (komoot GmbH) — the second parallel primary source for the nearby-mosque
+  search: a free-text search bounded to the radius, with the keyword following the UI
+  language ("مسجد" for Arabic — verified live to return the Arabic-named mosques a Latin
+  keyword misses). Different company, datacenter and stack from Nominatim/Overpass, so a
+  network failure of one family does not affect the other. <https://photon.komoot.io>
 - **GitHub Releases** — the in-app update check reads this repository's latest published
   release via GitHub's public API and, when the user opts in, downloads the release APK
   from the project's own GitHub Releases page. No account, no identifiers sent.
