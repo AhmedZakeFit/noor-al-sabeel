@@ -84,9 +84,12 @@
     <string name="mosques_center_saved">حول: %1$s</string>
     <string name="mosques_use_current_location">استخدم موقعي الحالي</string>
     <string name="mosques_locating">جارٍ تحديد موقعك…</string>
-    <string name="mosques_location_failed">تعذّر تحديد موقعك الحالي.</string>
+    <string name="mosques_location_failed">تعذّر تحديد موقعك الحالي. هل تريد إعادة المحاولة أم البحث حول موقعك المحفوظ بدلًا منه؟</string>
     <string name="mosques_fallback_saved">البحث حول الموقع المحفوظ</string>
-    <string name="mosques_permission_hint">يتم البحث حول موقعك المحفوظ. امنح إذن الموقع للبحث حول مكان وجودك فعليًا.</string>
+    <string name="mosques_permission_hint">عند الضغط على البحث سيطلب التطبيق إذن الموقع لتكون النتائج حول مكان وجودك فعليًا.</string>
+    <string name="mosques_permission_needed">يستخدم البحث عن المساجد القريبة موقعك الحالي. اسمح بالوصول للمتابعة، أو افتح إعدادات التطبيق إن كان الوصول محظورًا.</string>
+    <string name="mosques_allow_location">السماح بالوصول</string>
+    <string name="mosques_open_settings">فتح إعدادات التطبيق</string>
 
     <!-- Settings: location -->
     <string name="section_location">الموقع</string>

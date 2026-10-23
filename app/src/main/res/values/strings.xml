@@ -84,9 +84,12 @@
     <string name="mosques_center_saved">Around: %1$s</string>
     <string name="mosques_use_current_location">Use my current location</string>
     <string name="mosques_locating">Determining your location…</string>
-    <string name="mosques_location_failed">Could not determine your current location.</string>
+    <string name="mosques_location_failed">Couldn\'t determine your current location. Retry, or search around your saved location instead?</string>
     <string name="mosques_fallback_saved">Search around saved location</string>
-    <string name="mosques_permission_hint">Searching around your saved location. Grant location access to search around where you actually are.</string>
+    <string name="mosques_permission_hint">When you tap search, the app will ask for location access so the results follow where you actually are.</string>
+    <string name="mosques_permission_needed">Finding nearby mosques uses your current location. Allow access to continue, or open the app settings if access is blocked.</string>
+    <string name="mosques_allow_location">Allow access</string>
+    <string name="mosques_open_settings">Open app settings</string>
 
     <!-- Settings: location -->
     <string name="section_location">Location</string>

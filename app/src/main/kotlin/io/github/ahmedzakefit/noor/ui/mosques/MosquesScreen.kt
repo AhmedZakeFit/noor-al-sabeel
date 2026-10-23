@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -96,15 +97,17 @@ fun MosquesScreen() {
         BitmapDrawable(context.resources, circleBitmap(0xFF2E7D32.toInt(), 0xFFFFFFFF.toInt()))
     }
 
-    // Location permission flow (same in-context pattern as the settings
-    // location picker): a short rationale first, then the system dialog,
-    // then the search the user actually asked for.
+    // Location permission flow, wired into the MAIN search button (same
+    // in-context pattern as the settings location picker): a short rationale
+    // first, then the system dialog, then the search the user asked for.
+    // A denial keeps the guidance on screen — with a way out via the app
+    // settings when the system no longer shows the dialog.
     var showLocationRationale by remember { mutableStateOf(false) }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { grants ->
         vm.refreshLocationPermission()
-        if (grants.values.any { it }) vm.search(locale.toLanguageTag())
+        if (grants.values.any { it }) vm.search(locale.toLanguageTag()) else vm.markPermissionDenied()
     }
 
     // Leaving the screen aborts an in-flight fix or search — the socket is
@@ -119,9 +122,10 @@ fun MosquesScreen() {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
-                    // Permission may have been granted from system settings
-                    // while the app was in the background.
-                    vm.refreshLocationPermission()
+                    // The grant may have changed while the screen was covered
+                    // (system dialog or app settings): re-read it and, when a
+                    // search was waiting on exactly that grant, start it now.
+                    vm.onPermissionPossiblyChanged(locale.toLanguageTag())
                     mapHolder.mapView?.onResume()
                 }
                 Lifecycle.Event.ON_PAUSE -> mapHolder.mapView?.onPause()
@@ -189,17 +193,23 @@ fun MosquesScreen() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             TextButton(
-                onClick = { vm.search(locale.toLanguageTag()) },
-                enabled = (state.location != null || state.hasLocationPermission) && !inFlight,
+                onClick = {
+                    // The grant is read at the moment of the tap: with it, a
+                    // current-location search; without it, the in-context
+                    // permission request — never a silent saved-location
+                    // search (2026-10-24 field-report fix).
+                    if (vm.locationPermissionGranted()) vm.search(locale.toLanguageTag())
+                    else showLocationRationale = true
+                },
+                enabled = !inFlight,
             ) {
                 Text(stringResource(R.string.search_nearby_mosques))
             }
         }
 
-        // Which area the search revolves around — always visible, plus a
-        // one-tap path to the device's current location when the permission
-        // is missing (searching the saved location is the silent fallback
-        // otherwise, which is how "same old results" felt like a bug).
+        // Which area the search revolves around — always visible, so a
+        // saved-location search is recognized as such (the saved location
+        // is only ever searched as an explicit on-screen choice).
         Row(
             Modifier
                 .fillMaxWidth()
@@ -230,26 +240,13 @@ fun MosquesScreen() {
             } else {
                 Spacer(Modifier.weight(1f))
             }
-            if (!state.hasLocationPermission) {
-                TextButton(onClick = {
-                    if (vm.uiState.value.hasLocationPermission) {
-                        vm.search(languageTag)
-                    } else {
-                        showLocationRationale = true
-                    }
-                }) {
-                    Icon(
-                        Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.mosques_use_current_location))
-                }
-            }
         }
 
-        // Map — bounded box, gestures stay inside it
+        // Map — bounded box, gestures stay inside it. The zoom fit needs the
+        // view's REAL pixel size; flip [mapMeasured] once laid out so the
+        // sync effect below re-runs with true dimensions instead of the
+        // pre-measurement fallback estimate.
+        var mapMeasured by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxWidth().height(mapHeight.dp)) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
@@ -262,7 +259,12 @@ fun MosquesScreen() {
                         setBuiltInZoomControls(false)
                         minZoomLevel = MosquesViewModel.MIN_ZOOM
                         maxZoomLevel = MosquesViewModel.MAX_ZOOM
-                    }.also { mapHolder.mapView = it }
+                    }.also { mv ->
+                        mapHolder.mapView = mv
+                        mv.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+                            if (v.width > 0 && v.height > 0 && !mapMeasured) mapMeasured = true
+                        }
+                    }
                 },
                 onRelease = { it.onDetach() },
             )
@@ -276,11 +278,12 @@ fun MosquesScreen() {
             )
         }
 
-        // Map sync — keyed effects run ONLY when the center, the radius or
-        // the result set actually changes. A plain recomposition (theme,
-        // language, unrelated state) never re-centers the map again, so the
-        // user's pan and zoom survive until they mean something new.
-        LaunchedEffect(mapCenter, state.radiusKm, readyItems) {
+        // Map sync — keyed effects run ONLY when the center, the radius, the
+        // result set or the first real measurement actually changes. A plain
+        // recomposition (theme, language, unrelated state) never re-centers
+        // the map again, so the user's pan and zoom survive until they mean
+        // something new.
+        LaunchedEffect(mapCenter, state.radiusKm, readyItems, mapMeasured) {
             val map = mapHolder.mapView ?: return@LaunchedEffect
             val center = mapCenter ?: return@LaunchedEffect
             val minDimPx = if (map.width > 0 && map.height > 0) {
@@ -301,12 +304,51 @@ fun MosquesScreen() {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when (val search = state.searchState) {
                 MosquesViewModel.SearchState.Idle -> {
-                    when {
-                        state.location == null && !state.hasLocationPermission ->
-                            InfoText(stringResource(R.string.location_not_set))
-                        !state.hasLocationPermission ->
-                            InfoText(stringResource(R.string.mosques_permission_hint))
-                        else -> InfoText(stringResource(R.string.mosques_need_internet))
+                    if (state.hasLocationPermission) {
+                        InfoText(stringResource(R.string.mosques_need_internet))
+                    } else {
+                        InfoText(stringResource(R.string.mosques_permission_hint))
+                    }
+                }
+                MosquesViewModel.SearchState.PermissionRequired -> {
+                    // Location access is missing: explain, offer the in-context
+                    // grant path, the app-settings way out of a permanent
+                    // denial, and the saved location ONLY as an explicit choice.
+                    Column(
+                        Modifier.fillMaxSize().padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            stringResource(R.string.mosques_permission_needed),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                        TextButton(onClick = { showLocationRationale = true }) {
+                            Icon(
+                                Icons.Filled.LocationOn,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(stringResource(R.string.mosques_allow_location))
+                        }
+                        TextButton(onClick = {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(
+                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        Uri.fromParts("package", context.packageName, null),
+                                    ),
+                                )
+                            }
+                        }) { Text(stringResource(R.string.mosques_open_settings)) }
+                        if (state.location != null) {
+                            TextButton(onClick = { vm.searchAroundSaved(locale.toLanguageTag()) }) {
+                                Text(stringResource(R.string.mosques_fallback_saved))
+                            }
+                        }
                     }
                 }
                 MosquesViewModel.SearchState.Locating -> {

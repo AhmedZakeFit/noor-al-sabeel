@@ -17,19 +17,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Regression tests for the v1.0.5 on-device test report:
+ * Regression tests for the on-device test reports:
  *
- *  1. "Moving to another geographic area and searching again returns the
- *     same old results" — the search button used the *saved* app location
- *     only, so a fresh search after travelling queried the old area.
- *     [resolveSearchPlan] now routes to a live device fix whenever the
- *     permission allows it, and the request-level test pins that a new
- *     center actually reaches the outgoing queries.
+ *  v1.0.5 report — "map covers the UI / results list doesn't fit / same old
+ *  results after travelling": adaptive layout bounds, zoom fitting and
+ *  request-level evidence that a new center reaches the outgoing queries.
  *
- *  2. "The map moves and zooms uncontrollably / the results list does not
- *     fit the phone screen" — the layout used a fixed 280 dp map plus a
- *     fillMaxSize list that overran the screen. [mapHeightDp] and
- *     [zoomForRadius] pin the adaptive bounds the new layout relies on.
+ *  2026-10-24 report — "the app never asks for the location permission":
+ *  the search button used to silently search the *saved* app location when
+ *  the permission was missing (SEARCH_SAVED), so no permission dialog ever
+ *  appeared and travelling never changed the queried area. The plan is now
+ *  binary — a live fix with the grant, otherwise PERMISSION_REQUIRED with
+ *  the in-context grant flow — and the saved location is reachable ONLY as
+ *  the explicit on-screen choice (searchAroundSaved).
  */
 class MosquesLocationAndLayoutTest {
 
@@ -44,18 +44,15 @@ class MosquesLocationAndLayoutTest {
     fun `search plan prefers the live device location whenever permission is granted`() {
         // With the permission, the saved location is irrelevant: every search
         // must re-fix the device position, so travelling yields fresh areas.
-        assertEquals(SearchPlan.LOCATE_AND_SEARCH, MosquesViewModel.resolveSearchPlan(true, true))
-        assertEquals(SearchPlan.LOCATE_AND_SEARCH, MosquesViewModel.resolveSearchPlan(true, false))
+        assertEquals(SearchPlan.LOCATE_AND_SEARCH, MosquesViewModel.resolveSearchPlan(true))
     }
 
     @Test
-    fun `search plan falls back to the saved location without permission`() {
-        assertEquals(SearchPlan.SEARCH_SAVED, MosquesViewModel.resolveSearchPlan(false, true))
-    }
-
-    @Test
-    fun `search plan is disabled without permission and saved location`() {
-        assertEquals(SearchPlan.DISABLED, MosquesViewModel.resolveSearchPlan(false, false))
+    fun `search plan asks for permission instead of silently searching the saved location`() {
+        // 2026-10-24 fix: without the grant the button must surface the
+        // in-context permission request — never a silent saved-location
+        // search (the old SEARCH_SAVED plan is gone by design).
+        assertEquals(SearchPlan.PERMISSION_REQUIRED, MosquesViewModel.resolveSearchPlan(false))
     }
 
     @Test

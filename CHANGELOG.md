@@ -8,6 +8,20 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 
 ### Fixed
 
+- **Mosques search never asks for the location permission (the 2026-10-24 phone report).**
+  The main "find nearby mosques" button silently searched the *saved* app location whenever
+  the location permission was missing — so no permission dialog ever appeared, and travelling
+  to another area kept returning the old area's results (the diagnostic audit proved the
+  outgoing Nominatim viewbox / Photon bbox always embedded the saved city). The button is now
+  wired to the runtime permission request: a short in-context rationale, the system dialog,
+  and — on grant — the current-location search the user asked for. A denial keeps clear
+  guidance on screen with a way to open the app settings (for permanent denials), and the
+  saved location is reachable **only** as an explicit on-screen choice, never a silent
+  fallback. Returning to the screen with a newly granted permission (e.g. after granting it
+  in system settings) starts the waiting search automatically.
+- **First map zoom accuracy.** The zoom-fitting used a guessed viewport size until the map
+  view reported its real pixel dimensions, so the very first frame could land at the wrong
+  zoom. The map sync now re-runs once after the view is actually measured.
 - **Mosques screen after travelling (the "same old results" report).** The search button
   always queried the *saved* app location, so moving to another area and searching again
   returned the old area's mosques. It now searches around the device's **current

@@ -54,6 +54,12 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
         data class Error(val reason: OverpassClient.Reason) : SearchState
         /** Permission is granted but no location fix could be obtained. */
         data object LocationFailed : SearchState
+        /**
+         * The location permission is missing. The UI shows the in-context
+         * grant path (rationale, system dialog, app-settings link) and an
+         * *explicit* saved-location choice — never a silent fallback.
+         */
+        data object PermissionRequired : SearchState
     }
 
     data class UiState(
@@ -103,19 +109,50 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /**
-     * Entry point for the search button (and the retry button): search around
-     * the device's *current* location when the permission is granted — so
+     * Entry point for the search button (and the retry buttons): search
+     * around the device's *current* location — a fresh fix per search, so
      * travelling to another area and searching again returns that area's
-     * mosques — otherwise around the saved app location.
+     * mosques. When the permission is missing this does NOT silently fall
+     * back to the saved location (the v1.0.5 field report); it surfaces
+     * [SearchState.PermissionRequired] so the UI can run the in-context
+     * grant flow, and the saved location stays reachable only as the
+     * explicit on-screen choice ([searchAroundSaved]).
      *
      * @param languageTag current UI language, so the independent Nominatim
      * source can localize mosque names where OSM has translations.
      */
     fun search(languageTag: String) {
-        when (resolveSearchPlan(hasLocationPermission.value, uiState.value.location != null)) {
+        when (resolveSearchPlan(container.locationProvider.hasPermission())) {
             SearchPlan.LOCATE_AND_SEARCH -> locateAndSearch(languageTag)
-            SearchPlan.SEARCH_SAVED -> searchAroundSaved(languageTag)
-            SearchPlan.DISABLED -> Unit
+            SearchPlan.PERMISSION_REQUIRED -> searchState.value = SearchState.PermissionRequired
+        }
+    }
+
+    /** Grant status read at the moment of use — the UI asks for the permission first when missing. */
+    fun locationPermissionGranted(): Boolean = container.locationProvider.hasPermission()
+
+    /**
+     * The system permission dialog came back denied: keep the guidance on
+     * screen (grant path + app-settings link), but never destroy results
+     * the user is already looking at.
+     */
+    fun markPermissionDenied() {
+        val s = searchState.value
+        if (s is SearchState.Idle || s is SearchState.PermissionRequired) {
+            searchState.value = SearchState.PermissionRequired
+        }
+    }
+
+    /**
+     * Re-reads the grant after the screen resumes (the user may just have
+     * granted access in the system dialog or in the app settings). When a
+     * search was waiting on exactly that grant, it starts now — the user's
+     * pending intent is honored without another tap.
+     */
+    fun onPermissionPossiblyChanged(languageTag: String) {
+        refreshLocationPermission()
+        if (hasLocationPermission.value && searchState.value is SearchState.PermissionRequired) {
+            search(languageTag)
         }
     }
 
@@ -203,7 +240,7 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /** What tapping the search button does, given the current inputs. */
-    enum class SearchPlan { LOCATE_AND_SEARCH, SEARCH_SAVED, DISABLED }
+    enum class SearchPlan { LOCATE_AND_SEARCH, PERMISSION_REQUIRED }
 
     companion object {
         /** Search-radius choices, a clean 1..10 km ladder. */
@@ -221,14 +258,12 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
 
         /**
          * Pure decision for the search button (unit-tested): a live device
-         * fix whenever the permission allows it, else the saved location,
-         * else nothing to search around at all.
+         * fix whenever the permission allows it; otherwise the UI must run
+         * the in-context permission request — the saved location is NEVER
+         * searched silently (2026-10-24 field-report fix).
          */
-        internal fun resolveSearchPlan(hasPermission: Boolean, hasSavedLocation: Boolean): SearchPlan = when {
-            hasPermission -> SearchPlan.LOCATE_AND_SEARCH
-            hasSavedLocation -> SearchPlan.SEARCH_SAVED
-            else -> SearchPlan.DISABLED
-        }
+        internal fun resolveSearchPlan(hasPermission: Boolean): SearchPlan =
+            if (hasPermission) SearchPlan.LOCATE_AND_SEARCH else SearchPlan.PERMISSION_REQUIRED
 
         /**
          * Center the map (and the pre-search label) on the saved app
