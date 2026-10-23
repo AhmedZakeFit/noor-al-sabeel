@@ -79,6 +79,15 @@
     <string name="osm_attribution">© مساهمو OpenStreetMap</string>
     <string name="mosque_unnamed">مسجد بلا اسم</string>
 
+    <!-- Mosques: search center and device location -->
+    <string name="mosques_center_current">حول موقعك الحالي</string>
+    <string name="mosques_center_saved">حول: %1$s</string>
+    <string name="mosques_use_current_location">استخدم موقعي الحالي</string>
+    <string name="mosques_locating">جارٍ تحديد موقعك…</string>
+    <string name="mosques_location_failed">تعذّر تحديد موقعك الحالي.</string>
+    <string name="mosques_fallback_saved">البحث حول الموقع المحفوظ</string>
+    <string name="mosques_permission_hint">يتم البحث حول موقعك المحفوظ. امنح إذن الموقع للبحث حول مكان وجودك فعليًا.</string>
+
     <!-- Settings: location -->
     <string name="section_location">الموقع</string>
     <string name="change_location">تغيير الموقع</string>

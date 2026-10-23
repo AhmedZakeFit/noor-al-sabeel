@@ -48,6 +48,16 @@
   honest empty answer, the overall 15 s deadline firing while everything stalls, the
   tier-1/mirror socket budgets beneath that deadline, failure-reason ranking
   (offline > timeout > busy), and the Overpass fallback parser.
+- **Mosque location + layout regression tests (`MosquesLocationAndLayoutTest`)** — pins
+  the fixes for the v1.0.5 on-device report: the search-plan decision (a live device
+  fix whenever the permission is granted, the saved location without it, disabled when
+  neither exists), the pre-search map fallback to the saved location (never claiming to
+  be "current"), a request-level proof that searching after moving queries the **new**
+  area (the old one is absent from the outgoing Nominatim viewbox and Photon bbox —
+  there is no result caching), the radius-fitted map zoom (monotonic in the radius,
+  clamped to the tile source's 3–19 range), the adaptive map height for small/landscape
+  screens (clamped 150–260 dp, monotonic, leaving a usable results area), and the
+  human-scale locate budget before the explicit LocationFailed fallback.
 - **Reminder countdown tests (`ReminderRulesTest`)** — the reminder spec targets the prayer
   time with a counting-down chronometer, stale reminders (target already passed) are never
   posted, notification IDs are distinct and stable, and prayers without scheduled alarms
@@ -178,6 +188,15 @@ in docs/PRAYER_TIMES.md.
   لا يؤخر السليم — في الاتجاهين، ويُلغى طلب الخاسر)، احتياطي Overpass عند فشل
   المصدرين، الإجابة الفارغة الصادقة، المهلة الإجمالية 15 ثانية مع تعطّل كل شيء،
   حدود المنافذ أدنى منها، وترتيب أسباب الفشل (الانقطاع ثم المهلة ثم الانشغال).
+- **انحدارات موقع البحث والتخطيط (`MosquesLocationAndLayoutTest`)** — تُثبّت إصلاحات
+  تقرير الاختبار الميداني لـ v1.0.5: قرار خطة البحث (إصلاح حيّ للجهاز متى مُنح الإذن،
+  والموقع المحفوظ بدونه، والتعطيل عند غيابهما)، احتياطي الخريطة قبل البحث نحو
+  الموقع المحفوظ (دون ادعاء أنه «حالي» أبدًا)، وإثبات على مستوى الطلبات بأن البحث
+  بعد الانتقال يستعلم **المنطقة الجديدة** (القديمة غائبة عن viewbox الخاص بـ
+  Nominatim وbbox الخاص بـ Photon — لا تخزين مؤقت للنتائج)، وتقريب الخريطة الموائم
+  للنطاق (رتيب مع النطاق ومحصور بين ٣–١٩)، وارتفاع الخريطة التكيّفي للشاشات
+  الصغيرة والأفقية (محصور ١٥٠–٢٦٠ dp ورتيب ويترك مساحة قابلة للاستخدام للنتائج)،
+  وميزانية تحديد الموقع البشرية قبل الاحتياطي الصريح لفشل الموقع.
 - **عدّ التذكير التنازلي (`ReminderRulesTest`)** — الهدف هو وقت الصلاة بعدّاد حيّ نازل،
   ولا يُنشر تذكير فات وقته أصلًا، والمعرّفات ثابتة ومتمايزة، وتُنظّف إشعارات الصلوات
   التي لم تعد مجدولة.

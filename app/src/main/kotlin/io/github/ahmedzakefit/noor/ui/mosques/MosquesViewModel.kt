@@ -14,9 +14,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.cos
+import kotlin.math.log2
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class MosquesViewModel(private val container: AppContainer) : ViewModel() {
 
@@ -27,32 +31,70 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
         val bearing: Double,
     )
 
+    /**
+     * The geographic point a search actually runs around. [isCurrentLocation]
+     * is true only for a live device fix; when the center mirrors the saved
+     * app location, [saved] carries it along so the UI can show its label.
+     */
+    data class SearchCenter(
+        val latitude: Double,
+        val longitude: Double,
+        val isCurrentLocation: Boolean,
+        val saved: AppLocation? = null,
+    )
+
     sealed interface SearchState {
         data object Idle : SearchState
+        /** Acquiring a fresh device-location fix (phase before the network search). */
+        data object Locating : SearchState
         data object Loading : SearchState
         data class Ready(val items: List<MosqueItem>) : SearchState
         data object Empty : SearchState
         /** [reason] drives the localized message; the UI offers a retry button. */
         data class Error(val reason: OverpassClient.Reason) : SearchState
+        /** Permission is granted but no location fix could be obtained. */
+        data object LocationFailed : SearchState
     }
 
     data class UiState(
         val location: AppLocation? = null,
+        /** What the last (or, via fallback, next) search revolves around. */
+        val activeCenter: SearchCenter? = null,
         val searchState: SearchState = SearchState.Idle,
         val radiusKm: Int = 3,
+        val hasLocationPermission: Boolean = false,
     )
 
     private val searchState = MutableStateFlow<SearchState>(SearchState.Idle)
     private val radiusKm = MutableStateFlow(3)
+    private val activeCenter = MutableStateFlow<SearchCenter?>(null)
+    private val hasLocationPermission = MutableStateFlow(false)
     private var searchJob: Job? = null
 
-    val uiState: StateFlow<UiState> = kotlinx.coroutines.flow.combine(
+    val uiState: StateFlow<UiState> = combine(
         container.settingsRepository.settings,
         searchState,
         radiusKm,
-    ) { settings, search, radius ->
-        UiState(location = settings.location, searchState = search, radiusKm = radius)
+        activeCenter,
+        hasLocationPermission,
+    ) { settings, search, radius, center, permission ->
+        UiState(
+            location = settings.location,
+            activeCenter = center,
+            searchState = search,
+            radiusKm = radius,
+            hasLocationPermission = permission,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
+
+    init {
+        refreshLocationPermission()
+    }
+
+    /** Re-reads the location-permission grant; call on resume and after any permission dialog. */
+    fun refreshLocationPermission() {
+        hasLocationPermission.value = container.locationProvider.hasPermission()
+    }
 
     val radiusOptions: List<Int> = RADIUS_OPTIONS_KM
 
@@ -61,57 +103,165 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /**
-     * Same entry point for a fresh search and for the retry button.
+     * Entry point for the search button (and the retry button): search around
+     * the device's *current* location when the permission is granted — so
+     * travelling to another area and searching again returns that area's
+     * mosques — otherwise around the saved app location.
+     *
      * @param languageTag current UI language, so the independent Nominatim
      * source can localize mosque names where OSM has translations.
      */
     fun search(languageTag: String) {
-        val location = uiState.value.location ?: return
-        if (searchState.value is SearchState.Loading) return
+        when (resolveSearchPlan(hasLocationPermission.value, uiState.value.location != null)) {
+            SearchPlan.LOCATE_AND_SEARCH -> locateAndSearch(languageTag)
+            SearchPlan.SEARCH_SAVED -> searchAroundSaved(languageTag)
+            SearchPlan.DISABLED -> Unit
+        }
+    }
+
+    /**
+     * Always searches around the saved app location — the explicit fallback
+     * offered when a GPS fix cannot be obtained.
+     */
+    fun searchAroundSaved(languageTag: String) {
+        val saved = uiState.value.location ?: return
+        if (searchState.value is SearchState.Locating || searchState.value is SearchState.Loading) return
+        val center = SearchCenter(
+            saved.latitude, saved.longitude, isCurrentLocation = false, saved = saved,
+        )
+        activeCenter.value = center
+        runSearch(center, languageTag)
+    }
+
+    private fun locateAndSearch(languageTag: String) {
+        if (searchState.value is SearchState.Locating || searchState.value is SearchState.Loading) return
+        searchState.value = SearchState.Locating
+        searchJob = viewModelScope.launch {
+            try {
+                val fix = container.locationProvider.getCurrentFix(LOCATE_TIMEOUT_MS)
+                if (fix == null) {
+                    searchState.value = SearchState.LocationFailed
+                    return@launch
+                }
+                val center = SearchCenter(fix.latitude, fix.longitude, isCurrentLocation = true)
+                activeCenter.value = center
+                performSearch(center, languageTag)
+            } finally {
+                // Covers cancellation too: leaving the screen aborts the fix
+                // or the request and must never strand the UI on a spinner.
+                if (searchState.value is SearchState.Locating || searchState.value is SearchState.Loading) {
+                    searchState.value = SearchState.Idle
+                }
+            }
+        }
+    }
+
+    private fun runSearch(center: SearchCenter, languageTag: String) {
         searchState.value = SearchState.Loading
         searchJob = viewModelScope.launch {
             try {
-                val result = container.mosqueSearchClient.findNearbyMosques(
-                    location.latitude, location.longitude, radiusKm.value * 1000, languageTag,
-                )
-                searchState.value = when (result) {
-                    is OverpassClient.Result.Ok -> {
-                        val items = result.mosques.map { m ->
-                            MosqueItem(
-                                mosque = m,
-                                distanceKm = QiblaMath.haversineKm(
-                                    location.latitude, location.longitude, m.latitude, m.longitude,
-                                ),
-                                bearing = QiblaMath.bearingBetween(
-                                    location.latitude, location.longitude, m.latitude, m.longitude,
-                                ),
-                            )
-                        }.sortedBy { it.distanceKm }
-                        if (items.isEmpty()) SearchState.Empty else SearchState.Ready(items)
-                    }
-                    is OverpassClient.Result.Error -> SearchState.Error(result.reason)
-                }
+                performSearch(center, languageTag)
             } finally {
-                // Covers cancellation too: leaving the screen aborts the request
-                // and must never strand the UI on a spinner with no way out.
                 if (searchState.value is SearchState.Loading) searchState.value = SearchState.Idle
             }
         }
     }
 
+    private suspend fun performSearch(center: SearchCenter, languageTag: String) {
+        searchState.value = SearchState.Loading
+        val result = container.mosqueSearchClient.findNearbyMosques(
+            center.latitude, center.longitude, radiusKm.value * 1000, languageTag,
+        )
+        searchState.value = when (result) {
+            is OverpassClient.Result.Ok -> {
+                val items = result.mosques.map { m ->
+                    MosqueItem(
+                        mosque = m,
+                        distanceKm = QiblaMath.haversineKm(
+                            center.latitude, center.longitude, m.latitude, m.longitude,
+                        ),
+                        bearing = QiblaMath.bearingBetween(
+                            center.latitude, center.longitude, m.latitude, m.longitude,
+                        ),
+                    )
+                }.sortedBy { it.distanceKm }
+                if (items.isEmpty()) SearchState.Empty else SearchState.Ready(items)
+            }
+            is OverpassClient.Result.Error -> SearchState.Error(result.reason)
+        }
+    }
+
     /**
-     * Aborts an in-flight search (socket included) and resets the loading
-     * state. Called when the user leaves the mosques screen.
+     * Aborts an in-flight fix or search (socket included) and resets the
+     * transient state. Called when the user leaves the mosques screen.
      */
     fun cancelSearch() {
         searchJob?.cancel()
         searchJob = null
-        if (searchState.value is SearchState.Loading) searchState.value = SearchState.Idle
+        val s = searchState.value
+        if (s is SearchState.Locating || s is SearchState.Loading) searchState.value = SearchState.Idle
     }
+
+    /** What tapping the search button does, given the current inputs. */
+    enum class SearchPlan { LOCATE_AND_SEARCH, SEARCH_SAVED, DISABLED }
 
     companion object {
         /** Search-radius choices, a clean 1..10 km ladder. */
         val RADIUS_OPTIONS_KM: List<Int> = (1..10).toList()
+
+        /** Budget for obtaining a device-location fix before reporting failure. */
+        internal const val LOCATE_TIMEOUT_MS = 12_000L
+
+        /** Web-Mercator ground resolution at the equator for 256 px tiles, meters/px at zoom 0. */
+        private const val EQUATOR_M_PER_PX_AT_Z0 = 156_543.03392
+
+        /** MAPNIK's usable zoom range; also bounds the pinch gesture. */
+        internal const val MIN_ZOOM = 3.0
+        internal const val MAX_ZOOM = 19.0
+
+        /**
+         * Pure decision for the search button (unit-tested): a live device
+         * fix whenever the permission allows it, else the saved location,
+         * else nothing to search around at all.
+         */
+        internal fun resolveSearchPlan(hasPermission: Boolean, hasSavedLocation: Boolean): SearchPlan = when {
+            hasPermission -> SearchPlan.LOCATE_AND_SEARCH
+            hasSavedLocation -> SearchPlan.SEARCH_SAVED
+            else -> SearchPlan.DISABLED
+        }
+
+        /**
+         * Center the map (and the pre-search label) on the saved app
+         * location until an actual search has run. Pure for tests.
+         */
+        internal fun fallbackCenter(saved: AppLocation?): SearchCenter? =
+            saved?.let { SearchCenter(it.latitude, it.longitude, isCurrentLocation = false, saved = it) }
+
+        /**
+         * Zoom level that fits [radiusMeters] (plus a small margin) across
+         * the map's smaller dimension. Pure for tests: monotonic in the
+         * radius and clamped to the tile source's range.
+         */
+        internal fun zoomForRadius(radiusMeters: Int, latitude: Double, viewportMinPx: Float): Double {
+            val px = max(viewportMinPx, 1f)
+            val cosLat = max(cos(Math.toRadians(latitude)), 0.01)
+            val affordableMetersPerPx = (2.3 * radiusMeters) / px
+            val zoom = log2(EQUATOR_M_PER_PX_AT_Z0 * cosLat / affordableMetersPerPx)
+            return zoom.coerceIn(MIN_ZOOM, MAX_ZOOM)
+        }
+
+        /**
+         * Map height as a fraction of the screen height, floored/ceilinged so
+         * the map stays meaningful on small phones and never starves the
+         * results list. Pure for tests.
+         */
+        internal fun mapHeightDp(screenHeightDp: Int): Int =
+            (screenHeightDp * MAP_HEIGHT_FRACTION).roundToInt()
+                .coerceIn(MAP_HEIGHT_MIN_DP, MAP_HEIGHT_MAX_DP)
+
+        private const val MAP_HEIGHT_FRACTION = 0.32f
+        internal const val MAP_HEIGHT_MIN_DP = 150
+        internal const val MAP_HEIGHT_MAX_DP = 260
 
         /**
          * Builds one radius-chip label from the localized distance pattern

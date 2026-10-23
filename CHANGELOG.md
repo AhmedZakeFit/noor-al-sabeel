@@ -4,6 +4,37 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Mosques screen after travelling (the "same old results" report).** The search button
+  always queried the *saved* app location, so moving to another area and searching again
+  returned the old area's mosques. It now searches around the device's **current
+  location** whenever the location permission is granted — a fresh fix per search, never
+  a cached result (no result caching exists or was introduced; every search goes to the
+  network with the center embedded in the request). Without the permission it searches
+  the saved location and says so on screen, with a one-tap "use my current location"
+  path that asks for the permission in context. A failed fix, a denied permission and
+  an empty radius each get a clear message with explicit retry / fallback actions, and
+  a new search-center line always shows which area is being searched ("around your
+  current location" / "around: <place>").
+- **Mosques screen layout on phones (the "map covers the UI" report).** The results list
+  used `fillMaxSize`, which takes the whole screen height instead of the remaining
+  space, so it ran under the bottom navigation bar and off-screen — worst on small and
+  landscape screens. The list now fills exactly the remaining space (`weight`) and the
+  map shrinks to a bounded fraction of the screen height (150–260 dp), so map pan/pinch
+  gestures stay inside the map's own bounded box and the list scrolls within its own
+  area.
+- **Uncontrolled map movement.** The map was re-centered to the saved location and its
+  markers rebuilt on *every* recomposition (radius chip taps, search start/finish,
+  settings emissions), which kept yanking the user's pan/zoom away. Re-centering,
+  zoom-fitting and marker sync now run only when the search center, the radius or the
+  result set actually changes; the zoom is fitted to the chosen radius and bounded to
+  MAPNIK's usable range (3–19), built-in zoom buttons are disabled (pinch only), and the
+  `MapView` is properly detached when leaving the tab (fixes accumulated leaked map
+  instances across tab switches).
+
 ## [1.0.5] — 2026-10-23
 
 ### Fixed

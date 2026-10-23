@@ -1,11 +1,15 @@
 package io.github.ahmedzakefit.noor.ui.mosques
 
+import android.Manifest
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,27 +26,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,12 +71,21 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.util.Locale
 
+private val LOCATION_PERMISSIONS = arrayOf(
+    Manifest.permission.ACCESS_COARSE_LOCATION,
+    Manifest.permission.ACCESS_FINE_LOCATION,
+)
+
+/** Holds the MapView across recompositions without triggering them. */
+private class MapHolder { var mapView: MapView? = null }
+
 @Composable
 fun MosquesScreen() {
     val vm: MosquesViewModel = viewModel(factory = MosquesViewModel.Factory)
     val state by vm.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val density = LocalDensity.current.density
     val arabicDigits = Formatters.useArabicDigits(
         io.github.ahmedzakefit.noor.data.DigitSetting.FOLLOW_LOCALE, locale,
     )
@@ -79,12 +96,57 @@ fun MosquesScreen() {
         BitmapDrawable(context.resources, circleBitmap(0xFF2E7D32.toInt(), 0xFFFFFFFF.toInt()))
     }
 
-    // Leaving the screen aborts an in-flight search — the socket is
-    // disconnected, the spinner never strands, and returning later starts
-    // from a clean Idle state (completed results are kept).
+    // Location permission flow (same in-context pattern as the settings
+    // location picker): a short rationale first, then the system dialog,
+    // then the search the user actually asked for.
+    var showLocationRationale by remember { mutableStateOf(false) }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        vm.refreshLocationPermission()
+        if (grants.values.any { it }) vm.search(locale.toLanguageTag())
+    }
+
+    // Leaving the screen aborts an in-flight fix or search — the socket is
+    // disconnected, no spinner is ever stranded, and the map view is detached.
     DisposableEffect(Unit) {
         onDispose { vm.cancelSearch() }
     }
+
+    val mapHolder = remember { MapHolder() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    // Permission may have been granted from system settings
+                    // while the app was in the background.
+                    vm.refreshLocationPermission()
+                    mapHolder.mapView?.onResume()
+                }
+                Lifecycle.Event.ON_PAUSE -> mapHolder.mapView?.onPause()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            // The MapView itself is detached by AndroidView's onRelease —
+            // detaching here too would run MapView.onDetach() twice.
+            mapHolder.mapView = null
+        }
+    }
+
+    // Adaptive map height: a bounded fraction of the screen, so small phones
+    // and landscape keep room for the results list below.
+    val mapHeight = MosquesViewModel.mapHeightDp(LocalConfiguration.current.screenHeightDp)
+
+    // What the map and label revolve around: the last real search center,
+    // falling back to the saved app location before any search.
+    val mapCenter = state.activeCenter ?: MosquesViewModel.fallbackCenter(state.location)
+    val readyItems = (state.searchState as? MosquesViewModel.SearchState.Ready)?.items
+    val inFlight = state.searchState is MosquesViewModel.SearchState.Locating ||
+        state.searchState is MosquesViewModel.SearchState.Loading
 
     Column(
         Modifier
@@ -126,45 +188,83 @@ fun MosquesScreen() {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = { vm.search(locale.toLanguageTag()) }, enabled = state.location != null) {
+            TextButton(
+                onClick = { vm.search(locale.toLanguageTag()) },
+                enabled = (state.location != null || state.hasLocationPermission) && !inFlight,
+            ) {
                 Text(stringResource(R.string.search_nearby_mosques))
             }
         }
 
-        // Map
-        Box(Modifier.fillMaxWidth().height(280.dp)) {
-            val mapCenter = state.location?.let { GeoPoint(it.latitude, it.longitude) }
+        // Which area the search revolves around — always visible, plus a
+        // one-tap path to the device's current location when the permission
+        // is missing (searching the saved location is the silent fallback
+        // otherwise, which is how "same old results" felt like a bug).
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val languageTag = locale.toLanguageTag()
+            val centerLabel = when {
+                mapCenter != null && mapCenter.isCurrentLocation ->
+                    stringResource(R.string.mosques_center_current)
+                mapCenter?.saved != null ->
+                    stringResource(
+                        R.string.mosques_center_saved,
+                        mapCenter.saved!!.displayLabel(languageTag),
+                    )
+                state.hasLocationPermission ->
+                    stringResource(R.string.mosques_center_current)
+                else -> null
+            }
+            if (centerLabel != null) {
+                Text(
+                    centerLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            if (!state.hasLocationPermission) {
+                TextButton(onClick = {
+                    if (vm.uiState.value.hasLocationPermission) {
+                        vm.search(languageTag)
+                    } else {
+                        showLocationRationale = true
+                    }
+                }) {
+                    Icon(
+                        Icons.Filled.LocationOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.mosques_use_current_location))
+                }
+            }
+        }
+
+        // Map — bounded box, gestures stay inside it
+        Box(Modifier.fillMaxWidth().height(mapHeight.dp)) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     MapView(ctx).apply {
                         setTileSource(TileSourceFactory.MAPNIK)
+                        // Pan/pinch inside the map only; no built-in zoom
+                        // buttons overlapping the attribution or the tiles.
                         setMultiTouchControls(true)
-                        controller.setZoom(14.5)
-                    }
+                        setBuiltInZoomControls(false)
+                        minZoomLevel = MosquesViewModel.MIN_ZOOM
+                        maxZoomLevel = MosquesViewModel.MAX_ZOOM
+                    }.also { mapHolder.mapView = it }
                 },
-                update = { map ->
-                    if (mapCenter != null) {
-                        map.controller.setCenter(mapCenter)
-                        map.overlays.removeAll { it is Marker }
-                        val user = Marker(map)
-                        user.position = mapCenter
-                        user.icon = userMarkerIcon
-                        user.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                        map.overlays.add(user)
-                        val search = state.searchState
-                        if (search is MosquesViewModel.SearchState.Ready) {
-                            for (item in search.items) {
-                                val m = Marker(map)
-                                m.position = GeoPoint(item.mosque.latitude, item.mosque.longitude)
-                                m.icon = mosqueMarkerIcon
-                                m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                                map.overlays.add(m)
-                            }
-                        }
-                        map.invalidate()
-                    }
-                },
+                onRelease = { it.onDetach() },
             )
             Text(
                 stringResource(R.string.osm_attribution),
@@ -176,57 +276,176 @@ fun MosquesScreen() {
             )
         }
 
-        // Results
-        when (val search = state.searchState) {
-            MosquesViewModel.SearchState.Idle -> {
-                if (state.location == null) {
-                    InfoText(stringResource(R.string.location_not_set))
-                } else {
-                    InfoText(stringResource(R.string.mosques_need_internet))
-                }
+        // Map sync — keyed effects run ONLY when the center, the radius or
+        // the result set actually changes. A plain recomposition (theme,
+        // language, unrelated state) never re-centers the map again, so the
+        // user's pan and zoom survive until they mean something new.
+        LaunchedEffect(mapCenter, state.radiusKm, readyItems) {
+            val map = mapHolder.mapView ?: return@LaunchedEffect
+            val center = mapCenter ?: return@LaunchedEffect
+            val minDimPx = if (map.width > 0 && map.height > 0) {
+                minOf(map.width, map.height).toFloat()
+            } else {
+                360f * density
             }
-            MosquesViewModel.SearchState.Loading -> {
-                Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+            map.controller.setCenter(GeoPoint(center.latitude, center.longitude))
+            map.controller.setZoom(
+                MosquesViewModel.zoomForRadius(state.radiusKm * 1000, center.latitude, minDimPx),
+            )
+            syncMarkers(map, center, readyItems, userMarkerIcon, mosqueMarkerIcon)
+            map.invalidate()
+        }
+
+        // Results — exactly the remaining space, so the list always fits the
+        // screen and scrolls within its own bounded area.
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            when (val search = state.searchState) {
+                MosquesViewModel.SearchState.Idle -> {
+                    when {
+                        state.location == null && !state.hasLocationPermission ->
+                            InfoText(stringResource(R.string.location_not_set))
+                        !state.hasLocationPermission ->
+                            InfoText(stringResource(R.string.mosques_permission_hint))
+                        else -> InfoText(stringResource(R.string.mosques_need_internet))
+                    }
                 }
-            }
-            MosquesViewModel.SearchState.Empty -> InfoText(stringResource(R.string.no_mosques_found))
-            is MosquesViewModel.SearchState.Error -> {
-                // Explain what actually went wrong and offer an explicit retry
-                // instead of failing silently after the loading spinner.
-                Column(
-                    Modifier.fillMaxWidth().padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        reasonMessage(search.reason),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                    TextButton(onClick = { vm.search(locale.toLanguageTag()) }) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
+                MosquesViewModel.SearchState.Locating -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                stringResource(R.string.mosques_locating),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+                MosquesViewModel.SearchState.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                MosquesViewModel.SearchState.Empty -> InfoText(stringResource(R.string.no_mosques_found))
+                MosquesViewModel.SearchState.LocationFailed -> {
+                    // GPS fix could not be obtained: say so and offer both a
+                    // retry and the explicit saved-location fallback.
+                    Column(
+                        Modifier.fillMaxSize().padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            stringResource(R.string.mosques_location_failed),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.retry))
+                        Row {
+                            TextButton(onClick = { vm.search(locale.toLanguageTag()) }) {
+                                Icon(
+                                    Icons.Filled.Refresh,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(stringResource(R.string.retry))
+                            }
+                            if (state.location != null) {
+                                TextButton(onClick = { vm.searchAroundSaved(locale.toLanguageTag()) }) {
+                                    Text(stringResource(R.string.mosques_fallback_saved))
+                                }
+                            }
+                        }
+                    }
+                }
+                is MosquesViewModel.SearchState.Error -> {
+                    // Explain what actually went wrong and offer an explicit retry
+                    // instead of failing silently after the loading spinner.
+                    Column(
+                        Modifier.fillMaxSize().padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            reasonMessage(search.reason),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                        TextButton(onClick = { vm.search(locale.toLanguageTag()) }) {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(stringResource(R.string.retry))
+                        }
+                    }
+                }
+                is MosquesViewModel.SearchState.Ready -> {
+                    Column(Modifier.fillMaxSize()) {
+                        Text(
+                            stringResource(R.string.mosques_results_count, search.items.size),
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                        LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+                            items(search.items, key = { it.mosque.id }) { item ->
+                                MosqueRow(item, locale, arabicDigits)
+                            }
+                        }
                     }
                 }
             }
-            is MosquesViewModel.SearchState.Ready -> {
-                Text(
-                    stringResource(R.string.mosques_results_count, search.items.size),
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-                LazyColumn(Modifier.fillMaxSize()) {
-                    items(search.items, key = { it.mosque.id }) { item ->
-                        MosqueRow(item, locale, arabicDigits)
-                    }
+        }
+    }
+
+    // Composed AFTER the screen so it layers on top: a short "why do you
+    // need this?" explanation shown before the system permission dialog.
+    if (showLocationRationale) {
+        AlertDialog(
+            onDismissRequest = { showLocationRationale = false },
+            title = { Text(stringResource(R.string.mosques_use_current_location)) },
+            text = { Text(stringResource(R.string.gps_permission_rationale)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLocationRationale = false
+                    locationPermissionLauncher.launch(LOCATION_PERMISSIONS)
+                }) { Text(stringResource(R.string.common_continue)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLocationRationale = false }) {
+                    Text(stringResource(R.string.common_cancel))
                 }
-            }
+            },
+        )
+    }
+}
+
+/** Idempotent marker sync: user pin + one marker per result. */
+private fun syncMarkers(
+    map: MapView,
+    center: MosquesViewModel.SearchCenter,
+    items: List<MosquesViewModel.MosqueItem>?,
+    userIcon: Drawable,
+    mosqueIcon: Drawable,
+) {
+    map.overlays.removeAll { it is Marker }
+    val user = Marker(map)
+    user.position = GeoPoint(center.latitude, center.longitude)
+    user.icon = userIcon
+    user.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+    map.overlays.add(user)
+    if (items != null) {
+        for (item in items) {
+            val m = Marker(map)
+            m.position = GeoPoint(item.mosque.latitude, item.mosque.longitude)
+            m.icon = mosqueIcon
+            m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+            map.overlays.add(m)
         }
     }
 }
