@@ -43,6 +43,8 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
   checksum before the landing page's release metadata is updated. A broken or half-published
   release turns the workflow red and never leaks into the page.
 
+[1.0.5]: https://github.com/AhmedZakeFit/noor-al-sabeel/releases/tag/v1.0.5
+
 ## [1.0.4] — 2026-10-23
 
 ### Fixed
@@ -85,6 +87,8 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 - The application ID stays `io.github.ahmedzakefit.noor` and the signing certificate is
   unchanged, so this update installs directly over v1.0.0–v1.0.3 with settings and data
   preserved.
+
+[1.0.4]: https://github.com/AhmedZakeFit/noor-al-sabeel/releases/tag/v1.0.4
 
 ## [1.0.3] — 2026-10-23
 

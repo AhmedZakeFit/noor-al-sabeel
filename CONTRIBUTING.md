@@ -29,6 +29,11 @@ guidelines keep it healthy.
 
 ## Areas that especially need help
 
+A starter task list lives in the issue tracker under the
+[`good first issue`](https://github.com/AhmedZakeFit/noor-al-sabeel/labels/good%20first%20issue) and
+[`help wanted`](https://github.com/AhmedZakeFit/noor-al-sabeel/labels/help%20wanted) labels —
+pick one and comment that you are taking it. Otherwise:
+
 - Translations beyond Arabic/English.
 - Verifying prayer-time conventions for specific countries (with sources).
 - Bug reports with device model and Android version — sensors and vendor battery policies
@@ -74,6 +79,11 @@ Be respectful. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues go 
 4. افتح طلب دمج يصف *ماذا* و*لماذا*، مع الإشارة إلى المشكلة إن وُجدت.
 
 ## مجالات تحتاج مساعدة خاصة
+
+قائمة مهام البدء موجودة في المتتبع تحت وسمي
+[`good first issue`](https://github.com/AhmedZakeFit/noor-al-sabeel/labels/good%20first%20issue) و
+[`help wanted`](https://github.com/AhmedZakeFit/noor-al-sabeel/labels/help%20wanted) — اختر
+واحدة وعلّق بأنك بدأت العمل عليها. بخلاف ذلك:
 
 - الترجمات إلى لغات غير العربية والإنجليزية.
 - التحقق من عُرف حساب المواقيت لبلدان محددة (مع المصادر).

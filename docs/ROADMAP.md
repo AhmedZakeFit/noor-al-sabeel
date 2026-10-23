@@ -7,9 +7,6 @@ the speed of its contributors.
 
 - **Home-screen widget** with the next prayer and countdown (Jetpack Glance once the
   dependency situation is settled).
-- **Adhan audio option** — requires a properly licensed recording (sampling-free,
-  redistribution-friendly). We will not ship audio with unclear rights; tracked as a
-  prerequisite task.
 - **F-Droid submission** — prepare metadata and a reproducible build; acceptance is up to
   the F-Droid maintainers and is *not* guaranteed.
 - **Mosque favourites** and last-search caching for offline reuse.
