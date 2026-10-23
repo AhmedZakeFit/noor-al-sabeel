@@ -466,6 +466,9 @@ private fun CalendarSection(settings: AppSettings, vm: SettingsViewModel) {
 @Composable
 private fun AboutSection() {
     val context = LocalContext.current
+    val updateVm: io.github.ahmedzakefit.noor.ui.update.UpdateViewModel =
+        viewModel(factory = io.github.ahmedzakefit.noor.ui.update.UpdateViewModel.Factory)
+    val updateState by updateVm.state.collectAsStateWithLifecycle()
     SectionCard(stringResource(R.string.section_about)) {
         val version = remember {
             runCatching {
@@ -479,24 +482,61 @@ private fun AboutSection() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
+
+        // Manual update check against GitHub Releases — always tells the user
+        // what happened (checking / up to date / failed), unlike the silent
+        // automatic check on app open.
+        TextButton(
+            onClick = { updateVm.manualCheck() },
+            enabled = !updateState.checking,
+        ) {
+            Text(
+                if (updateState.checking) stringResource(R.string.update_checking)
+                else stringResource(R.string.update_check)
+            )
+        }
+        when (updateState.manualMessage) {
+            io.github.ahmedzakefit.noor.ui.update.UpdateViewModel.ManualMessage.UP_TO_DATE -> {
+                Text(
+                    stringResource(R.string.update_up_to_date),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            io.github.ahmedzakefit.noor.ui.update.UpdateViewModel.ManualMessage.FAILED -> {
+                Text(
+                    stringResource(R.string.update_check_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            else -> Unit
+        }
+        Text(
+            stringResource(R.string.update_source_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+
         TextButton(onClick = {
             runCatching {
                 context.startActivity(
-                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AhmedZakeFit/noor")),
+                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AhmedZakeFit/noor-al-sabeel")),
                 )
             }
         }) { Text(stringResource(R.string.about_github)) }
         TextButton(onClick = {
             runCatching {
                 context.startActivity(
-                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AhmedZakeFit/noor/blob/main/PRIVACY.md")),
+                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/PRIVACY.md")),
                 )
             }
         }) { Text(stringResource(R.string.about_privacy)) }
         TextButton(onClick = {
             runCatching {
                 context.startActivity(
-                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AhmedZakeFit/noor/blob/main/docs/PRAYER_TIMES.md")),
+                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/docs/PRAYER_TIMES.md")),
                 )
             }
         }) { Text(stringResource(R.string.about_accuracy)) }

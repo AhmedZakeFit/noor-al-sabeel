@@ -23,9 +23,17 @@ No ads. No subscriptions. No accounts. No tracking.
 - **Mosque tuning** — shift any individual time by ±30 minutes to match your local mosque.
 - **Qibla compass** with magnetic declination correction and calibration guidance.
 - **Nearby mosques** on an OpenStreetMap map, with distance, direction and one-tap navigation
-  handoff to any installed navigation app.
-- **Customizable notifications** — per-prayer toggles, a pre-prayer reminder, sound and
-  vibration choices, exact alarms, and a test button.
+  handoff to any installed navigation app. Two independent search sources (Nominatim first,
+  Overpass mirrors as fallback), one overall time budget, and instant cancellation when you
+  leave the screen keep the search fast and reliable on mobile networks.
+- **Customizable notifications** — per-prayer toggles, a pre-prayer reminder with a **live
+  countdown** that hands over to the prayer alert (or the adhan) when the time arrives,
+  sound and vibration choices, exact alarms, and a test button.
+- **In-app update check** — the app quietly compares your version with the latest GitHub
+  release on open (manual re-check in Settings → About), shows the changelog, and can
+  download and verify the update (checksum + signature) before offering the standard
+  Android install prompt. Postponing an update silences it; nothing is installed without
+  your approval.
 - **Full adhan (audio prayer call)** — choose the complete adhan instead of a short sound;
   Fajr uses its own dawn adhan. Bundled and fully offline, plays on the alarm volume with
   the screen off, and can be stopped from the notification. See [NOTICE](NOTICE.md) for the
@@ -41,8 +49,10 @@ No ads. No subscriptions. No accounts. No tracking.
 ## Install
 
 Download the latest signed APK from
-[GitHub Releases](https://github.com/AhmedZakeFit/noor-al-sabeel/releases) and open it on your phone
-(allow "install from unknown sources" when asked). No Google Play account is needed.
+[GitHub Releases](https://github.com/AhmedZakeFit/noor-al-sabeel/releases) (or the
+[project page](https://ahmedzakefit.github.io/noor-al-sabeel/)) and open it on your phone
+(allow "install from unknown sources" when asked). No Google Play account is needed. Once
+installed, the app itself can notify you about and install future updates.
 
 > Submitting Noor Al-Sabeel to F-Droid is planned (see the [roadmap](docs/ROADMAP.md)). Acceptance is
 > not guaranteed and is up to the F-Droid maintainers.
@@ -51,7 +61,7 @@ Download the latest signed APK from
 
 Noor Al-Sabeel collects nothing. There are no ads, no analytics, no accounts and no trackers. All
 settings and locations stay on your device. The app only touches the network when you open the
-map, search for mosques, or use the optional online city search. See
+map, search for mosques, use the optional online city search, or check for updates. See
 [PRIVACY.md](PRIVACY.md) for the full policy.
 
 ## Accuracy & sources

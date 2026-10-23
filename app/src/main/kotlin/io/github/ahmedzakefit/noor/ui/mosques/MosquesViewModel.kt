@@ -10,6 +10,7 @@ import io.github.ahmedzakefit.noor.core.qibla.QiblaMath
 import io.github.ahmedzakefit.noor.data.AppLocation
 import io.github.ahmedzakefit.noor.data.OverpassClient
 import io.github.ahmedzakefit.noor.ui.common.Formatters
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +44,7 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
 
     private val searchState = MutableStateFlow<SearchState>(SearchState.Idle)
     private val radiusKm = MutableStateFlow(3)
+    private var searchJob: Job? = null
 
     val uiState: StateFlow<UiState> = kotlinx.coroutines.flow.combine(
         container.settingsRepository.settings,
@@ -58,33 +60,53 @@ class MosquesViewModel(private val container: AppContainer) : ViewModel() {
         radiusKm.value = km
     }
 
-    /** Same entry point for a fresh search and for the retry button. */
-    fun search() {
+    /**
+     * Same entry point for a fresh search and for the retry button.
+     * @param languageTag current UI language, so the independent Nominatim
+     * source can localize mosque names where OSM has translations.
+     */
+    fun search(languageTag: String) {
         val location = uiState.value.location ?: return
         if (searchState.value is SearchState.Loading) return
         searchState.value = SearchState.Loading
-        viewModelScope.launch {
-            val result = container.overpassClient.findMosques(
-                location.latitude, location.longitude, radiusKm.value * 1000,
-            )
-            searchState.value = when (result) {
-                is OverpassClient.Result.Ok -> {
-                    val items = result.mosques.map { m ->
-                        MosqueItem(
-                            mosque = m,
-                            distanceKm = QiblaMath.haversineKm(
-                                location.latitude, location.longitude, m.latitude, m.longitude,
-                            ),
-                            bearing = QiblaMath.bearingBetween(
-                                location.latitude, location.longitude, m.latitude, m.longitude,
-                            ),
-                        )
-                    }.sortedBy { it.distanceKm }
-                    if (items.isEmpty()) SearchState.Empty else SearchState.Ready(items)
+        searchJob = viewModelScope.launch {
+            try {
+                val result = container.mosqueSearchClient.findNearbyMosques(
+                    location.latitude, location.longitude, radiusKm.value * 1000, languageTag,
+                )
+                searchState.value = when (result) {
+                    is OverpassClient.Result.Ok -> {
+                        val items = result.mosques.map { m ->
+                            MosqueItem(
+                                mosque = m,
+                                distanceKm = QiblaMath.haversineKm(
+                                    location.latitude, location.longitude, m.latitude, m.longitude,
+                                ),
+                                bearing = QiblaMath.bearingBetween(
+                                    location.latitude, location.longitude, m.latitude, m.longitude,
+                                ),
+                            )
+                        }.sortedBy { it.distanceKm }
+                        if (items.isEmpty()) SearchState.Empty else SearchState.Ready(items)
+                    }
+                    is OverpassClient.Result.Error -> SearchState.Error(result.reason)
                 }
-                is OverpassClient.Result.Error -> SearchState.Error(result.reason)
+            } finally {
+                // Covers cancellation too: leaving the screen aborts the request
+                // and must never strand the UI on a spinner with no way out.
+                if (searchState.value is SearchState.Loading) searchState.value = SearchState.Idle
             }
         }
+    }
+
+    /**
+     * Aborts an in-flight search (socket included) and resets the loading
+     * state. Called when the user leaves the mosques screen.
+     */
+    fun cancelSearch() {
+        searchJob?.cancel()
+        searchJob = null
+        if (searchState.value is SearchState.Loading) searchState.value = SearchState.Idle
     }
 
     companion object {

@@ -58,6 +58,8 @@ import io.github.ahmedzakefit.noor.core.model.Prayer
 import io.github.ahmedzakefit.noor.data.AppSettings
 import io.github.ahmedzakefit.noor.data.CalculationMethodLabels
 import io.github.ahmedzakefit.noor.ui.common.Formatters
+import io.github.ahmedzakefit.noor.ui.update.UpdateBanner
+import io.github.ahmedzakefit.noor.ui.update.UpdateViewModel
 import java.time.LocalDate
 import java.util.Locale
 
@@ -107,6 +109,11 @@ fun HomeScreen(
     ) {
         Header(state, locale, arabicDigits)
         Spacer(Modifier.height(12.dp))
+
+        // Quiet update banner after the automatic check on app open
+        // (postponed versions never re-appear).
+        val updateVm: UpdateViewModel = viewModel(factory = UpdateViewModel.Factory)
+        UpdateBanner(updateVm)
 
         val location = state.settings.location
         if (location == null) {

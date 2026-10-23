@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -31,6 +32,8 @@ import io.github.ahmedzakefit.noor.ui.mosques.MosquesScreen
 import io.github.ahmedzakefit.noor.ui.qibla.QiblaScreen
 import io.github.ahmedzakefit.noor.ui.settings.SettingsScreen
 import io.github.ahmedzakefit.noor.ui.theme.NOORTheme
+import io.github.ahmedzakefit.noor.ui.update.UpdateFlowHost
+import io.github.ahmedzakefit.noor.ui.update.UpdateViewModel
 
 private data class BottomDestination(
     val route: String,
@@ -85,6 +88,10 @@ fun NoorApp(
                         )
                     }
                 }
+                // Activity-scoped update flow: quiet banner (Home) + shared
+                // details dialog on top of whichever tab is showing.
+                val updateVm: UpdateViewModel = viewModel(factory = UpdateViewModel.Factory)
+                UpdateFlowHost(updateVm)
             }
         }
     }

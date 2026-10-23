@@ -7,9 +7,12 @@ import io.github.ahmedzakefit.noor.core.cities.CityCatalog
 import io.github.ahmedzakefit.noor.core.calc.PrayerCalculator
 import io.github.ahmedzakefit.noor.data.AlarmScheduler
 import io.github.ahmedzakefit.noor.data.LocationProvider
+import io.github.ahmedzakefit.noor.data.MosqueSearchClient
 import io.github.ahmedzakefit.noor.data.NominatimClient
 import io.github.ahmedzakefit.noor.data.OverpassClient
 import io.github.ahmedzakefit.noor.data.SettingsRepository
+import io.github.ahmedzakefit.noor.data.Http
+import io.github.ahmedzakefit.noor.data.UpdateManager
 import io.github.ahmedzakefit.noor.notifications.NotificationChannels
 import java.io.File
 import java.io.InputStreamReader
@@ -24,6 +27,8 @@ class AppContainer(val appContext: Context) {
     val locationProvider: LocationProvider = LocationProvider(appContext)
     val nominatimClient: NominatimClient = NominatimClient()
     val overpassClient: OverpassClient = OverpassClient()
+    val mosqueSearchClient: MosqueSearchClient = MosqueSearchClient(overpassClient)
+    val updateManager: UpdateManager = UpdateManager(appContext, settingsRepository)
     val alarmScheduler: AlarmScheduler =
         AlarmScheduler(appContext, settingsRepository, prayerCalculator)
 
@@ -46,7 +51,7 @@ class NoorApplication : Application() {
 
         // OpenStreetMap tile usage policy: identify the app; keep cache app-private.
         org.osmdroid.config.Configuration.getInstance().apply {
-            userAgentValue = "NoorAlSabeel/1.0.3 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
+            userAgentValue = Http.USER_AGENT
             osmdroidBasePath = File(cacheDir, "osmdroid")
             osmdroidTileCache = File(cacheDir, "osmdroid/tiles")
         }

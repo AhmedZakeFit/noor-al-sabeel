@@ -4,6 +4,49 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] — 2026-10-23
+
+### Fixed
+
+- **Nearby-mosque search (again).** v1.0.3's mirror failover was not enough: on several mobile
+  networks *every* Overpass endpoint stalls or drops the connection, so the search still ground
+  through ~30 s of per-socket timeouts and then failed. The search now asks **Nominatim first** —
+  independent infrastructure, verified reachable from networks where all Overpass endpoints
+  answer nothing — and only falls back to the Overpass mirrors. One overall 20-second deadline
+  bounds the whole search no matter what the networks do, leaving the screen aborts the request
+  immediately (the socket is disconnected, the spinner never strands), and a failure still shows
+  an explainable message with a retry button. Names arrive localized and the Islamic-places
+  filter keeps non-Muslim places of worship out.
+- **Pre-prayer reminder countdown.** The reminder notification used to freeze on "10 minutes
+  left" and stay that way until dismissed. It now carries a **live countdown** (an
+  Android-system chronometer counting down to the prayer time itself — rendered by the OS, so
+  zero extra alarms and zero battery cost), and when the prayer time arrives it is replaced by
+  the normal prayer notification or the adhan. Reminders whose prayer time already passed are
+  never posted, and stale notifications for prayers whose alerts were switched off are cleaned
+  up when the schedule is rebuilt (including after reboot or clock/time-zone changes).
+
+### Added
+
+- **In-app update check (GitHub Releases).** On app open the app quietly compares the installed
+  version with the latest stable GitHub release (manual re-check available in
+  Settings → About). When an update exists it shows the version, a change summary and clear
+  actions: download (optional, with progress), postpone (that exact version is never nagged
+  about again), or close. The downloaded APK is verified before anything is offered for
+  installation: SHA-256 against the published checksum asset, plus package name, versionCode
+  and signing certificate compared with the installed app. Installation uses the standard
+  Android prompt and always requires the user's approval — there is no silent path. Update
+  failures (offline, timeout) never disturb prayer or adhan functions. New permission:
+  `REQUEST_INSTALL_PACKAGES` (needed only for the user-approved install flow).
+- **Project landing page** (Arabic + English, responsive, no trackers, no external requests):
+  <https://ahmedzakefit.github.io/noor-al-sabeel/> — with a download button that always points
+  at `/releases/latest`, the privacy policy, usage instructions and the source repository.
+
+### Compatibility
+
+- The application ID stays `io.github.ahmedzakefit.noor` and the signing certificate is
+  unchanged, so this update installs directly over v1.0.0–v1.0.3 with settings and data
+  preserved.
+
 ## [1.0.3] — 2026-10-23
 
 ### Fixed

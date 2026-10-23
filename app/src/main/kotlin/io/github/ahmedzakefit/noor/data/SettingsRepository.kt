@@ -45,6 +45,7 @@ class SettingsRepository(private val context: Context) {
         val DIGITS = intPreferencesKey("digits")
         val HIJRI_OFFSET = intPreferencesKey("hijri_offset_days")
         val NOTIF_ASKED = booleanPreferencesKey("notif_permission_asked")
+        val UPDATE_POSTPONED_VERSION = stringPreferencesKey("update_postponed_version")
         fun offset(prayer: Prayer) = intPreferencesKey("offset_${prayer.key}")
     }
 
@@ -63,6 +64,14 @@ class SettingsRepository(private val context: Context) {
 
     val notificationPermissionAsked: Flow<Boolean> =
         context.dataStore.data.map { it[Keys.NOTIF_ASKED] ?: false }
+
+    /** Version the user postponed — auto update checks stay quiet about it. */
+    val updatePostponedVersion: Flow<String?> =
+        context.dataStore.data.map { it[Keys.UPDATE_POSTPONED_VERSION] }
+
+    suspend fun setUpdatePostponedVersion(version: String) {
+        context.dataStore.edit { it[Keys.UPDATE_POSTPONED_VERSION] = version }
+    }
 
     private fun read(prefs: androidx.datastore.preferences.core.Preferences): AppSettings {
         val location = if (prefs[Keys.LAT] != null && prefs[Keys.LON] != null && prefs[Keys.TZ] != null) {

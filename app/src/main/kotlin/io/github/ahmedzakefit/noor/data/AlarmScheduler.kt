@@ -8,7 +8,9 @@ import android.os.Build
 import io.github.ahmedzakefit.noor.core.calc.PrayerCalculator
 import io.github.ahmedzakefit.noor.core.model.GeoPosition
 import io.github.ahmedzakefit.noor.core.model.Prayer
+import io.github.ahmedzakefit.noor.notifications.Notifier
 import io.github.ahmedzakefit.noor.notifications.PrayerAlarmReceiver
+import io.github.ahmedzakefit.noor.notifications.ReminderRules
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.LocalDate
@@ -19,6 +21,11 @@ import java.time.ZoneId
  * next three days, and reschedules itself after every fired alarm, boot, time or
  * timezone change. Falls back to inexact windowed alarms when exact alarms are
  * not permitted.
+ *
+ * Also keeps posted notifications honest: a prayer whose alarms are all gone
+ * (alerts turned off per-prayer, master switch off, location cleared) gets its
+ * stale prayer/reminder/adhan notifications cancelled — a leftover countdown
+ * would otherwise keep ticking towards a time nobody will be alerted for.
  */
 class AlarmScheduler(
     private val context: Context,
@@ -29,13 +36,20 @@ class AlarmScheduler(
     suspend fun reschedule() {
         val settings = repository.settings.first()
         cancelAll()
-        if (!settings.notificationsMaster) return
-        val location = settings.location ?: return
+        if (!settings.notificationsMaster) {
+            Notifier.cancelPrayerNotifications(context)
+            return
+        }
+        val location = settings.location ?: run {
+            Notifier.cancelPrayerNotifications(context)
+            return
+        }
 
         val zone = ZoneId.of(location.timeZoneId)
         val now = Instant.now()
         val today = LocalDate.now(zone)
 
+        val scheduledPrayers = mutableSetOf<Prayer>()
         for (dayOffset in 0..2) {
             val date = today.plusDays(dayOffset.toLong())
             val params = settings.calculationParametersFor(date)
@@ -50,6 +64,7 @@ class AlarmScheduler(
                 if (!settings.notificationsPerPrayer.contains(prayer)) continue
                 val at = time.toInstant()
                 if (at <= now) continue
+                scheduledPrayers += prayer
                 schedule(at.toEpochMilli(), prayer, dayOffset, isReminder = false)
                 val reminder = settings.reminderMinutes
                 if (reminder > 0) {
@@ -59,6 +74,11 @@ class AlarmScheduler(
                     }
                 }
             }
+        }
+
+        // Notifications for prayers with no scheduled alarm anymore are stale.
+        for (prayer in ReminderRules.prayersToCancel(scheduledPrayers)) {
+            Notifier.cancelPrayerFamily(context, prayer)
         }
     }
 

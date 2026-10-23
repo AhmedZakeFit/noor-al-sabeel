@@ -167,7 +167,7 @@
     <string name="notif_adhan_test_title">تجربة الأذان</string>
     <string name="notif_adhan_test_body">هكذا يُسمَع الأذان عند دخول وقت الصلاة، ويمكن إيقافه من هذا الإشعار.</string>
     <string name="notif_reminder_title">اقترب وقت صلاة %1$s</string>
-    <string name="notif_reminder_body">باقٍ %1$d دقيقة • الموعد %2$s</string>
+    <string name="notif_reminder_body">الموعد %1$s • %2$s</string>
     <string name="notif_test_title">إشعار تجريبي</string>
     <string name="notif_test_body">إشعارات نور السبيل تعمل بشكل سليم.</string>
 
@@ -201,6 +201,23 @@
     <string name="about_licenses">تراخيص المصادر المفتوحة</string>
     <string name="about_accuracy">مصادر الحساب ودقته</string>
     <string name="about_github">مستودع GitHub</string>
+
+    <!-- التحقق من التحديثات داخل التطبيق (GitHub Releases) -->
+    <string name="update_check">التحقق من وجود تحديثات</string>
+    <string name="update_checking">جارٍ التحقق…</string>
+    <string name="update_available_title">تحديث متوفر — الإصدار %1$s</string>
+    <string name="update_banner_body">الإصدار %1$s متوفر الآن. اطّلع على الجديد ثم نزّله وثبّته بموافقتك.</string>
+    <string name="update_view_details">عرض التفاصيل</string>
+    <string name="update_postpone">لاحقًا</string>
+    <string name="update_download">تنزيل التحديث</string>
+    <string name="update_downloading">جارٍ تنزيل التحديث…</string>
+    <string name="update_install">تثبيت التحديث</string>
+    <string name="update_verify_note">يُتحقق من الملف المنزّل بمطابقة بصمته وتوقيعه المنشورين قبل عرض التثبيت، ولا يتم التثبيت إلا بموافقتك.</string>
+    <string name="update_up_to_date">أنت على أحدث إصدار.</string>
+    <string name="update_check_failed">تعذّر التحقق من التحديثات. تحقق من الاتصال ثم أعد المحاولة.</string>
+    <string name="update_download_failed">فشل التنزيل أو تعذّر التحقق من سلامة الملف. أعد المحاولة.</string>
+    <string name="update_changelog_title">الجديد في هذا الإصدار</string>
+    <string name="update_source_note">تأتي التحديثات من صفحة GitHub Releases الخاصة بالمشروع، ولا يُثبَّت شيء دون موافقتك.</string>
     <string-array name="hijri_months">
         <item>محرم</item>
         <item>صفر</item>

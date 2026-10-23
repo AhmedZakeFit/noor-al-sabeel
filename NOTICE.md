@@ -20,14 +20,20 @@ All runtime dependencies are Apache-2.0 licensed, which is why Noor Al-Sabeel sh
 ## Data & services
 
 - **OpenStreetMap** — map tiles rendered in the mosques screen, and place data returned by
-  the Overpass API. © OpenStreetMap contributors, ODbL 1.0. Attribution is shown on the map
-  screen. Requests are manual, bounded (radius ≤ 10 km, ≤ 50 results, 20 s timeout) and
-  respect the public instances' usage policies.
+  the Nominatim search service (primary) with the Overpass API mirrors as fallback. ©
+  OpenStreetMap contributors, ODbL 1.0. Attribution is shown on the map screen. Requests are
+  manual, bounded (radius ≤ 10 km, ≤ 50 results, 20 s overall deadline) and respect the
+  public instances' usage policies.
 - **GeoNames** — the bundled offline city catalog (`app/src/main/assets/cities.csv`) is derived
   from GeoNames `cities5000` plus alternate Arabic names. Licensed CC-BY-4.0; attribution
   given here and in the app's About section. <https://www.geonames.org>
 - **Nominatim** (OpenStreetMap) — optional online city search when the user's query is not
-  covered by the offline catalog. Usage policy respected (identified app, debounced queries).
+  covered by the offline catalog, and the primary source for the nearby-mosque search (a
+  bounded `mosque` keyword query inside the search radius). Usage policy respected
+  (identified app, manual low-volume queries).
+- **GitHub Releases** — the in-app update check reads this repository's latest published
+  release via GitHub's public API and, when the user opts in, downloads the release APK
+  from the project's own GitHub Releases page. No account, no identifiers sent.
 - **Umm al-Qura calendar table** — the month-length table in
   `core/.../hijri/UmmalquraCalendar.kt` encodes the official Umm al-Qura calendar as
   published by KACST and is adapted from the MIT-licensed

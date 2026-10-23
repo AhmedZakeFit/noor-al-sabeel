@@ -58,33 +58,40 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
                     )
                     val locale = context.resources.configuration.locales[0]
                     val locationLabel = location.displayLabel(locale.toLanguageTag())
+                    val prayerAtMillis = times.timeOf(prayer).toInstant().toEpochMilli()
                     if (isReminder) {
                         Notifier.showReminderNotification(
-                            context, prayer, settings.reminderMinutes, timeLabel, locationLabel,
+                            context, prayer, prayerAtMillis, timeLabel, locationLabel,
                         )
-                    } else if (shouldPlayAdhan(settings.adhanMode, isReminder = false, prayer)) {
-                        // Full adhan via a mediaPlayback foreground service. If the
-                        // system blocks the service start (background FGS
-                        // restrictions), fall back to the regular audible alert so
-                        // the prayer time is never missed silently.
-                        val started = AdhanService.start(
-                            context,
-                            prayer,
-                            preview = false,
-                            timeLabel = timeLabel,
-                            locationLabel = locationLabel,
-                        )
-                        if (!started) {
+                    } else {
+                        // The prayer time has arrived: retire the countdown
+                        // reminder and let the prayer/adhan notification take
+                        // over — the reminder never lingers past its target.
+                        Notifier.cancelReminder(context, prayer)
+                        if (shouldPlayAdhan(settings.adhanMode, isReminder = false, prayer)) {
+                            // Full adhan via a mediaPlayback foreground service. If the
+                            // system blocks the service start (background FGS
+                            // restrictions), fall back to the regular audible alert so
+                            // the prayer time is never missed silently.
+                            val started = AdhanService.start(
+                                context,
+                                prayer,
+                                preview = false,
+                                timeLabel = timeLabel,
+                                locationLabel = locationLabel,
+                            )
+                            if (!started) {
+                                Notifier.showPrayerNotification(
+                                    context, prayer, timeLabel, locationLabel,
+                                    arabicDigits = settings.digits != io.github.ahmedzakefit.noor.data.DigitSetting.LATIN,
+                                )
+                            }
+                        } else {
                             Notifier.showPrayerNotification(
                                 context, prayer, timeLabel, locationLabel,
                                 arabicDigits = settings.digits != io.github.ahmedzakefit.noor.data.DigitSetting.LATIN,
                             )
                         }
-                    } else {
-                        Notifier.showPrayerNotification(
-                            context, prayer, timeLabel, locationLabel,
-                            arabicDigits = settings.digits != io.github.ahmedzakefit.noor.data.DigitSetting.LATIN,
-                        )
                     }
                 }
                 app.alarmScheduler.reschedule()

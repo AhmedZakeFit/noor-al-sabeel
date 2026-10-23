@@ -78,18 +78,49 @@ object Notifier {
     fun showReminderNotification(
         context: Context,
         prayer: Prayer,
-        minutesLeft: Int,
+        prayerAtMillis: Long,
         timeLabel: String,
         locationLabel: String,
     ) {
+        // A frozen "N minutes left" text never ticked and kept lying until
+        // the user cleared it. Instead the notification now carries a live
+        // system-rendered countdown to the prayer time itself: zero extra
+        // alarms, zero battery cost — SystemUI animates the chronometer.
+        val spec = ReminderRules.spec(prayer, prayerAtMillis, System.currentTimeMillis())
+            ?: return // prayer time already passed — posting would count up from zero
         val ctx = context.localized()
         val title = ctx.getString(R.string.notif_reminder_title, prayerName(ctx, prayer))
-        val body = ctx.getString(R.string.notif_reminder_body, minutesLeft, timeLabel, locationLabel)
+        val body = ctx.getString(R.string.notif_reminder_body, timeLabel, locationLabel)
         val notification = baseBuilder(ctx, NotificationChannels.CHANNEL_REMINDER)
             .setContentTitle(title)
             .setContentText(body)
+            .setCategory(NotificationCompat.CATEGORY_EVENT)
+            .setShowWhen(true)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(true)
+            .setWhen(spec.countdownTargetMillis)
             .build()
-        post(context, 100 + prayer.ordinal, notification)
+        post(context, spec.id, notification)
+    }
+
+    /** Cancels the countdown reminder for one prayer (e.g. its time arrived). */
+    fun cancelReminder(context: Context, prayer: Prayer) {
+        try {
+            NotificationManagerCompat.from(context).cancel(ReminderRules.reminderNotificationId(prayer))
+        } catch (_: SecurityException) {
+        }
+    }
+
+    /** Cancels the prayer, reminder and adhan-record notifications for one prayer. */
+    fun cancelPrayerFamily(context: Context, prayer: Prayer) {
+        try {
+            NotificationManagerCompat.from(context).apply {
+                cancel(ReminderRules.prayerNotificationId(prayer))
+                cancel(ReminderRules.reminderNotificationId(prayer))
+                cancel(AdhanService.notificationId(prayer))
+            }
+        } catch (_: SecurityException) {
+        }
     }
 
     fun showTestNotification(context: Context) {

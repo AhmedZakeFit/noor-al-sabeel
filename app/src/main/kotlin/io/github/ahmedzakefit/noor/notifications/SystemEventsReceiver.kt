@@ -32,6 +32,13 @@ class SystemEventsReceiver : BroadcastReceiver() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         scope.launch {
             try {
+                // Boot / clock / timezone changes can leave countdown reminders
+                // whose prayer time already passed while the device was off or
+                // shifted — clear them all before re-arming; fresh ones are
+                // posted by the next reminder alarms.
+                for (prayer in io.github.ahmedzakefit.noor.core.model.Prayer.entries) {
+                    Notifier.cancelReminder(context, prayer)
+                }
                 context.appContainer.alarmScheduler.reschedule()
             } catch (_: Throwable) {
             } finally {

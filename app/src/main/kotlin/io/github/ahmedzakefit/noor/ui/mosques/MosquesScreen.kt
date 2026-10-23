@@ -79,6 +79,13 @@ fun MosquesScreen() {
         BitmapDrawable(context.resources, circleBitmap(0xFF2E7D32.toInt(), 0xFFFFFFFF.toInt()))
     }
 
+    // Leaving the screen aborts an in-flight search — the socket is
+    // disconnected, the spinner never strands, and returning later starts
+    // from a clean Idle state (completed results are kept).
+    DisposableEffect(Unit) {
+        onDispose { vm.cancelSearch() }
+    }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -119,7 +126,7 @@ fun MosquesScreen() {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = { vm.search() }, enabled = state.location != null) {
+            TextButton(onClick = { vm.search(locale.toLanguageTag()) }, enabled = state.location != null) {
                 Text(stringResource(R.string.search_nearby_mosques))
             }
         }
@@ -197,7 +204,7 @@ fun MosquesScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                     )
-                    TextButton(onClick = { vm.search() }) {
+                    TextButton(onClick = { vm.search(locale.toLanguageTag()) }) {
                         Icon(
                             Icons.Filled.Refresh,
                             contentDescription = null,
