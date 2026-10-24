@@ -62,7 +62,7 @@ class UpdateParserTest {
     {
       "tag_name": "v1.0.4",
       "name": "v1.0.4",
-      "body": "**Noor Al-Sabeel v1.0.4** — signed release APK. See [CHANGELOG](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/CHANGELOG.md).\n\n- Fixed mosque search\n- Live countdown reminders\n\n**Full Changelog**: https://github.com/AhmedZakeFit/noor-al-sabeel/compare/v1.0.3...v1.0.4",
+      "body": "**Noor Al-Sabeel v1.0.4** — signed release APK. See [CHANGELOG](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/CHANGELOG.md).\n\n- Fixed notification scheduling\n- Live countdown reminders\n\n**Full Changelog**: https://github.com/AhmedZakeFit/noor-al-sabeel/compare/v1.0.3...v1.0.4",
       "assets": [
         {"name": "noor-al-sabeel-1.0.4.apk", "size": 12850128,
          "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.4/noor-al-sabeel-1.0.4.apk"},
@@ -82,7 +82,7 @@ class UpdateParserTest {
         assertTrue(info.sha256Url!!.endsWith(".apk.sha256"))
         assertEquals(12850128L, info.apkSizeBytes)
         // Markdown links degrade to their text; bullets survive.
-        assertTrue(info.changelogSummary.contains("Fixed mosque search"))
+        assertTrue(info.changelogSummary.contains("Fixed notification scheduling"))
         assertFalse(info.changelogSummary.contains("]("))
         assertTrue(info.changelogSummary.contains("CHANGELOG"))
     }

@@ -30,8 +30,7 @@ CHANGELOG if you wish.
 ## Scope notes
 
 - Noor Al-Sabeel stores everything locally and sends no identifiers; the realistic attack surface is
-  small: notification/alarm handling, the two read-only public APIs (Overpass, Nominatim)
-  and map tile loading.
+  small: notification/alarm handling and the one read-only public API (Nominatim city search).
 - Miscomputed prayer times are an accuracy issue (see docs/PRAYER_TIMES.md), not a security
   vulnerability, unless you can show code-level abuse.
 
@@ -59,7 +58,6 @@ CHANGELOG if you wish.
 ## ملاحظات النطاق
 
 - يخزّن نور السبيل كل شيء محليًا ولا يرسل أي معرّفات، لذا سطح الهجوم صغير: معالجة الإشعارات
-  والتنبيهات، والواجهتان العامتان للقراءة فقط (Overpass وNominatim)، وتحميل مربعات
-  الخريطة.
+  والتنبيهات، والواجهة العامة للقراءة فقط (Nominatim للبحث عن المدن).
 - أخطاء حساب المواقيت مسألة دقة (انظر docs/PRAYER_TIMES.md) لا ثغرة أمنية، إلا إذا
   أثبتَ استغلالًا على مستوى الشيفرة.

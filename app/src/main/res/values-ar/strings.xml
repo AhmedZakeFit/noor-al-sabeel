@@ -4,7 +4,6 @@
     <!-- Bottom navigation -->
     <string name="nav_times">المواقيت</string>
     <string name="nav_qibla">القبلة</string>
-    <string name="nav_mosques">المساجد</string>
     <string name="nav_settings">الإعدادات</string>
 
     <!-- Common -->
@@ -62,35 +61,6 @@
     <string name="dir_w">غ</string>
     <string name="dir_nw">ش غ</string>
 
-    <!-- Mosques -->
-    <string name="search_nearby_mosques">ابحث عن المساجد القريبة</string>
-    <string name="search_radius">نطاق البحث: %1$s كم</string>
-    <string name="mosques_results_count">عدد النتائج: %1$d</string>
-    <string name="no_mosques_found">لا توجد مساجد داخل هذا النطاق.</string>
-    <string name="mosques_search_failed">فشل البحث عن المساجد. حاول مرة أخرى.</string>
-    <string name="mosque_search_failed_offline">لا يوجد اتصال بالإنترنت. تحقق من الاتصال ثم أعد المحاولة.</string>
-    <string name="mosque_search_failed_busy">خدمة البحث عن المساجد مشغولة حاليًا. أعد المحاولة بعد قليل.</string>
-    <string name="mosque_search_failed_timeout">استغرق البحث وقتًا طويلًا. أعد المحاولة من فضلك.</string>
-    <string name="mosques_need_internet">البحث عن المساجد يحتاج اتصالًا بالإنترنت (مربعات الخريطة وبيانات OpenStreetMap).</string>
-    <string name="mosque_distance_km">%1$s كم</string>
-    <string name="mosque_distance_m">%1$s م</string>
-    <string name="navigate">فتح الملاحة</string>
-    <string name="show_on_map">عرض على الخريطة</string>
-    <string name="osm_attribution">© مساهمو OpenStreetMap</string>
-    <string name="mosque_unnamed">مسجد بلا اسم</string>
-
-    <!-- Mosques: search center and device location -->
-    <string name="mosques_center_current">حول موقعك الحالي</string>
-    <string name="mosques_center_saved">حول: %1$s</string>
-    <string name="mosques_use_current_location">استخدم موقعي الحالي</string>
-    <string name="mosques_locating">جارٍ تحديد موقعك…</string>
-    <string name="mosques_location_failed">تعذّر تحديد موقعك الحالي. هل تريد إعادة المحاولة أم البحث حول موقعك المحفوظ بدلًا منه؟</string>
-    <string name="mosques_fallback_saved">البحث حول الموقع المحفوظ</string>
-    <string name="mosques_permission_hint">عند الضغط على البحث سيطلب التطبيق إذن الموقع لتكون النتائج حول مكان وجودك فعليًا.</string>
-    <string name="mosques_permission_needed">يستخدم البحث عن المساجد القريبة موقعك الحالي. اسمح بالوصول للمتابعة، أو افتح إعدادات التطبيق إن كان الوصول محظورًا.</string>
-    <string name="mosques_allow_location">السماح بالوصول</string>
-    <string name="mosques_open_settings">فتح إعدادات التطبيق</string>
-
     <!-- Settings: location -->
     <string name="section_location">الموقع</string>
     <string name="change_location">تغيير الموقع</string>
@@ -101,7 +71,7 @@
     <string name="locating">جارٍ تحديد الموقع…</string>
     <string name="gps_failed">تعذّر تحديد موقعك.</string>
     <string name="gps_permission_denied">لم يُمنح إذن الموقع. يمكنك اختيار مدينة أو إدخال الإحداثيات يدويًا.</string>
-    <string name="gps_permission_rationale">يُستخدم موقعك على هذا الجهاز فقط لحساب مواقيت الصلاة والبحث عن المساجد القريبة، ولا يُرسل إلى أي جهة. امنح الإذن ليُحدَّد موقعك تلقائيًا.</string>
+    <string name="gps_permission_rationale">يُستخدم موقعك على هذا الجهاز فقط لحساب مواقيت الصلاة وتحديد اتجاه القبلة، ولا يُرسل إلى أي جهة. امنح الإذن ليُحدَّد موقعك تلقائيًا.</string>
     <string name="search_city_hint">ابحث عن مدينة…</string>
     <string name="city_search_note">النتائج المدمجة تعمل دون إنترنت، والبحث عبر الإنترنت يضيف المزيد عند توفر الاتصال.</string>
     <string name="no_results">لا توجد نتائج</string>

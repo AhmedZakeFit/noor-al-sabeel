@@ -10,7 +10,6 @@ composeBom = "2024.10.01"
 navigationCompose = "2.8.4"
 datastore = "1.1.1"
 coroutines = "1.9.0"
-osmdroid = "6.1.20"
 desugar = "2.1.5"
 junit = "4.13.2"
 orgJson = "20240303"
@@ -35,7 +34,6 @@ compose-material-icons-core = { group = "androidx.compose.material", name = "mat
 coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
-osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 org-json = { group = "org.json", name = "json", version.ref = "orgJson" }

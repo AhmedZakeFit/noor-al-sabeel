@@ -2,7 +2,7 @@
 
 **English** | [العربية بالأسفل](#العربية)
 
-*Last updated: 2026-10-23*
+*Last updated: 2026-10-24*
 
 Noor Al-Sabeel (نور السبيل) is a free, open-source Android application. This policy describes exactly what
 the app does with data. Because the app contains no analytics or crash reporting, this
@@ -27,12 +27,6 @@ it completely.
 By default, nothing. The app uses the internet **only** when you actively use one of these
 features:
 
-- **Mosque search / map screen** — your search center (the coordinates you selected) is sent
-  **in parallel** to two independent public services: Nominatim (OpenStreetMap Foundation)
-  and Photon (komoot). Whichever answers with results first wins and the other request is
-  cancelled, so the search no longer depends on the health of any single provider. Only if
-  both fail does the request go to the public Overpass API mirrors as a last chance. Map
-  tiles are fetched from OpenStreetMap servers for the visible area.
 - **Optional online city search** — the text you type is sent to the public Nominatim
   service (OpenStreetMap) when the offline catalog has no match.
 - **Update check** — on app open (and when you tap "check for updates") the app contacts
@@ -41,8 +35,8 @@ features:
   APK comes from the project's own GitHub Releases page. Nothing about you is sent — no
   identifiers, no usage data; it is a plain version lookup.
 
-These services are operated by third parties (OpenStreetMap Foundation, komoot, Overpass API
-maintainers and GitHub) and are governed by their own policies. Noor Al-Sabeel sends no
+These services are operated by third parties (the OpenStreetMap Foundation and GitHub) and are
+governed by their own policies. Noor Al-Sabeel sends no
 identifiers, no advertising IDs and no usage statistics with these requests.
 
 ## Permissions and why
@@ -51,7 +45,7 @@ identifiers, no advertising IDs and no usage statistics with these requests.
 |---|---|
 | Location (coarse/fine) | Only used when you tap "use current location" to detect your position for prayer times and qibla |
 | Notifications | Showing prayer-time and reminder notifications |
-| Internet / network state | Mosque search, map tiles, optional online city search, update check |
+| Internet / network state | Optional online city search, update check |
 | Receive boot completed | Re-scheduling prayer notifications after the phone restarts |
 | Exact alarms | Ringing prayer notifications at the precise time |
 | Vibrate | Notification vibration (optional) |
@@ -78,7 +72,7 @@ Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any
 
 # العربية
 
-*آخر تحديث: 2026-10-23*
+*آخر تحديث: 2026-10-24*
 
 نور السبيل تطبيق أندرويد مجاني ومفتوح المصدر، وهذه السياسة تصف بالضبط ما يفعله التطبيق
 بالبيانات. ولأن التطبيق لا يحتوي أي تحليلات أو تقارير أعطال، فإن هذا المستند مبني على
@@ -101,11 +95,6 @@ Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any
 
 افتراضيًا: لا شيء. يستخدم التطبيق الإنترنت **فقط** عند استخدامك إحدى هذه الميزات:
 
-- **البحث عن المساجد / شاشة الخريطة** — يُرسل مركز البحث (الإحداثيات التي اخترتها)
-  **بالتوازي** إلى خدمتين عامتين مستقلتين: Nominatim‏ (مؤسسة OpenStreetMap) و
-  Photon‏ (komoot)؛ وأيّهما يرد بالنتائج أولًا يفوز ويُلغى الطلب الآخر، فلا يعتمد البحث
-  بعد الآن على جاهزية مزوّد واحد. وعند تعذّر الاثنين معًا يُرسل الطلب إلى مرايا Overpass
-  العامة كفرصة أخيرة. وتُجلب مربعات الخريطة من خوادم OpenStreetMap للمنطقة الظاهرة.
 - **البحث الاختياري عن المدن عبر الإنترنت** — يُرسل النص الذي تكتبه إلى خدمة Nominatim
   العامة (OpenStreetMap) عندما لا يجد الفهرس المدمج نتيجة مطابقة.
 - **التحقق من التحديثات** — عند فتح التطبيق (وعند ضغطك «التحقق من وجود تحديثات») يتصل
@@ -114,7 +103,7 @@ Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any
   Releases الخاصة بالمشروع نفسه. لا يُرسل شيء يخصك — لا معرّفات ولا بيانات استخدام؛
   إنها مطابقة رقم إصدار فحسب.
 
-هذه الخدمات يشغّلها طرف ثالث (مؤسسة OpenStreetMap وkomoot ومشغّلو Overpass وGitHub) وتحكمها سياستهم
+هذه الخدمات يشغّلها طرف ثالث (مؤسسة OpenStreetMap وGitHub) وتحكمها سياستهم
 الخاصة. لا يرسل نور السبيل معها أي معرّفات ولا معرّفات إعلانية ولا إحصاءات استخدام.
 
 ## الأذونات وسببها
@@ -123,7 +112,7 @@ Open an issue at <https://github.com/AhmedZakeFit/noor-al-sabeel/issues> for any
 |---|---|
 | الموقع (تقريبي/دقيق) | يُستخدم فقط عند ضغطك "استخدام الموقع الحالي" لتحديد موقعك للمواقيت والقبلة |
 | الإشعارات | عرض إشعارات المواقيت والتذكيرات |
-| الإنترنت وحالة الشبكة | البحث عن المساجد ومربعات الخريطة والبحث الاختياري عن المدن والتحقق من التحديثات |
+| الإنترنت وحالة الشبكة | البحث الاختياري عن المدن والتحقق من التحديثات |
 | استقبال اكتمال الإقلاع | إعادة جدولة إشعارات الصلاة بعد إعادة تشغيل الهاتف |
 | التنبيهات الدقيقة | رنين إشعارات الصلاة في الوقت المحدد بدقة |
 | الاهتزاز | اهتزاز الإشعار (اختياري) |

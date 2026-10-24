@@ -11,7 +11,7 @@ guidelines keep it healthy.
    dependencies (no Google Play services). Ask first before adding any dependency — it must
    be Apache-2.0 (or similarly permissive) compatible.
 2. **Keep it offline-first.** Computation stays on the device. Network access is only for
-   the map, mosque search and optional online city search.
+   the optional online city search.
 3. **Bilingual by default.** Every user-facing string must exist in `values/` (English) and
    `values-ar/` (Arabic), including notifications. RTL/LTR layout must be verified for both.
 4. **Tests before merges.** Any change to the calculation engine must come with or update
@@ -61,8 +61,8 @@ Be respectful. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues go 
 1. **ابقِه مجانيًا:** لا إعلانات ولا متتبعات ولا حسابات ولا خدمات مدفوعة ولا تبعيات
    مغلقة (ولا خدمات Google Play). استأذن قبل إضافة أي تبعية — يجب أن تكون متوافقة مع
    Apache-2.0 أو ما يماثلها.
-2. **ابقِه يعمل دون إنترنت أولًا:** الحسابات على الجهاز، والشبكة فقط للخريطة والمساجد
-   والبحث الاختياري.
+2. **ابقِه يعمل دون إنترنت أولًا:** الحسابات على الجهاز، والشبكة فقط للبحث الاختياري
+   عن المدن.
 3. **ثنائي اللغة افتراضيًا:** كل نص يظهر للمستخدم يجب أن يوجد في `values/` (إنجليزي)
    و`values-ar/` (عربي) بما يشمل الإشعارات، مع التحقق من اتجاهي RTL/LTR.
 4. **الاختبارات قبل الدمج:** أي تغيير في محرك الحسابات يجب أن يأتي مع اختبارات، ويجب
