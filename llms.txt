@@ -1,0 +1,23 @@
+# Noor Al-Sabeel (نور السبيل)
+
+> Free, open-source Android app for prayer times (salah), the full adhan and the qibla compass — no ads, no tracking, and all calculations run offline on the device.
+
+Noor Al-Sabeel is developed by AhmedZakeFit and released under Apache-2.0. Prayer times support twelve calculation methods (Umm al-Qura, Muslim World League, Egyptian General Authority of Survey, ISNA, Karachi, Gulf, Kuwait, Qatar, Singapore, Turkey, France, or custom angles), with a ±30-minute shift on any individual time to match a local mosque. The app plays a complete recorded adhan at prayer time (with a separate Fajr adhan), shows a pre-prayer reminder with a live countdown, includes a qibla compass with magnetic-declination correction, and displays the official Umm al-Qura Hijri calendar (1924–2076). It collects nothing and sends nothing to any server; the network is used only for the optional online city search and the in-app update check. The app UI is available in Arabic and English. It is not on Google Play; distribution is a direct signed APK from GitHub Releases, and an F-Droid submission is planned but not guaranteed.
+
+## Pages
+
+- [Landing page (Arabic)](https://ahmedzakefit.github.io/noor-al-sabeel/): overview, features, install steps and FAQ in Arabic.
+- [Landing page (English)](https://ahmedzakefit.github.io/noor-al-sabeel/en/): the same page in English.
+
+## Download and source
+
+- [Direct APK download (latest stable, signed)](https://github.com/AhmedZakeFit/noor-al-sabeel/releases/latest/download/noor-al-sabeel.apk): always resolves to the newest verified release.
+- [Source code](https://github.com/AhmedZakeFit/noor-al-sabeel): Kotlin + Jetpack Compose, Apache-2.0.
+- [Releases and checksums](https://github.com/AhmedZakeFit/noor-al-sabeel/releases): versioned APKs with SHA-256 checksums.
+
+## Policies and docs
+
+- [Privacy policy](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/PRIVACY.md): exactly what the app stores and sends, written against the source code.
+- [Calculation methods and sources](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/docs/PRAYER_TIMES.md): every method, source and known limitation.
+- [Changelog](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/CHANGELOG.md): release history.
+- [Roadmap](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/docs/ROADMAP.md): planned work, including the F-Droid submission.

@@ -1,0 +1,13 @@
+# robots.txt — Noor Al-Sabeel landing page (GitHub Pages)
+#
+# Everything on this site is public and meant to be discovered:
+# search engines and answer engines are all welcome, including
+# AI assistants (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot,
+# PerplexityBot, Google-Extended, Applebot-Extended, meta-externalagent,
+# Amazonbot, CCBot) alongside the usual web crawlers (Googlebot, Bingbot).
+# Nothing is blocked; this file mainly exists to point at the sitemap.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://ahmedzakefit.github.io/noor-al-sabeel/sitemap.xml
