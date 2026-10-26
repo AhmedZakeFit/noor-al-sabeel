@@ -141,6 +141,6 @@ jobs:
             echo "release.json already up to date — no commit (no Pages rebuild churn)."
           else
             git commit -m "release.json: verified $TAG (post-release link check)"
-            git push
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages:gh-pages
             echo "Pushed verified release.json for $TAG — the landing page will show it after the Pages rebuild."
           fi
