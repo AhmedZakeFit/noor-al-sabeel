@@ -54,18 +54,26 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         Notifier.showTestNotification(container.appContext)
     }
 
+    fun setAdhanVoice(voice: io.github.ahmedzakefit.noor.data.AdhanVoice) {
+        update { it.copy(adhanVoice = voice) }
+    }
+
     /**
      * Plays the standard adhan through the same foreground service a real
      * prayer-time alert uses, so the user can verify volume and sound before
      * relying on it. Stop at any time from the notification or the settings
      * screen's stop button (visible while the preview is playing).
      */
-    fun testAdhan() {
-        io.github.ahmedzakefit.noor.notifications.AdhanService.start(
-            container.appContext,
-            io.github.ahmedzakefit.noor.core.model.Prayer.DHUHR,
-            preview = true,
-        )
+    fun testAdhan(forFajr: Boolean = false) {
+        viewModelScope.launch {
+            val s = container.settingsRepository.settings.first()
+            io.github.ahmedzakefit.noor.notifications.AdhanService.start(
+                container.appContext,
+                if (forFajr) io.github.ahmedzakefit.noor.core.model.Prayer.FAJR else io.github.ahmedzakefit.noor.core.model.Prayer.DHUHR,
+                preview = true,
+                voice = s.adhanVoice,
+            )
+        }
     }
 
     /** Live flag: true while the adhan service is reciting (test or real). */

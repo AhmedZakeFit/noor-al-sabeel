@@ -37,6 +37,7 @@ class SettingsRepository(private val context: Context) {
         val NOTIF_PRAYERS = stringSetPreferencesKey("notif_prayers")
         val REMINDER_MINUTES = intPreferencesKey("reminder_minutes")
         val ADHAN_MODE = intPreferencesKey("adhan_mode")
+        val ADHAN_VOICE = intPreferencesKey("adhan_voice")
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
         val SOUND_URI = stringPreferencesKey("sound_uri")
         val VIBRATE = booleanPreferencesKey("vibrate")
@@ -112,6 +113,8 @@ class SettingsRepository(private val context: Context) {
             reminderMinutes = prefs[Keys.REMINDER_MINUTES] ?: 10,
             adhanMode = io.github.ahmedzakefit.noor.data.AdhanMode.entries
                 .getOrElse(prefs[Keys.ADHAN_MODE] ?: 0) { io.github.ahmedzakefit.noor.data.AdhanMode.REGULAR },
+            adhanVoice = io.github.ahmedzakefit.noor.data.AdhanVoice.entries
+                .getOrElse(prefs[Keys.ADHAN_VOICE] ?: 0) { io.github.ahmedzakefit.noor.data.AdhanVoice.MAKKAH },
             soundEnabled = prefs[Keys.SOUND_ENABLED] ?: true,
             soundUri = prefs[Keys.SOUND_URI],
             vibrate = prefs[Keys.VIBRATE] ?: true,
@@ -159,6 +162,7 @@ class SettingsRepository(private val context: Context) {
         prefs[Keys.NOTIF_PRAYERS] = s.notificationsPerPrayer.map { it.key }.toSet()
         prefs[Keys.REMINDER_MINUTES] = s.reminderMinutes
         prefs[Keys.ADHAN_MODE] = s.adhanMode.ordinal
+        prefs[Keys.ADHAN_VOICE] = s.adhanVoice.ordinal
         prefs[Keys.SOUND_ENABLED] = s.soundEnabled
         if (s.soundUri != null) prefs[Keys.SOUND_URI] = s.soundUri else prefs.remove(Keys.SOUND_URI)
         prefs[Keys.VIBRATE] = s.vibrate

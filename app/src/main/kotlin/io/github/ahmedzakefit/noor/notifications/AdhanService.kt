@@ -43,6 +43,7 @@ class AdhanService : Service() {
         const val EXTRA_PREVIEW = "preview"
         const val EXTRA_TIME_LABEL = "time_label"
         const val EXTRA_LOCATION_LABEL = "location_label"
+        const val EXTRA_VOICE = "voice"
 
         /** Offset so adhan notifications never collide with regular ones (0..5 / 100+). */
         private const val NOTIF_ID_OFFSET = 500
@@ -62,11 +63,13 @@ class AdhanService : Service() {
             preview: Boolean,
             timeLabel: String? = null,
             locationLabel: String? = null,
+            voice: io.github.ahmedzakefit.noor.data.AdhanVoice = io.github.ahmedzakefit.noor.data.AdhanVoice.MAKKAH,
         ): Boolean = try {
             val intent = Intent(context, AdhanService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_PRAYER, prayer.name)
                 putExtra(EXTRA_PREVIEW, preview)
+                putExtra(EXTRA_VOICE, voice.name)
                 if (timeLabel != null) putExtra(EXTRA_TIME_LABEL, timeLabel)
                 if (locationLabel != null) putExtra(EXTRA_LOCATION_LABEL, locationLabel)
             }
@@ -84,6 +87,7 @@ class AdhanService : Service() {
     private var audioManager: AudioManager? = null
     private var focusListener: AudioManager.OnAudioFocusChangeListener? = null
     private var prayer: Prayer = Prayer.DHUHR
+    private var voice: io.github.ahmedzakefit.noor.data.AdhanVoice = io.github.ahmedzakefit.noor.data.AdhanVoice.MAKKAH
     private var preview = false
     private var timeLabel: String? = null
     private var locationLabel: String? = null
@@ -116,6 +120,9 @@ class AdhanService : Service() {
                 preview = intent.getBooleanExtra(EXTRA_PREVIEW, preview)
                 timeLabel = intent.getStringExtra(EXTRA_TIME_LABEL) ?: timeLabel
                 locationLabel = intent.getStringExtra(EXTRA_LOCATION_LABEL) ?: locationLabel
+                intent.getStringExtra(EXTRA_VOICE)?.let {
+                    runCatching { io.github.ahmedzakefit.noor.data.AdhanVoice.valueOf(it) }.getOrNull()?.let { voice = it }
+                }
                 startAdhan()
             }
         }
@@ -126,11 +133,7 @@ class AdhanService : Service() {
         AdhanPlayback.setPlaying(true)
         // 1) Enter the foreground immediately (5-second window) with a silent
         //    notification; the MediaPlayer below is the actual sound.
-        val resId = if (prayer == Prayer.FAJR) {
-            io.github.ahmedzakefit.noor.R.raw.adhan_fajr
-        } else {
-            io.github.ahmedzakefit.noor.R.raw.adhan
-        }
+        val resId = AdhanAudio.rawResourceFor(this, voice, prayer)
         ServiceCompat.startForeground(
             this,
             notificationId(prayer),

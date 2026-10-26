@@ -6,6 +6,11 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 
 ## [1.0.6] — 2026-10-26
 
+### Added
+- **Adhan Voices Selection:** Multiple adhan reciters (Makkah Holy Sanctuary, Prophet's Mosque Madinah, Al-Azhar Mosque Cairo, and Al-Aqsa Mosque) with dual preview testing for Fajr (including "Prayer is better than sleep") and regular daily prayers.
+- **Easy Permissions & Notification Setup:** Prominent one-tap activation banner on Home for notifications, plus a comprehensive permissions & reliability panel in Settings covering notification permission, exact alarms (Android 12+), and battery optimization exemption.
+- **Direct In-App Update Trigger:** Added a prominent "Update App Now" (تحديث التطبيق الآن) button right in the update alert banner for immediate one-tap download and installation.
+
 ### Fixed
 - **Islamic Midnight & Last Third of Night calculation (PrayerCalculator.kt):** The night
   duration was calculating negative minutes across the midnight threshold (subtracting tomorrow's

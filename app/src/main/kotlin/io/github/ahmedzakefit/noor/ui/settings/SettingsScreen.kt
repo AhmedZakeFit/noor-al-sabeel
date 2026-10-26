@@ -24,6 +24,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -281,9 +284,31 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                 // becomes an immediate stop — always visible here, even when the
                 // notification (and its stop action) is hidden by a missing
                 // POST_NOTIFICATIONS grant on Android 13+.
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.adhan_voice_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                RadioRow(
+                    title = "",
+                    options = listOf(
+                        stringResource(R.string.adhan_voice_makkah) to io.github.ahmedzakefit.noor.data.AdhanVoice.MAKKAH,
+                        stringResource(R.string.adhan_voice_madinah) to io.github.ahmedzakefit.noor.data.AdhanVoice.MADINAH,
+                        stringResource(R.string.adhan_voice_cairo) to io.github.ahmedzakefit.noor.data.AdhanVoice.CAIRO,
+                        stringResource(R.string.adhan_voice_aqsa) to io.github.ahmedzakefit.noor.data.AdhanVoice.AQSA,
+                    ),
+                    selected = settings.adhanVoice,
+                    onSelect = { voice -> vm.setAdhanVoice(voice) },
+                )
+                Spacer(Modifier.height(8.dp))
                 val adhanPlaying by vm.adhanPlaying.collectAsStateWithLifecycle()
                 if (adhanPlaying) {
-                    TextButton(onClick = { vm.stopAdhan() }) {
+                    Button(
+                        onClick = { vm.stopAdhan() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
                         Icon(
                             Icons.Filled.Close,
                             contentDescription = null,
@@ -293,8 +318,22 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                         Text(stringResource(R.string.notif_adhan_stop))
                     }
                 } else {
-                    TextButton(onClick = { vm.testAdhan() }) {
-                        Text(stringResource(R.string.test_adhan))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        TextButton(
+                            onClick = { vm.testAdhan(forFajr = false) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.test_adhan_regular))
+                        }
+                        TextButton(
+                            onClick = { vm.testAdhan(forFajr = true) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.test_adhan_fajr))
+                        }
                     }
                 }
             }
@@ -324,12 +363,74 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                 vm.update { it.copy(vibrate = on) }
             }
             HorizontalDivider()
+            Text(
+                stringResource(R.string.permissions_status_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            NotificationPermissionStatus()
+            ExactAlarmStatus(vm)
+            BatteryReliability()
+            Spacer(Modifier.height(8.dp))
             TextButton(onClick = { vm.sendTestNotification() }) {
                 Text(stringResource(R.string.test_notification))
             }
-            ExactAlarmStatus(vm)
-            BatteryReliability()
         }
+    }
+}
+
+@Composable
+private fun NotificationPermissionStatus() {
+    val context = LocalContext.current
+    val enabled = io.github.ahmedzakefit.noor.notifications.NotificationChannels.areNotificationsEnabled(context)
+    if (!enabled) {
+        Card(
+            Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        ) {
+            Column(Modifier.padding(12.dp)) {
+                Text(
+                    stringResource(R.string.notif_perm_status_missing),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.notif_perm_banner_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        runCatching { context.startActivity(intent) }.onFailure {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        .setData(Uri.parse("package:" + context.packageName))
+                                )
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text(stringResource(R.string.enable_notifications_now))
+                }
+            }
+        }
+    } else {
+        Text(
+            stringResource(R.string.notif_perm_status_ok),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 
@@ -339,26 +440,30 @@ private fun ExactAlarmStatus(vm: SettingsViewModel) {
     var canExact by remember { mutableStateOf(true) }
     androidx.compose.runtime.LaunchedEffect(Unit) { canExact = vm.canScheduleExactAlarms() }
     if (Build.VERSION.SDK_INT >= 31 && !canExact) {
-        Column {
+        Column(Modifier.padding(top = 8.dp)) {
             Text(
                 stringResource(R.string.exact_alarm_blocked),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.tertiary,
+                color = MaterialTheme.colorScheme.error,
             )
-            TextButton(onClick = {
-                runCatching {
-                    context.startActivity(
-                        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                            .setData(Uri.parse("package:" + context.packageName)),
-                    )
-                }
-            }) { Text(stringResource(R.string.allow_exact_alarms)) }
+            Button(
+                onClick = {
+                    runCatching {
+                        context.startActivity(
+                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                                .setData(Uri.parse("package:" + context.packageName)),
+                        )
+                    }
+                },
+                modifier = Modifier.padding(top = 4.dp),
+            ) { Text(stringResource(R.string.allow_exact_alarms)) }
         }
     } else {
         Text(
             stringResource(R.string.exact_alarm_ok),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
         )
     }
 }
@@ -376,15 +481,25 @@ private fun BatteryReliability() {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = {
-                runCatching {
-                    context.startActivity(
-                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                            .setData(Uri.parse("package:" + context.packageName)),
-                    )
-                }
-            }) { Text(stringResource(R.string.disable_battery_optimization)) }
+            Button(
+                onClick = {
+                    runCatching {
+                        context.startActivity(
+                            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                                .setData(Uri.parse("package:" + context.packageName)),
+                        )
+                    }
+                },
+                modifier = Modifier.padding(top = 4.dp),
+            ) { Text(stringResource(R.string.battery_optimizing_fix)) }
         }
+    } else {
+        Text(
+            stringResource(R.string.battery_optimizing_ok),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
 

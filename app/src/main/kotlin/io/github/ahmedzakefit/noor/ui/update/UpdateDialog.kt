@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -74,12 +75,22 @@ fun UpdateBanner(vm: UpdateViewModel) {
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
-            Column {
-                TextButton(onClick = { vm.openDialog(info) }) {
-                    Text(stringResource(R.string.update_view_details))
+            Column(horizontalAlignment = Alignment.End) {
+                Button(
+                    onClick = {
+                        vm.openDialog(info)
+                        vm.startDownload(info)
+                    },
+                ) {
+                    Text(stringResource(R.string.update_install_now))
                 }
-                TextButton(onClick = { vm.postpone(info) }) {
-                    Text(stringResource(R.string.update_postpone))
+                Row {
+                    TextButton(onClick = { vm.openDialog(info) }) {
+                        Text(stringResource(R.string.update_view_details))
+                    }
+                    TextButton(onClick = { vm.postpone(info) }) {
+                        Text(stringResource(R.string.update_postpone))
+                    }
                 }
             }
         }

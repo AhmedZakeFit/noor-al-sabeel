@@ -13,6 +13,13 @@ enum class LanguageSetting { SYSTEM, ARABIC, ENGLISH }
 
 enum class DigitSetting { FOLLOW_LOCALE, ARABIC_INDIC, LATIN }
 
+enum class AdhanVoice {
+    MAKKAH,     // أذان الحرم المكي الشريف
+    MADINAH,    // أذان المسجد النبوي الشريف
+    CAIRO,      // أذان جمهورية مصر العربية (الأزهر الشريف)
+    AQSA,       // أذان المسجد الأقصى المبارك
+}
+
 /** Alert style for prayer-time notifications: short system sound or full adhan audio. */
 enum class AdhanMode { REGULAR, ADHAN }
 
@@ -51,6 +58,7 @@ data class AppSettings(
     val reminderMinutes: Int = 10,
     /** Whether prayer-time alerts recite the full bundled adhan (Fajr uses its own dawn adhan). */
     val adhanMode: AdhanMode = AdhanMode.REGULAR,
+    val adhanVoice: AdhanVoice = AdhanVoice.MAKKAH,
     val soundEnabled: Boolean = true,
     val soundUri: String? = null,
     val vibrate: Boolean = true,

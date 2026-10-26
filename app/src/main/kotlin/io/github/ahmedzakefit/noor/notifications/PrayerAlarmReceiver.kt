@@ -79,6 +79,7 @@ class PrayerAlarmReceiver : BroadcastReceiver() {
                                 preview = false,
                                 timeLabel = timeLabel,
                                 locationLabel = locationLabel,
+                                voice = settings.adhanVoice,
                             )
                             if (!started) {
                                 Notifier.showPrayerNotification(

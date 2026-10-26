@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -114,6 +115,10 @@ fun HomeScreen(
         // (postponed versions never re-appear).
         val updateVm: UpdateViewModel = viewModel(factory = UpdateViewModel.Factory)
         UpdateBanner(updateVm)
+        val notifsEnabled = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
+        if (state.settings.notificationsMaster && !notifsEnabled) {
+            NotificationPermissionBanner(onRequestNotificationPermission)
+        }
 
         val location = state.settings.location
         if (location == null) {
@@ -400,4 +405,77 @@ fun prayerLabel(prayer: Prayer): String = when (prayer) {
     Prayer.ASR -> stringResource(R.string.prayer_asr)
     Prayer.MAGHRIB -> stringResource(R.string.prayer_maghrib)
     Prayer.ISHA -> stringResource(R.string.prayer_isha)
+}
+
+@Composable
+private fun NotificationPermissionBanner(
+    onRequestNotificationPermission: () -> Unit,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+        ),
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.Notifications,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.notif_perm_banner_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.notif_perm_banner_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Spacer(Modifier.height(10.dp))
+            androidx.compose.material3.Button(
+                onClick = {
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.POST_NOTIFICATIONS,
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (!granted) {
+                            onRequestNotificationPermission()
+                            return@Button
+                        }
+                    }
+                    val intent = android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    }
+                    runCatching { context.startActivity(intent) }.onFailure {
+                        runCatching {
+                            context.startActivity(
+                                android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    .setData(android.net.Uri.parse("package:" + context.packageName))
+                            )
+                        }
+                    }
+                },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+            ) {
+                Text(stringResource(R.string.enable_notifications_now))
+            }
+        }
+    }
 }

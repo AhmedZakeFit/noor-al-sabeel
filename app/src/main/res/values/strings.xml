@@ -183,6 +183,14 @@
     <string name="notif_test_title">Test notification</string>
     <string name="notif_test_body">Noor Al-Sabeel notifications are working correctly.</string>
 
+    <string name="notif_perm_banner_title">Enable Prayer &amp; Adhan Notifications</string>
+    <string name="notif_perm_banner_desc">To receive prayer alerts and hear the adhan accurately on time, please allow notification permission.</string>
+    <string name="enable_notifications_now">Enable Notifications Now</string>
+    <string name="permissions_status_title">Permissions &amp; Alert Status</string>
+    <string name="notif_perm_status_ok">Notifications: Enabled and ready</string>
+    <string name="notif_perm_status_missing">Notifications: Disabled (you will miss the adhan)</string>
+    <string name="battery_optimizing_ok">Protected from battery saver kills</string>
+    <string name="battery_optimizing_fix">Allow running in background (Ignore battery optimization)</string>
     <!-- Settings: appearance -->
     <string name="section_appearance">Appearance</string>
     <string name="theme_label">Theme</string>
@@ -224,6 +232,7 @@
     <string name="update_download">Download update</string>
     <string name="update_downloading">Downloading update…</string>
     <string name="update_install">Install update</string>
+    <string name="update_install_now">Update App Now</string>
     <string name="update_verify_note">The downloaded file is checked against the published checksum and signature before installation is offered. Installation itself always needs your approval.</string>
     <string name="update_up_to_date">You already have the latest version.</string>
     <string name="update_check_failed">Could not check for updates. Check your connection and try again.</string>

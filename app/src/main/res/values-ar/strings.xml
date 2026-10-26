@@ -157,6 +157,13 @@
     <string name="adhan_style_adhan">أذان كامل (صوتي)</string>
     <string name="adhan_fajr_note">يُستخدم في الفجر أذان الفجر الخاص الذي يزيد «الصلاةُ خيرٌ من النوم».</string>
     <string name="adhan_volume_hint">يُرفَع الأذان على مستوى صوت المنبّه — تحقّق من مستوى صوت المنبّه وإعدادات عدم الإزعاج.</string>
+    <string name="adhan_voice_title">صوت الأذان المفضل</string>
+    <string name="adhan_voice_makkah">أذان الحرم المكي الشريف</string>
+    <string name="adhan_voice_madinah">أذان المسجد النبوي الشريف</string>
+    <string name="adhan_voice_cairo">أذان جمهورية مصر (الجامع الأزهر)</string>
+    <string name="adhan_voice_aqsa">أذان المسجد الأقصى المبارك</string>
+    <string name="test_adhan_fajr">تجربة أذان الفجر (الصلاة خير من النوم)</string>
+    <string name="test_adhan_regular">تجربة أذان باقي الصلوات</string>
     <string name="test_adhan">تجربة الأذان</string>
     <string name="exact_alarm_ok">التنبيه الدقيق مفعّل</string>
     <string name="exact_alarm_blocked">التنبيه الدقيق معطّل — قد تتأخر الإشعارات دقائق.</string>
@@ -183,6 +190,14 @@
     <string name="notif_test_title">إشعار تجريبي</string>
     <string name="notif_test_body">إشعارات نور السبيل تعمل بشكل سليم.</string>
 
+    <string name="notif_perm_banner_title">تفعيل إشعارات الأذان والمواقيت</string>
+    <string name="notif_perm_banner_desc">لإشعارك بدخول وقت كل صلاة وسماع الأذان بدقة في موعده، يرجى تفعيل إذن الإشعارات.</string>
+    <string name="enable_notifications_now">تفعيل الإشعارات الآن</string>
+    <string name="permissions_status_title">حالة الصلاحيات والتنبيهات</string>
+    <string name="notif_perm_status_ok">إذن الإشعارات: مفعل وجاهز</string>
+    <string name="notif_perm_status_missing">إذن الإشعارات: معطل (لن يصلك صوت الأذان)</string>
+    <string name="battery_optimizing_ok">محمي من الإغلاق في وضع توفير الطاقة</string>
+    <string name="battery_optimizing_fix">السماح بالعمل في الخلفية وتجاوز توفير البطارية</string>
     <!-- Settings: appearance -->
     <string name="section_appearance">المظهر</string>
     <string name="theme_label">السمة</string>
@@ -224,6 +239,7 @@
     <string name="update_download">تنزيل التحديث</string>
     <string name="update_downloading">جارٍ تنزيل التحديث…</string>
     <string name="update_install">تثبيت التحديث</string>
+    <string name="update_install_now">تحديث التطبيق الآن</string>
     <string name="update_verify_note">يُتحقق من الملف المنزّل بمطابقة بصمته وتوقيعه المنشورين قبل عرض التثبيت، ولا يتم التثبيت إلا بموافقتك.</string>
     <string name="update_up_to_date">أنت على أحدث إصدار.</string>
     <string name="update_check_failed">تعذّر التحقق من التحديثات. تحقق من الاتصال ثم أعد المحاولة.</string>
