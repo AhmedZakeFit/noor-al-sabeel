@@ -1,3 +1,8 @@
+## [1.0.11] — 2026-10-26
+
+- **App Size Optimization (>62% reduction).** Compressed all bundled adhan audio files (`MP3`) for all reciters and Fajr using 64kbps mono encoding, reducing total raw audio asset footprint from ~40.5 MB down to ~15.1 MB.
+- **Landing Page & Metadata Sync.** Updated landing page, repository docs, and version badges to v1.0.11.
+
 # Changelog
 
 All notable changes to Noor Al-Sabeel are documented here. The format follows
