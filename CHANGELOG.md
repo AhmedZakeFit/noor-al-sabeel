@@ -1,3 +1,8 @@
+## [1.0.13] — 2026-10-26
+
+- **Comprehensive Features Showcase on Landing Page.** Added a dedicated "ميزات التطبيق والبحث عن المساجد" tab showcasing all core features including Nearby Mosque Search, astronomical prayer calculations, Qibla compass, adhan reciter voices, and unthrottled exact alarm clock scheduling.
+- **Version Bump to v1.0.13.**
+
 ## [1.0.12] — 2026-10-26
 
 - **Makkah Adhan Silence Trim.** Removed leading silent dead-air seconds from Makkah Adhan audio files so recitation starts instantly.
