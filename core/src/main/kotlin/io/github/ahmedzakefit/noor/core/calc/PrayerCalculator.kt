@@ -80,9 +80,11 @@ class PrayerCalculator {
 
         val maghribWithOffset = maghribUT + parameters.offsetOf(Prayer.MAGHRIB)
         val tomorrowFajrWithOffset = tomorrow.fajrUTmin + parameters.offsetOf(Prayer.FAJR)
-        val nightMinutes = tomorrowFajrWithOffset - maghribWithOffset
+        // Tomorrow's Fajr is on the next calendar day (1440 minutes ahead of today's 00:00 UT)
+        val tomorrowFajrAbsolute = 1440.0 + tomorrowFajrWithOffset
+        val nightMinutes = tomorrowFajrAbsolute - maghribWithOffset
         val midnightZ = zoned(maghribWithOffset + nightMinutes / 2.0)
-        val lastThirdZ = zoned(tomorrowFajrWithOffset - nightMinutes / 3.0)
+        val lastThirdZ = zoned(tomorrowFajrAbsolute - nightMinutes / 3.0)
 
         return PrayerTimes(
             date = date,

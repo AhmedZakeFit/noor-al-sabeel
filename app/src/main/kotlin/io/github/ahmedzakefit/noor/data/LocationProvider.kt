@@ -50,8 +50,8 @@ class LocationProvider(private val context: Context) {
             return lastKnown(lm)
         }
         val best = AtomicReference<Location?>(null)
-        return withTimeoutOrNull(timeoutMs) {
-            suspendCancellableCoroutine { cont ->
+        val fix = withTimeoutOrNull(timeoutMs) {
+            suspendCancellableCoroutine<Fix?> { cont ->
                 val main = Looper.getMainLooper()
                 var finished = false
                 val listener = object : LocationListener {
@@ -63,8 +63,8 @@ class LocationProvider(private val context: Context) {
                         ) {
                             best.set(location)
                         }
-                        // Good enough fix: finish early.
-                        if (location.hasAccuracy() && location.accuracy <= 30f && !finished) {
+                        // Good enough fix: finish early (45m is more than enough for prayer/qibla)
+                        if (location.hasAccuracy() && location.accuracy <= 45f && !finished) {
                             finished = true
                             lm.removeUpdates(this)
                             if (cont.isActive) cont.resumeWith(Result.success(fixOf(location)))
@@ -87,10 +87,9 @@ class LocationProvider(private val context: Context) {
                     } catch (_: Exception) {
                     }
                 }
-            } ?: run {
-                best.get()?.let { fixOf(it) } ?: lastKnown(lm)
             }
         }
+        return fix ?: best.get()?.let { fixOf(it) } ?: lastKnown(lm)
     }
 
     @SuppressLint("MissingPermission")

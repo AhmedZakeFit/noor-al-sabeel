@@ -1,6 +1,6 @@
 # Noor Al-Sabeel — نور السبيل
 
-**Free, open-source prayer times and qibla compass for Android.**
+**Free, open-source prayer times, qibla compass and nearby mosques for Android.**
 No ads. No subscriptions. No accounts. No tracking.
 
 **العربية:** [اقرأ الوثائق بالعربية](README-AR.md)
@@ -22,6 +22,10 @@ No ads. No subscriptions. No accounts. No tracking.
   Singapore, Turkey, France, or fully custom angles.
 - **Mosque tuning** — shift any individual time by ±30 minutes to match your local mosque.
 - **Qibla compass** with magnetic declination correction and calibration guidance.
+- **Nearby mosques** on an OpenStreetMap map, with distance, direction and one-tap navigation
+  handoff to any installed navigation app. Two independent search sources (Nominatim first,
+  Overpass mirrors as fallback), one overall time budget, and instant cancellation when you
+  leave the screen keep the search fast and reliable on mobile networks.
 - **Customizable notifications** — per-prayer toggles, a pre-prayer reminder with a **live
   countdown** that hands over to the prayer alert (or the adhan) when the time arrives,
   sound and vibration choices, exact alarms, and a test button.
@@ -56,8 +60,8 @@ installed, the app itself can notify you about and install future updates.
 ## Privacy
 
 Noor Al-Sabeel collects nothing. There are no ads, no analytics, no accounts and no trackers. All
-settings and locations stay on your device. The app only touches the network when you use the
-optional online city search or check for updates. See
+settings and locations stay on your device. The app only touches the network when you open the
+map, search for mosques, use the optional online city search, or check for updates. See
 [PRIVACY.md](PRIVACY.md) for the full policy.
 
 ## Accuracy & sources
@@ -87,7 +91,7 @@ environment variables (no secrets in the repo), are in [docs/BUILDING.md](docs/B
 
 ```
 core/    Pure-Kotlin engine: solar math, prayer times, qibla, Hijri calendar, city catalog
-app/     Android UI (Jetpack Compose), notifications, alarms
+app/     Android UI (Jetpack Compose), notifications, alarms, map and mosque search
 docs/    Documentation: building, testing, calculation sources, roadmap
 art/     Source icon artwork
 ```
@@ -101,5 +105,6 @@ Issues, translations and pull requests are welcome — see
 ## License
 
 Code is licensed under [Apache-2.0](LICENSE). Third-party data and libraries and their
-licenses are listed in [NOTICE.md](NOTICE.md), including GeoNames cities (CC-BY-4.0) and the
-Umm al-Qura calendar table adapted from the MIT-licensed hijri-converter project.
+licenses are listed in [NOTICE.md](NOTICE.md), including OpenStreetMap/ODbL map data,
+GeoNames cities (CC-BY-4.0) and the Umm al-Qura calendar table adapted from the MIT-licensed
+hijri-converter project.

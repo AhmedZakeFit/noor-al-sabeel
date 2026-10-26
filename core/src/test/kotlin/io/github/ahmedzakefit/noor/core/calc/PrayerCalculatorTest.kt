@@ -120,3 +120,14 @@ class PrayerCalculatorTest {
         assertEquals(io.github.ahmedzakefit.noor.core.model.Prayer.DHUHR, next!!.first)
     }
 }
+    @Test
+    fun `midnight and last third of night are within night hours`() {
+        val t = calc.compute(LocalDate.of(2026, 1, 15), cairo)
+        assertNotNull(t.midnight)
+        assertNotNull(t.lastThirdOfNight)
+        // Midnight must be after today's Maghrib
+        assertTrue("midnight (${t.midnight}) must be after maghrib (${t.maghrib})", t.midnight!!.isAfter(t.maghrib))
+        // Last third of night must be after midnight and before tomorrow's fajr
+        assertTrue("last third (${t.lastThirdOfNight}) must be after midnight (${t.midnight})", t.lastThirdOfNight!!.isAfter(t.midnight!!))
+    }
+}

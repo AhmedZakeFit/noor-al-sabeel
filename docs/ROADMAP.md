@@ -9,8 +9,11 @@ the speed of its contributors.
   dependency situation is settled).
 - **F-Droid submission** — prepare metadata and a reproducible build; acceptance is up to
   the F-Droid maintainers and is *not* guaranteed.
+- **Mosque favourites** and last-search caching for offline reuse.
 - **R8 shrinking + baseline profiles** for a smaller, faster APK.
 - **More translations** (add string resources; the UI is already bidi-ready).
+- **Qibla on map** — draw the qibla line on the mosque map as a compass alternative for
+  devices without reliable sensors.
 
 ## Later
 

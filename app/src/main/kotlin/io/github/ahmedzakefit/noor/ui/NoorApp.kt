@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -27,6 +28,7 @@ import io.github.ahmedzakefit.noor.R
 import io.github.ahmedzakefit.noor.appContainer
 import io.github.ahmedzakefit.noor.data.AppSettings
 import io.github.ahmedzakefit.noor.ui.home.HomeScreen
+import io.github.ahmedzakefit.noor.ui.mosques.MosquesScreen
 import io.github.ahmedzakefit.noor.ui.qibla.QiblaScreen
 import io.github.ahmedzakefit.noor.ui.settings.SettingsScreen
 import io.github.ahmedzakefit.noor.ui.theme.NOORTheme
@@ -53,6 +55,7 @@ fun NoorApp(
         val destinations = listOf(
             BottomDestination("home", R.drawable.ic_notification, null, R.string.nav_times),
             BottomDestination("qibla", R.drawable.ic_compass, null, R.string.nav_qibla),
+            BottomDestination("mosques", null, Icons.Filled.Place, R.string.nav_mosques),
             BottomDestination("settings", null, Icons.Filled.Settings, R.string.nav_settings),
         )
         Scaffold(
@@ -71,6 +74,7 @@ fun NoorApp(
                         )
                     }
                     composable("qibla") { QiblaScreen() }
+                    composable("mosques") { MosquesScreen() }
                     composable("settings") {
                         SettingsScreen(
                             onFirstLocationSet = {

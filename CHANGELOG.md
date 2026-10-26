@@ -4,26 +4,65 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.6] — 2026-10-26
+
+### Fixed
+- **Islamic Midnight & Last Third of Night calculation (PrayerCalculator.kt):** The night
+  duration was calculating negative minutes across the midnight threshold (subtracting tomorrow's
+  Fajr minutes from today's Maghrib without the 24-hour cycle offset), causing midnight and the
+  last third to appear in the morning. Fixed with 1440.0 minutes absolute day offset and verified with tests.
+- **Location detection timeout on real devices (LocationProvider.kt):** The fallback to last-known
+  location was unreachable on timeout due to coroutine cancellation, and the strict 30m accuracy
+  threshold caused continuous timeouts indoors or on cellular networks. Fixed by moving fallback
+  outside withTimeoutOrNull and setting threshold to 45m.
+- **Nearby Mosques Search restored & verified:** Re-enabled the full mosque search and interactive
+  map with parallel independent sources (Photon + Nominatim), fixed location permission workflow,
+  and reliable search around current device location.
+
 ## [Unreleased]
 
-### Removed
+### Fixed
 
-- **The nearby-mosque search and map feature, in full.** Despite three repair rounds
-  (v1.0.3 mirror failover, v1.0.4 Nominatim-first, v1.0.5 parallel independent sources,
-  and the subsequent permission/layout/location fixes), the search kept failing on real
-  phones — so rather than ship more patches, the feature is removed completely:
-  - the Mosques tab, screen, view model and all its strings (Arabic and English);
-  - the mosque-search stack (`MosqueSearchClient`, `OverpassClient`) and the
-    osmdroid map dependency, its configuration and its NOTICE attribution;
-  - all mosque-related unit tests and the mosque sections of the docs, privacy policy
-    and landing page.
-  Everything else is untouched: prayer times, qibla compass, adhan, notifications,
-  Hijri calendar, settings and the in-app update check. Location permissions are
-  **kept** — they are still used by the settings location picker ("use current
-  location") for prayer times and qibla, as documented in PRIVACY.md. The optional
-  online city search (Nominatim) and the update check keep the `INTERNET` permission
-  meaningfully in use. No official release was cut for the interim fix commits; the
-  removal supersedes them before the next release.
+- **Mosques search never asks for the location permission (the 2026-10-24 phone report).**
+  The main "find nearby mosques" button silently searched the *saved* app location whenever
+  the location permission was missing — so no permission dialog ever appeared, and travelling
+  to another area kept returning the old area's results (the diagnostic audit proved the
+  outgoing Nominatim viewbox / Photon bbox always embedded the saved city). The button is now
+  wired to the runtime permission request: a short in-context rationale, the system dialog,
+  and — on grant — the current-location search the user asked for. A denial keeps clear
+  guidance on screen with a way to open the app settings (for permanent denials), and the
+  saved location is reachable **only** as an explicit on-screen choice, never a silent
+  fallback. Returning to the screen with a newly granted permission (e.g. after granting it
+  in system settings) starts the waiting search automatically.
+- **First map zoom accuracy.** The zoom-fitting used a guessed viewport size until the map
+  view reported its real pixel dimensions, so the very first frame could land at the wrong
+  zoom. The map sync now re-runs once after the view is actually measured.
+- **Mosques screen after travelling (the "same old results" report).** The search button
+  always queried the *saved* app location, so moving to another area and searching again
+  returned the old area's mosques. It now searches around the device's **current
+  location** whenever the location permission is granted — a fresh fix per search, never
+  a cached result (no result caching exists or was introduced; every search goes to the
+  network with the center embedded in the request). Without the permission it searches
+  the saved location and says so on screen, with a one-tap "use my current location"
+  path that asks for the permission in context. A failed fix, a denied permission and
+  an empty radius each get a clear message with explicit retry / fallback actions, and
+  a new search-center line always shows which area is being searched ("around your
+  current location" / "around: <place>").
+- **Mosques screen layout on phones (the "map covers the UI" report).** The results list
+  used `fillMaxSize`, which takes the whole screen height instead of the remaining
+  space, so it ran under the bottom navigation bar and off-screen — worst on small and
+  landscape screens. The list now fills exactly the remaining space (`weight`) and the
+  map shrinks to a bounded fraction of the screen height (150–260 dp), so map pan/pinch
+  gestures stay inside the map's own bounded box and the list scrolls within its own
+  area.
+- **Uncontrolled map movement.** The map was re-centered to the saved location and its
+  markers rebuilt on *every* recomposition (radius chip taps, search start/finish,
+  settings emissions), which kept yanking the user's pan/zoom away. Re-centering,
+  zoom-fitting and marker sync now run only when the search center, the radius or the
+  result set actually changes; the zoom is fitted to the chosen radius and bounded to
+  MAPNIK's usable range (3–19), built-in zoom buttons are disabled (pinch only), and the
+  `MapView` is properly detached when leaving the tab (fixes accumulated leaked map
+  instances across tab switches).
 
 ## [1.0.5] — 2026-10-23
 

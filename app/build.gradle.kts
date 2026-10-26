@@ -19,8 +19,8 @@ android {
         applicationId = "io.github.ahmedzakefit.noor"
         minSdk = 24
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.0.5"
+        versionCode = 7
+        versionName = "1.0.6"
         vectorDrawables { useSupportLibrary = true }
         resourceConfigurations += listOf("en", "ar")
     }
@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coroutines.android)
+    implementation(libs.osmdroid.android)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

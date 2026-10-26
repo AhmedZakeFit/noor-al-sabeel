@@ -9,15 +9,15 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * Minimal cancellable HTTP helper shared by the update checker (and kept as the
- * single transport for any future online feature). Plain [HttpURLConnection] on
- * a short-lived worker thread — no external dependency.
+ * Minimal cancellable HTTP helper shared by the mosque-search sources and the
+ * update checker. Plain [HttpURLConnection] on a short-lived worker thread —
+ * no external dependency.
  *
  * Cancellation actually aborts the transfer: when the calling coroutine is
- * cancelled (user leaves the screen, deadline reached, dialog closed),
+ * cancelled (user leaves the screen, overall deadline reached, dialog closed),
  * [HttpURLConnection.disconnect] is invoked from the cancellation handler,
  * which immediately unblocks the worker thread's socket read. This is what
- * bounds the wall-clock time of a request regardless of per-socket timeouts.
+ * bounds the wall-clock time of a search regardless of per-socket timeouts.
  */
 internal sealed interface HttpOutcome {
     data class Response(val code: Int, val body: String?) : HttpOutcome
@@ -26,7 +26,7 @@ internal sealed interface HttpOutcome {
 internal object Http {
 
     const val USER_AGENT =
-        "NoorAlSabeel/1.0.5 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
+        "NoorAlSabeel/1.0.6 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
 
     suspend fun call(
         url: String,
