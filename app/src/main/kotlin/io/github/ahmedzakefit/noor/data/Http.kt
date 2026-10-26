@@ -21,6 +21,8 @@ import kotlin.coroutines.resumeWithException
  */
 internal sealed interface HttpOutcome {
     data class Response(val code: Int, val body: String?) : HttpOutcome
+    /** HEAD probe result after following redirects. */
+    data class Head(val code: Int, val contentLength: Long) : HttpOutcome
 }
 
 internal object Http {
@@ -108,6 +110,47 @@ internal object Http {
                 val code = conn.responseCode
                 // After following redirects, conn.url is the final address.
                 if (cont.isActive) cont.resume(if (code in 200..399) conn.url.toString() else null)
+            } catch (t: Throwable) {
+                if (cont.isActive) cont.resumeWithException(t)
+            } finally {
+                runCatching { conn.disconnect() }
+            }
+        }
+    }
+
+    /**
+     * HEAD probe with the response code and Content-Length of the address the
+     * redirects finally land on (github.com asset links redirect to the CDN).
+     * Used to confirm that a release asset exists and read its size WITHOUT
+     * downloading it — and without touching the rate-limited API. A missing
+     * asset answers 404 with contentLength -1/absent; the caller treats any
+     * non-2xx as "not there".
+     */
+    suspend fun head(
+        url: String,
+        connectTimeoutMs: Int = 6_000,
+        readTimeoutMs: Int = 8_000,
+    ): HttpOutcome.Head = suspendCancellableCoroutine { cont ->
+        val conn: HttpURLConnection
+        try {
+            conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = connectTimeoutMs
+                readTimeout = readTimeoutMs
+                requestMethod = "HEAD"
+                instanceFollowRedirects = true
+                setRequestProperty("User-Agent", USER_AGENT)
+            }
+        } catch (t: Throwable) {
+            if (cont.isActive) cont.resumeWithException(t)
+            return@suspendCancellableCoroutine
+        }
+        cont.invokeOnCancellation { runCatching { conn.disconnect() } }
+        thread(isDaemon = true, name = "noor-http") {
+            try {
+                val code = conn.responseCode
+                if (cont.isActive) {
+                    cont.resume(HttpOutcome.Head(code, conn.contentLengthLong))
+                }
             } catch (t: Throwable) {
                 if (cont.isActive) cont.resumeWithException(t)
             } finally {

@@ -143,6 +143,33 @@ object UpdateParser {
             host.endsWith(".githubusercontent.com")
     }
 
+    /** GitHub owner/repo this updater is bound to (constant, no user input). */
+    internal const val REPO_PATH = "AhmedZakeFit/noor-al-sabeel"
+
+    /**
+     * Deterministic release-asset URL pairs for the API-free update path.
+     *
+     * The release workflow always publishes, under the tag's download
+     * directory, the versioned pair `noor-al-sabeel-<version>.apk` +
+     * `.apk.sha256` and the stable-named pair `noor-al-sabeel.apk` +
+     * `.apk.sha256` (identical bytes). Given the version resolved from the
+     * `/releases/latest` redirect (github.com — NOT the rate-limited API),
+     * these are exactly the URLs the API would have returned. The caller
+     * HEAD-probes a pair and only uses it when both assets answer 200; the
+     * download is then verified against the published checksum exactly as in
+     * the API path, so the security posture is unchanged.
+     *
+     * Versioned pair first, stable pair as fallback. Invalid version -> null.
+     */
+    fun fallbackAssetUrls(version: String): List<Pair<String, String>>? {
+        val v = versionNameFromTag(version) ?: return null
+        val base = "https://github.com/$REPO_PATH/releases/download/v$v"
+        return listOf(
+            "$base/noor-al-sabeel-$v.apk" to "$base/noor-al-sabeel-$v.apk.sha256",
+            "$base/$STABLE_APK_ASSET" to "$base/$STABLE_APK_ASSET.sha256",
+        )
+    }
+
     /** Outcome of evaluating a fetched release document. */
     enum class Decision { AVAILABLE, UP_TO_DATE, FAILED }
 

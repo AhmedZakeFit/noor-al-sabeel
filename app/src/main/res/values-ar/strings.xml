@@ -244,6 +244,19 @@
     <string name="update_up_to_date">أنت على أحدث إصدار.</string>
     <string name="update_check_failed">تعذّر التحقق من التحديثات. تحقق من الاتصال ثم أعد المحاولة.</string>
     <string name="update_download_failed">فشل التنزيل أو تعذّر التحقق من سلامة الملف. أعد المحاولة.</string>
+    <!-- رسائل محددة لكل سبب فشل في التنزيل أو التحقق أو فتح المُثبّت -->
+    <string name="update_failed_network">فشل التنزيل بسبب خطأ في الشبكة. تحقّق من اتصالك ثم أعد المحاولة.</string>
+    <string name="update_failed_http">رفض الخادم التنزيل (HTTP %1$s). أعد المحاولة لاحقًا.</string>
+    <string name="update_failed_empty">كان الملف المنزّل فارغًا. أعد المحاولة.</string>
+    <string name="update_failed_checksum_unavailable">تعذّر جلب بصمة الملف المنشورة، فلا يمكن التحقق من سلامته. أعد المحاولة لاحقًا.</string>
+    <string name="update_failed_checksum_mismatch">الملف المنزّل لا يطابق بصمة SHA-256 المنشورة وقد حُذف. أعد المحاولة.</string>
+    <string name="update_failed_package_mismatch">الملف المنزّل يخص تطبيقًا آخر وقد حُذف.</string>
+    <string name="update_failed_not_newer">الملف المنزّل ليس أحدث من الإصدار المثبّت وقد حُذف.</string>
+    <string name="update_failed_signature_mismatch">الملف المنزّل موقّع بشهادة مختلفة عن شهادة هذا التطبيق وقد حُذف. حدّث من صفحة إصدارات GitHub للمشروع.</string>
+    <string name="update_failed_source">مصدر التنزيل غير مسموح به وقد حُذف الملف.</string>
+    <string name="update_install_open_failed">تعذّر فتح مُثبّت أندرويد. أعد المحاولة.</string>
+    <string name="update_install_permission_note">يطلب أندرويد موافقتك مرة واحدة: اضغط «السماح بالتثبيت» وفعّل «السماح من هذا المصدر» ثم عُد واضغط «تثبيت».</string>
+    <string name="update_install_permission_button">السماح بالتثبيت</string>
     <string name="update_changelog_title">الجديد في هذا الإصدار</string>
     <string name="update_source_note">تأتي التحديثات من صفحة GitHub Releases الخاصة بالمشروع، ولا يُثبَّت شيء دون موافقتك.</string>
     <string-array name="hijri_months">

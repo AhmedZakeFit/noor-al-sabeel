@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import io.github.ahmedzakefit.noor.data.UpdateParser.ReleaseInfo
 import kotlinx.coroutines.CancellationException
@@ -29,8 +31,23 @@ import java.security.MessageDigest
  * (the user must approve "install unknown apps" for this app once; the system
  * refuses mismatched signatures — we simply detect it earlier).
  *
+ * Version discovery has TWO paths so a rate-limited API can never hide an
+ * existing update (proven failure mode on shared mobile IPs, which share the
+ * 60 req/h unauthenticated quota):
+ *  1. the plain website redirect github.com/…/releases/latest (not
+ *     rate-limited) resolves the latest version;
+ *  2. the API (api.github.com) provides the full release document with
+ *     changelog and exact asset URLs. When the API is unusable (403/429 rate
+ *     limit, 5xx, offline) but the redirect already proved a NEWER version
+ *     exists, the release info is built from the deterministic asset URLs
+ *     the release workflow always publishes (versioned pair preferred, stable
+ *     pair fallback) and confirmed with cheap HEAD probes against github.com.
+ *     The downloaded APK is then verified against the published .sha256
+ *     asset exactly as in the API path — no security check is skipped.
+ *
  * Update checks never block or disturb prayer/adhan functions: every failure
- * path is contained and silent in auto mode.
+ * path is contained and silent in auto mode (except a redirect-proven newer
+ * version, which must surface).
  */
 class UpdateManager(
     private val context: Context,
@@ -43,10 +60,44 @@ class UpdateManager(
         data object Failed : CheckResult
     }
 
+    /** Why a download/verification/install attempt failed — user-visible. */
+    enum class DownloadFailure {
+        /** Network error while fetching the checksum or the APK. */
+        NETWORK,
+        /** The server answered a non-200 code. */
+        HTTP_ERROR,
+        /** The download produced zero bytes. */
+        EMPTY_DOWNLOAD,
+        /** The published .sha256 asset could not be fetched/parsed. */
+        CHECKSUM_UNAVAILABLE,
+        /** Downloaded bytes do not match the published checksum. */
+        CHECKSUM_MISMATCH,
+        /** The archive is a different app. */
+        PACKAGE_MISMATCH,
+        /** The archive is not newer than the installed versionCode. */
+        NOT_NEWER,
+        /** The archive is signed with a different certificate. */
+        SIGNATURE_MISMATCH,
+        /** The URL is not on the release-asset allowlist. */
+        DISALLOWED_SOURCE,
+    }
+
     sealed interface DownloadResult {
         /** File verified — ready for the install prompt. */
         data class Verified(val file: File) : DownloadResult
-        data class Failed(val reason: String?) : DownloadResult
+        data class Failed(
+            val reason: DownloadFailure,
+            /** Human-readable detail for logs, e.g. "HTTP 403" or the exception message. */
+            val detail: String? = null,
+        ) : DownloadResult
+    }
+
+    /** Outcome of trying to hand a verified APK to the system installer. */
+    sealed interface InstallPromptResult {
+        /** The system installer activity was started. */
+        data object Opened : InstallPromptResult
+        /** Could not open the installer (no handler, provider failure, …). */
+        data class Failed(val detail: String? = null) : InstallPromptResult
     }
 
     private val packageManager: PackageManager get() = context.packageManager
@@ -72,6 +123,9 @@ class UpdateManager(
         // Rate-limit-aware pre-check: the plain website redirect resolves the
         // latest version without the 60 req/h API quota, so up-to-date
         // clients (the overwhelming majority of checks) never touch the API.
+        // When it resolves a NEWER version it is remembered — that fact is
+        // the input of the API-free fallback below.
+        var redirectProvedNewer: String? = null
         try {
             val latestVersion = Http.finalRedirectUrl(LATEST_RELEASE_PAGE_URL)
                 ?.let { UpdateParser.versionFromRedirectUrl(it) }
@@ -83,6 +137,7 @@ class UpdateManager(
                     // User postponed exactly this version — no nagging.
                     return CheckResult.UpToDate
                 }
+                redirectProvedNewer = latestVersion
             }
             // Unknown/unreachable redirect or a genuinely newer version:
             // fall through and fetch the full release document.
@@ -107,14 +162,78 @@ class UpdateManager(
             when (decision) {
                 UpdateParser.Decision.AVAILABLE ->
                     CheckResult.Available(info ?: return CheckResult.UpToDate)
-                UpdateParser.Decision.FAILED -> CheckResult.Failed
-                UpdateParser.Decision.UP_TO_DATE -> CheckResult.UpToDate
+                else -> {
+                    // The API produced no usable document (offline, 403/429
+                    // rate limit, 5xx) — but the redirect already PROVED a
+                    // newer version exists. Build the release from the
+                    // deterministic asset URLs so a rate-limited IP can never
+                    // hide an existing update. When the API DID answer and
+                    // said "up to date", it is trusted as before.
+                    if (body == null && redirectProvedNewer != null) {
+                        return releaseFromDeterministicAssets(redirectProvedNewer)
+                            ?: if (decision == UpdateParser.Decision.FAILED) {
+                                CheckResult.Failed
+                            } else {
+                                CheckResult.UpToDate
+                            }
+                    }
+                    if (decision == UpdateParser.Decision.FAILED) CheckResult.Failed
+                    else CheckResult.UpToDate
+                }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (_: Throwable) {
+            // Even the API call itself failed (connection reset, DNS, …):
+            // the deterministic-asset path still applies when the redirect
+            // proved a newer version. (No runCatching here — cancellation
+            // must propagate; the helper contains its own per-candidate
+            // error handling.)
+            if (redirectProvedNewer != null) {
+                return releaseFromDeterministicAssets(redirectProvedNewer)
+                    ?: failOrUpToDate(manual)
+            }
             failOrUpToDate(manual)
         }
+    }
+
+    /**
+     * API-free fallback: HEAD-probe the deterministic versioned/stable asset
+     * pairs published under the resolved tag and build a ReleaseInfo from
+     * the first pair whose APK and checksum both answer 200. Security is
+     * unchanged: https + github.com allowlist only, and the download is
+     * still verified against the published checksum asset before any
+     * install prompt. Null when no pair is reachable.
+     */
+    private suspend fun releaseFromDeterministicAssets(version: String): CheckResult? {
+        val candidates = UpdateParser.fallbackAssetUrls(version) ?: return null
+        for ((apkUrl, sha256Url) in candidates) {
+            if (!UpdateParser.isAllowedDownloadUrl(apkUrl)) continue
+            if (!UpdateParser.isAllowedDownloadUrl(sha256Url)) continue
+            try {
+                val shaHead = Http.head(sha256Url)
+                if (shaHead.code != 200) continue
+                val apkHead = Http.head(apkUrl)
+                if (apkHead.code != 200) continue
+                return CheckResult.Available(
+                    ReleaseInfo(
+                        tag = "v$version",
+                        versionName = version,
+                        apkUrl = apkUrl,
+                        apkSizeBytes = apkHead.contentLength.takeIf { it > 0 } ?: 0L,
+                        sha256Url = sha256Url,
+                        // Changelog needs the API; the dialog already falls
+                        // back to the source note when the summary is blank.
+                        changelogSummary = "",
+                    ),
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                // Try the next candidate pair.
+            }
+        }
+        return null
     }
 
     private fun failOrUpToDate(manual: Boolean): CheckResult =
@@ -128,7 +247,8 @@ class UpdateManager(
      * Downloads the APK into the app's private cache (no permissions needed),
      * hashing while streaming, then verifies checksum + package + version +
      * signature. Any mismatch deletes the file — a bad update is never
-     * offered for installation.
+     * offered for installation. The failure reason is typed so the UI can
+     * tell the user WHAT failed, not just that something did.
      */
     suspend fun downloadApk(
         info: ReleaseInfo,
@@ -137,18 +257,25 @@ class UpdateManager(
         var target: File? = null
         try {
             if (!UpdateParser.isAllowedDownloadUrl(info.apkUrl)) {
-                return@withContext DownloadResult.Failed("disallowed source")
+                return@withContext DownloadResult.Failed(DownloadFailure.DISALLOWED_SOURCE)
             }
             // The published checksum is fetched first — without it there is
             // nothing to verify against, so refuse rather than trust blindly.
-            val publishedSha256: String = info.sha256Url?.let { url ->
-                val checksumOutcome = Http.call(
-                    url = url,
-                    connectTimeoutMs = 6_000,
-                    readTimeoutMs = 10_000,
-                ) as HttpOutcome.Response
-                if (checksumOutcome.code != 200) null else checksumOutcome.body
-            }?.let { UpdateParser.parseChecksumFile(it) } ?: return@withContext DownloadResult.Failed("checksum unavailable")
+            val publishedSha256: String = try {
+                info.sha256Url?.let { url ->
+                    val checksumOutcome = Http.call(
+                        url = url,
+                        connectTimeoutMs = 6_000,
+                        readTimeoutMs = 10_000,
+                    ) as HttpOutcome.Response
+                    if (checksumOutcome.code != 200) null else checksumOutcome.body
+                }?.let { UpdateParser.parseChecksumFile(it) }
+                    ?: return@withContext DownloadResult.Failed(DownloadFailure.CHECKSUM_UNAVAILABLE)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                return@withContext DownloadResult.Failed(DownloadFailure.NETWORK, "checksum fetch failed")
+            }
 
             val dir = File(context.cacheDir, "updates").apply { mkdirs() }
             // Clear older cached updates — only one staged file at a time.
@@ -162,7 +289,9 @@ class UpdateManager(
                 conn.instanceFollowRedirects = true
                 conn.setRequestProperty("User-Agent", Http.USER_AGENT)
                 val code = conn.responseCode
-                if (code != 200) return@withContext DownloadResult.Failed("HTTP $code")
+                if (code != 200) {
+                    return@withContext DownloadResult.Failed(DownloadFailure.HTTP_ERROR, "HTTP $code")
+                }
                 val total = if (conn.contentLengthLong > 0) conn.contentLengthLong else info.apkSizeBytes
                 val digest = MessageDigest.getInstance("SHA-256")
                 var read = 0L
@@ -181,7 +310,7 @@ class UpdateManager(
                         }
                     }
                 }
-                if (read == 0L) return@withContext DownloadResult.Failed("empty download")
+                if (read == 0L) return@withContext DownloadResult.Failed(DownloadFailure.EMPTY_DOWNLOAD)
 
                 val actualSha256 = sha256Hex(digest.digest())
                 val archive = archiveFacts(target)
@@ -197,7 +326,17 @@ class UpdateManager(
                     DownloadResult.Verified(target)
                 } else {
                     runCatching { target.delete() }
-                    DownloadResult.Failed(verdict.name)
+                    DownloadResult.Failed(
+                        when (verdict) {
+                            UpdateVerifier.Verdict.CHECKSUM_UNKNOWN -> DownloadFailure.CHECKSUM_UNAVAILABLE
+                            UpdateVerifier.Verdict.CHECKSUM_MISMATCH -> DownloadFailure.CHECKSUM_MISMATCH
+                            UpdateVerifier.Verdict.PACKAGE_MISMATCH -> DownloadFailure.PACKAGE_MISMATCH
+                            UpdateVerifier.Verdict.NOT_NEWER -> DownloadFailure.NOT_NEWER
+                            UpdateVerifier.Verdict.SIGNATURE_MISMATCH -> DownloadFailure.SIGNATURE_MISMATCH
+                            UpdateVerifier.Verdict.OK -> DownloadFailure.NETWORK // unreachable
+                        },
+                        verdict.name,
+                    )
                 }
             } finally {
                 conn.disconnect()
@@ -207,7 +346,7 @@ class UpdateManager(
             throw e
         } catch (e: Throwable) {
             target?.let { runCatching { it.delete() } }
-            DownloadResult.Failed(e.message)
+            DownloadResult.Failed(DownloadFailure.NETWORK, e.message)
         }
     }
 
@@ -215,9 +354,10 @@ class UpdateManager(
      * Opens the system package-installer flow for the verified file. The
      * user's approval (and the one-time "install unknown apps" grant for this
      * app on Android 8+) is required — there is no silent path and none is
-     * attempted.
+     * attempted. The outcome is REPORTED (not swallowed) so the UI can show
+     * what happened and offer retry / the permission settings screen.
      */
-    fun installPrompt(file: File): Boolean = try {
+    fun installPrompt(file: File): InstallPromptResult = try {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
@@ -225,9 +365,33 @@ class UpdateManager(
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
-        true
-    } catch (_: Throwable) {
-        false
+        InstallPromptResult.Opened
+    } catch (e: Throwable) {
+        InstallPromptResult.Failed(e.message ?: e.javaClass.simpleName)
+    }
+
+    /**
+     * Whether this app currently holds the Android 8+ "install unknown apps"
+     * grant. Null on Android < 8, where the legacy "unknown sources" setting
+     * governs the install flow instead.
+     */
+    fun canRequestInstalls(): Boolean? =
+        if (Build.VERSION.SDK_INT >= 26) packageManager.canRequestPackageInstalls() else null
+
+    /**
+     * Opens this app's page in the system "install unknown apps" settings so
+     * the user can grant the one-time permission themselves. Purely
+     * user-driven — nothing is granted silently.
+     */
+    fun openInstallPermissionSettings(): InstallPromptResult = try {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+            Uri.parse("package:${context.packageName}"),
+        ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+        context.startActivity(intent)
+        InstallPromptResult.Opened
+    } catch (e: Throwable) {
+        InstallPromptResult.Failed(e.message ?: e.javaClass.simpleName)
     }
 
     /** Package facts of a downloaded APK, as far as the platform exposes them. */
@@ -261,8 +425,8 @@ class UpdateManager(
 
     companion object {
         internal const val LATEST_RELEASE_URL =
-            "https://api.github.com/repos/AhmedZakeFit/noor-al-sabeel/releases/latest"
+            "https://api.github.com/repos/${UpdateParser.REPO_PATH}/releases/latest"
         internal const val LATEST_RELEASE_PAGE_URL =
-            "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/latest"
+            "https://github.com/${UpdateParser.REPO_PATH}/releases/latest"
     }
 }

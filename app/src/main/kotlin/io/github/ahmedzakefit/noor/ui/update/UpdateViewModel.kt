@@ -20,13 +20,20 @@ import java.io.File
  * a quiet banner on the home screen after the automatic check on app open,
  * and the details dialog used from the banner and from settings' manual
  * "check for updates" button.
+ *
+ * Every failure carries its REASON (network / checksum / signature / HTTP /
+ * installer could not open …) so the dialog can tell the user what exactly
+ * went wrong and always offer a retry. Nothing is hidden.
  */
 class UpdateViewModel(private val container: AppContainer) : ViewModel() {
 
     sealed interface DownloadState {
         data class Progress(val bytes: Long, val total: Long?) : DownloadState
         data class Verified(val file: File) : DownloadState
-        data object Failed : DownloadState
+        data class Failed(
+            val reason: UpdateManager.DownloadFailure,
+            val detail: String? = null,
+        ) : DownloadState
     }
 
     /** One-line outcome for the manual check button. */
@@ -40,6 +47,8 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
         val checking: Boolean = false,
         val manualMessage: ManualMessage = ManualMessage.NONE,
         val download: DownloadState? = null,
+        /** Non-null when handing the verified file to the system installer failed. */
+        val installOpenError: String? = null,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -75,6 +84,7 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
                     banner = result.info,
                     dialog = result.info,
                     download = null,
+                    installOpenError = null,
                 )
                 UpdateManager.CheckResult.UpToDate -> _state.value.copy(
                     checking = false,
@@ -95,14 +105,14 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
     fun closeDialog() {
         downloadJob?.cancel()
         downloadJob = null
-        _state.value = _state.value.copy(dialog = null, download = null)
+        _state.value = _state.value.copy(dialog = null, download = null, installOpenError = null)
     }
 
     /** Postpone exactly this version: auto checks stay quiet until a newer one. */
     fun postpone(info: ReleaseInfo) {
         viewModelScope.launch {
             container.updateManager.postpone(info)
-            _state.value = _state.value.copy(banner = null, dialog = null, download = null)
+            _state.value = _state.value.copy(banner = null, dialog = null, download = null, installOpenError = null)
         }
     }
 
@@ -110,6 +120,7 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
         if (downloadJob?.isActive == true) return
         _state.value = _state.value.copy(
             download = DownloadState.Progress(0, info.apkSizeBytes.takeIf { it > 0 }),
+            installOpenError = null,
         )
         downloadJob = viewModelScope.launch {
             val result = container.updateManager.downloadApk(info) { read, total ->
@@ -117,10 +128,20 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
             }
             val downloadState = when (result) {
                 is UpdateManager.DownloadResult.Verified -> {
-                    install(result.file)
+                    // Hand the verified file to the installer; report failures
+                    // instead of silently doing nothing.
+                    when (val opened = container.updateManager.installPrompt(result.file)) {
+                        is UpdateManager.InstallPromptResult.Opened ->
+                            _state.value = _state.value.copy(installOpenError = null)
+                        is UpdateManager.InstallPromptResult.Failed ->
+                            _state.value = _state.value.copy(
+                                installOpenError = opened.detail ?: "installer unavailable",
+                            )
+                    }
                     DownloadState.Verified(result.file)
                 }
-                is UpdateManager.DownloadResult.Failed -> DownloadState.Failed
+                is UpdateManager.DownloadResult.Failed ->
+                    DownloadState.Failed(result.reason, result.detail)
             }
             _state.value = _state.value.copy(download = downloadState)
         }
@@ -128,8 +149,29 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
 
     /** Verified file -> system install prompt (user approval required). */
     fun install(file: File) {
-        container.updateManager.installPrompt(file)
+        when (val opened = container.updateManager.installPrompt(file)) {
+            is UpdateManager.InstallPromptResult.Opened ->
+                _state.value = _state.value.copy(installOpenError = null)
+            is UpdateManager.InstallPromptResult.Failed ->
+                _state.value = _state.value.copy(
+                    installOpenError = opened.detail ?: "installer unavailable",
+                )
+        }
     }
+
+    /** Retry opening the installer after a failure. */
+    fun retryInstall(file: File) {
+        install(file)
+    }
+
+    /** Opens the system "install unknown apps" page for this app (Android 8+). */
+    fun openInstallPermissionSettings() {
+        container.updateManager.openInstallPermissionSettings()
+    }
+
+    /** Whether the Android 8+ "install unknown apps" grant is missing (null: N/A). */
+    fun installPermissionMissing(): Boolean? =
+        container.updateManager.canRequestInstalls()?.not()
 
     companion object {
         val Factory: ViewModelProvider.Factory =

@@ -65,6 +65,51 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 
 ### Fixed
 
+- **In-app update unreachable behind a rate-limited GitHub API (the proven root cause
+  of the in-app update failure).** The updater's only path to an available update was
+  the unauthenticated `api.github.com/repos/…/releases/latest` call (60 req/h per IP);
+  the `/releases/latest` website redirect pre-check only short-circuited the
+  *up-to-date* case. On shared/CGNAT mobile IPs whose quota is exhausted, the check
+  failed exactly when a newer release existed: the automatic check stayed silently
+  "up to date" (no banner) and the manual check reported failure (verified live:
+  the API answered HTTP 403 while the redirect, the release assets and their
+  checksums were all fully reachable from the same network). The check now falls
+  back — when the redirect has already proven a newer version exists and the API
+  produced no usable document — to the deterministic asset URLs the release
+  workflow always publishes (versioned pair preferred, stable-named pair
+  fallback), confirmed with cheap HEAD probes against `github.com` (not
+  rate-limited). No security check is weakened: HTTPS + release-host allowlist
+  only, and the downloaded APK is still verified against the published
+  `.apk.sha256` asset plus package name, versionCode and signing certificate
+  before any install prompt.
+- **Update failures no longer hide their reason.** Download/verification failures
+  were collapsed into one generic "download failed" message, and the result of
+  opening the Android package installer was ignored entirely — a failed
+  installer open left the dialog claiming everything was fine with no retry.
+  Failures are now typed (network / HTTP error / empty file / checksum
+  unavailable / checksum mismatch / wrong package / not newer / signature
+  mismatch / disallowed source / installer could not open) and the dialog shows
+  a specific, localized message for each, always with a retry. On Android 8+
+  with the "install unknown apps" grant missing, the dialog explains the
+  one-time approval and offers a button that opens the system settings page for
+  this app — nothing is granted or installed silently.
+- **Landing page contradicted the mosque search feature (gh-pages).** The FAQ
+  claimed the app "does not search for nearby mosques" while the app ships a
+  full mosque search (parallel Nominatim + Photon sources, 1–10 km radius,
+  interactive map). The claim was removed from the Arabic and English pages,
+  the nearby-mosque search was added to the feature list (JSON-LD and visible
+  cards) and a dedicated FAQ entry describes it accurately, including that it
+  needs an internet connection; the "only two optional internet features"
+  statements were corrected to three everywhere (city search, mosque search,
+  update check) and `llms.txt` was aligned.
+
+### Added
+
+- **Tests for the new update paths.** The deterministic fallback asset-URL
+  construction (versioned pair first, stable pair fallback, allowlisted,
+  matching the real v1.0.13 release layout), and a pin that every typed
+  download-failure reason maps to a distinct localized message.
+
 - **Mosques search never asks for the location permission (the 2026-10-24 phone report).**
   The main "find nearby mosques" button silently searched the *saved* app location whenever
   the location permission was missing — so no permission dialog ever appeared, and travelling

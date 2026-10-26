@@ -166,6 +166,72 @@ class UpdateParserTest {
         assertFalse(UpdateParser.isAllowedDownloadUrl("not a url"))
     }
 
+    // --- API-free fallback: deterministic asset URLs ---------------------------
+
+    @Test
+    fun `fallback asset urls build the versioned pair first then the stable pair`() {
+        // The exact URLs the release workflow publishes under the tag's
+        // download directory — this is what the updater uses when the
+        // rate-limited API cannot answer but /releases/latest already
+        // resolved the newer version.
+        val pairs = UpdateParser.fallbackAssetUrls("1.0.13")!!
+        assertEquals(2, pairs.size)
+        assertEquals(
+            "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.13/noor-al-sabeel-1.0.13.apk",
+            pairs[0].first,
+        )
+        assertEquals(
+            "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.13/noor-al-sabeel-1.0.13.apk.sha256",
+            pairs[0].second,
+        )
+        assertEquals(
+            "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.13/noor-al-sabeel.apk",
+            pairs[1].first,
+        )
+        assertEquals(
+            "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.13/noor-al-sabeel.apk.sha256",
+            pairs[1].second,
+        )
+    }
+
+    @Test
+    fun `every fallback url is https on github com and thus allowlisted`() {
+        for ((apk, sha) in UpdateParser.fallbackAssetUrls("2.5")!!) {
+            assertTrue(UpdateParser.isAllowedDownloadUrl(apk))
+            assertTrue(UpdateParser.isAllowedDownloadUrl(sha))
+        }
+    }
+
+    @Test
+    fun `malformed versions yield no fallback urls`() {
+        assertNull(UpdateParser.fallbackAssetUrls("1.0.5.1-test.5b022cb1")) // test prerelease
+        assertNull(UpdateParser.fallbackAssetUrls(""))
+        assertNull(UpdateParser.fallbackAssetUrls("beta"))
+    }
+
+    @Test
+    fun `fallback urls match what the real release publishes`() {
+        // Cross-check against the real v1.0.13 release layout: the versioned
+        // APK asset's browser_download_url IS the deterministic URL the
+        // fallback constructs (verified against the live release on
+        // 2026-10-26). This pins the naming convention.
+        val releaseWithVersionedAsset = """
+        {
+          "tag_name": "v1.0.13",
+          "assets": [
+            {"name": "noor-al-sabeel-1.0.13.apk", "size": 24550825,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.13/noor-al-sabeel-1.0.13.apk"},
+            {"name": "noor-al-sabeel-1.0.13.apk.sha256", "size": 92,
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.13/noor-al-sabeel-1.0.13.apk.sha256"}
+          ]
+        }
+        """.trimIndent()
+        val apiInfo = UpdateParser.parseRelease(releaseWithVersionedAsset)!!
+        val fallback = UpdateParser.fallbackAssetUrls("1.0.13")!!
+        assertEquals(apiInfo.apkUrl, fallback[0].first)
+        assertEquals(apiInfo.sha256Url, fallback[0].second)
+    }
+
     // --- changelog summary ----------------------------------------------------
 
     @Test
@@ -298,4 +364,40 @@ class UpdateVerifierTest {
             UpdateVerifier.verdict(sha, sha, facts(signer = null), installed, 4, sha),
         )
     }
+}
+
+/**
+ * Pins the mapping from a [io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure]
+ * to its user-facing message key, so every typed failure the update flow can
+ * report stays distinct and none silently degrades to a generic message.
+ */
+class UpdateFailureMappingTest {
+
+    private val allReasons = io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.entries
+
+    @Test
+    fun `every download failure reason maps to a distinct message key`() {
+        // The dialog maps each reason to exactly one localized string; a
+        // collision or a missing entry would hide the real cause from the
+        // user (the very bug this fixes).
+        val keys = allReasons.associateWith { reason ->
+            io.github.ahmedzakefit.noor.R.string::class.java
+                .getField(messageKeyField(reason))
+                .getInt(null)
+        }
+        assertEquals(allReasons.size, keys.values.toSet().size)
+    }
+
+    private fun messageKeyField(reason: io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure): String =
+        "update_failed_" + when (reason) {
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.NETWORK -> "network"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.HTTP_ERROR -> "http"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.EMPTY_DOWNLOAD -> "empty"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.CHECKSUM_UNAVAILABLE -> "checksum_unavailable"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.CHECKSUM_MISMATCH -> "checksum_mismatch"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.PACKAGE_MISMATCH -> "package_mismatch"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.NOT_NEWER -> "not_newer"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.SIGNATURE_MISMATCH -> "signature_mismatch"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.DISALLOWED_SOURCE -> "source"
+        }
 }

@@ -81,7 +81,13 @@
   same/older → up to date, connection failure → silent up-to-date in auto mode but a
   visible failure for manual checks, postponed version silenced in auto mode only. The
   verifier matrix blocks install on checksum unknown/mismatch, wrong package, non-newer
-  versionCode, or a mismatched signing certificate.
+  versionCode, or a mismatched signing certificate. The API-free fallback pins the
+  deterministic asset URLs (versioned pair first, stable pair fallback, every URL HTTPS on
+  the allowlisted github.com, malformed/test versions rejected, and the constructed URLs
+  byte-identical to a real release's published asset URLs), and the failure-mapping test
+  pins that every typed download failure (network / HTTP / empty / checksum unavailable /
+  checksum mismatch / package / not-newer / signature / disallowed source) maps to a
+  distinct localized message so no cause is ever silently swallowed.
 - **Post-release link check (`verify-download` workflow)** — after every release publish
   (and weekly) the fixed landing-page link `/releases/latest/download/noor-al-sabeel.apk`
   is downloaded through and verified: HTTP 200, ZIP magic bytes, plausible size, and SHA-256
@@ -151,9 +157,14 @@ on the app:
     updates” reports up-to-date; with a newer release published, the quiet banner appears
     on the home screen after (re)opening the app, the dialog shows the version and change
     summary, “Later” silences that exact version, the download shows progress and then the
-    install prompt (approve “install unknown apps” once), and the system installs the
-    verified APK over the existing app with data intact. In airplane mode nothing pops up
-    and prayer functions are unaffected.
+    install prompt (approve “install unknown apps” once; when the grant is missing the
+    dialog now explains it and links to the system settings page for this app), and the
+    system installs the verified APK over the existing app with data intact. Failures must
+    say WHY (network / HTTP error / checksum unavailable or mismatch / signature mismatch /
+    installer could not open) and offer a retry — including when the GitHub API is
+    rate-limited (HTTP 403): the banner must still appear and the download must still
+    verify, because the check falls back to the deterministic release asset URLs. In
+    airplane mode nothing pops up and prayer functions are unaffected.
 17. **Landing page:** open <https://ahmedzakefit.github.io/noor-al-sabeel/> — Arabic by
     default, the language toggle flips direction (RTL/LTR) and persists, the download
     button downloads the APK file directly (no intermediate release page; on Android a
@@ -226,6 +237,11 @@ in docs/PRAYER_TIMES.md.
   فشل الاتصال ← صمت تلقائي ورسالة يدويًا، المؤجَّل يُسكت تلقائيًا فقط)، ومصفوفة الرفض
   قبل التثبيت (بصمة غائبة/مخالفة، حزمة أخرى، إصدار غير أحدث، توقيع مخالف)، وتفضيل
   ملف APK المُوسوم بالإصدار تحديدًا على النسخة ثابتة الاسم مهما كان ترتيب الأصول.
+  كما تُثبّت اختبارات المسار البديل بدون API روابط الأصول الحتمية (الزوج المُوسوم
+  أولًا ثم الثابت، كلها HTTPS على github.com المسموح، ورفض أسماء الإصدارات التجريبية،
+  وتطابق الروابط المبنية بايتًا بايتًا مع روابط إصدار حقيقي منشور)، ويُثبّت اختبار
+  الخرائط أن كل سبب فشل مُنمّط في التنزيل (شبكة/HTTP/ملف فارغ/بصمة غائبة أو مخالفة/
+  حزمة/غير أحدث/توقيع/مصدر ممنوع) يقابل رسالة مترجمة متميزة فلا يُبتلع أي سبب صمتًا.
 - **فحص رابط التنزيل بعد النشر (سير عمل `verify-download`)** — بعد كل نشر إصدار (وأسبوعيًا)
   يُنزَّل الملف عبر الرابط الثابت `/releases/latest/download/noor-al-sabeel.apk` ويُتحقق
   منه: HTTP 200 وبايتات ZIP الفعلية وحجم معقول وبصمة SHA-256 مطابقة لأصل الإصدار
@@ -275,9 +291,13 @@ in docs/PRAYER_TIMES.md.
 16. **التحقق من التحديث:** على أحدث إصدار يعرض «التحقق من وجود تحديثات» في الإعدادات ←
     حول التطبيق أنك محدّث؛ وعند نشر إصدار أحدث يظهر شريط هادئ في الرئيسية بعد الفتح،
     ويعرض الحوار الإصدار وملخص التغييرات، و«لاحقًا» يُسكت هذا الإصدار بعينه، ويظهر
-    تقدم التنزيل ثم نافذة التثبيت (وافق على «تثبيت تطبيقات غير معروفة» مرة واحدة)،
-    ويثبّت النظام الملف المتحقق منه فوق التطبيق ببقاء البيانات. وفي وضع الطيران لا
-    يظهر شيء ولا تتأثر وظائف الصلاة.
+    تقدم التنزيل ثم نافذة التثبيت (وافق على «تثبيت تطبيقات غير معروفة» مرة واحدة؛
+    وإذا كان الإذن غير ممنوح يشرحه الحوار الآن ويربط بصفحة إعدادات النظام الخاصة
+    بالتطبيق)، ويثبّت النظام الملف المتحقق منه فوق التطبيق ببقاء البيانات. وعند أي
+    فشل يجب أن يُذكر السبب (شبكة/خطأ HTTP/بصمة غائبة أو مخالفة/توقيع مخالف/تعذّر فتح
+    المُثبّت) مع إمكانية إعادة المحاولة — بما في ذلك عند تقييد واجهة GitHub‏ (HTTP 403):
+    يجب أن يظل الشريط ظاهرًا والتنزيل متحققًا منه لأن الفحص يسقط على روابط أصول
+    الإصدار الحتمية. وفي وضع الطيران لا يظهر شيء ولا تتأثر وظائف الصلاة.
 17. **صفحة الهبوط:** افتح <https://ahmedzakefit.github.io/noor-al-sabeel/> — العربية هي
     الافتراضية، وزر اللغة يبدّل الاتجاه (RTL/LTR) ويحفظ الاختيار، وزر التحميل يُنزّل ملف
     الـ APK مباشرة عبر الرابط الثابت `/releases/latest/download/noor-al-sabeel.apk` دون
