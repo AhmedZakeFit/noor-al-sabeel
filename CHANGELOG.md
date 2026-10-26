@@ -1,3 +1,9 @@
+## [1.0.12] — 2026-10-26
+
+- **Makkah Adhan Silence Trim.** Removed leading silent dead-air seconds from Makkah Adhan audio files so recitation starts instantly.
+- **Cairo Adhan Takbeer Correction.** Corrected Cairo Adhan audio to correctly recite 4 Takbeers at the start ("Allahu Akbar" x4) instead of 2.
+- **Metadata Sync.** Version bumped to v1.0.12 across all landing page and repository files.
+
 ## [1.0.11] — 2026-10-26
 
 - **App Size Optimization (>62% reduction).** Compressed all bundled adhan audio files (`MP3`) for all reciters and Fajr using 64kbps mono encoding, reducing total raw audio asset footprint from ~40.5 MB down to ~15.1 MB.
