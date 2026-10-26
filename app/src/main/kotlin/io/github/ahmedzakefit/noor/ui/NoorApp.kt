@@ -66,9 +66,18 @@ fun NoorApp(
                     .fillMaxSize()
                     .padding(padding),
             ) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val activityStoreOwner = (context as? androidx.lifecycle.ViewModelStoreOwner)
+                    ?: androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner.current
+                val updateVm: UpdateViewModel = viewModel(
+                    viewModelStoreOwner = checkNotNull(activityStoreOwner),
+                    factory = UpdateViewModel.Factory
+                )
+
                 NavHost(navController = navController, startDestination = "home") {
                     composable("home") {
                         HomeScreen(
+                            updateVm = updateVm,
                             onOpenLocationPicker = { navController.navigate("settings") },
                             onRequestNotificationPermission = onRequestNotificationPermission,
                         )
@@ -77,6 +86,7 @@ fun NoorApp(
                     composable("mosques") { MosquesScreen() }
                     composable("settings") {
                         SettingsScreen(
+                            updateVm = updateVm,
                             onFirstLocationSet = {
                                 navController.navigate("home") {
                                     popUpTo(navController.graph.startDestinationId) {
@@ -88,9 +98,6 @@ fun NoorApp(
                         )
                     }
                 }
-                // Activity-scoped update flow: quiet banner (Home) + shared
-                // details dialog on top of whichever tab is showing.
-                val updateVm: UpdateViewModel = viewModel(factory = UpdateViewModel.Factory)
                 UpdateFlowHost(updateVm)
             }
         }

@@ -115,12 +115,14 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
             val result = container.updateManager.downloadApk(info) { read, total ->
                 _state.value = _state.value.copy(download = DownloadState.Progress(read, total))
             }
-            _state.value = _state.value.copy(
-                download = when (result) {
-                    is UpdateManager.DownloadResult.Verified -> DownloadState.Verified(result.file)
-                    is UpdateManager.DownloadResult.Failed -> DownloadState.Failed
-                },
-            )
+            val downloadState = when (result) {
+                is UpdateManager.DownloadResult.Verified -> {
+                    install(result.file)
+                    DownloadState.Verified(result.file)
+                }
+                is UpdateManager.DownloadResult.Failed -> DownloadState.Failed
+            }
+            _state.value = _state.value.copy(download = downloadState)
         }
     }
 

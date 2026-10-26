@@ -69,6 +69,11 @@ import java.util.Locale
 fun HomeScreen(
     onOpenLocationPicker: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
+    updateVm: UpdateViewModel = viewModel(
+        viewModelStoreOwner = (LocalContext.current as? androidx.lifecycle.ViewModelStoreOwner)
+            ?: checkNotNull(androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner.current),
+        factory = UpdateViewModel.Factory
+    ),
 ) {
     val context = LocalContext.current
     val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
@@ -113,7 +118,6 @@ fun HomeScreen(
 
         // Quiet update banner after the automatic check on app open
         // (postponed versions never re-appear).
-        val updateVm: UpdateViewModel = viewModel(factory = UpdateViewModel.Factory)
         UpdateBanner(updateVm)
         val notifsEnabled = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
         if (state.settings.notificationsMaster && !notifsEnabled) {

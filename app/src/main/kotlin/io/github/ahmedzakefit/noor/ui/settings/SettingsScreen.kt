@@ -66,7 +66,14 @@ import io.github.ahmedzakefit.noor.ui.home.prayerLabel
 import java.util.Locale
 
 @Composable
-fun SettingsScreen(onFirstLocationSet: (() -> Unit)? = null) {
+fun SettingsScreen(
+    onFirstLocationSet: (() -> Unit)? = null,
+    updateVm: io.github.ahmedzakefit.noor.ui.update.UpdateViewModel = viewModel(
+        viewModelStoreOwner = (LocalContext.current as? androidx.lifecycle.ViewModelStoreOwner)
+            ?: checkNotNull(androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner.current),
+        factory = io.github.ahmedzakefit.noor.ui.update.UpdateViewModel.Factory
+    ),
+) {
     val vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
     val settings by vm.settings.collectAsStateWithLifecycle()
     var showLocationPicker by remember { mutableStateOf(false) }
@@ -84,7 +91,7 @@ fun SettingsScreen(onFirstLocationSet: (() -> Unit)? = null) {
         NotificationsSection(settings, vm)
         AppearanceSection(settings, vm)
         CalendarSection(settings, vm)
-        AboutSection()
+        AboutSection(updateVm)
     }
 
     if (showLocationPicker) {
@@ -684,10 +691,8 @@ private fun CalendarSection(settings: AppSettings, vm: SettingsViewModel) {
 }
 
 @Composable
-private fun AboutSection() {
+private fun AboutSection(updateVm: io.github.ahmedzakefit.noor.ui.update.UpdateViewModel) {
     val context = LocalContext.current
-    val updateVm: io.github.ahmedzakefit.noor.ui.update.UpdateViewModel =
-        viewModel(factory = io.github.ahmedzakefit.noor.ui.update.UpdateViewModel.Factory)
     val updateState by updateVm.state.collectAsStateWithLifecycle()
     SectionCard(stringResource(R.string.section_about)) {
         val version = remember {
