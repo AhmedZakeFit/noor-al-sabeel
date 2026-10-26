@@ -4,6 +4,11 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.9] — 2026-10-26
+
+- **Distinct Adhan Audio Files for Every Reciter.** Bundled distinct, authentic, high-quality adhan audio recordings for all 4 selectable reciter voices (Makkah, Madinah, Cairo, Al-Aqsa) for both regular prayers and Fajr.
+- **Voice Preview & Alert Fix.** Testing or receiving an adhan now plays the exact audio file corresponding to the user-selected reciter and prayer.
+
 ## [1.0.8] — 2026-10-26
 
 - **App Version Name Sync.** Updated `versionName` in `app/build.gradle.kts` to `1.0.8` (and `versionCode` to `9`) so installed APKs accurately show version 1.0.8 under Settings > About and align with GitHub Releases & landing page.
