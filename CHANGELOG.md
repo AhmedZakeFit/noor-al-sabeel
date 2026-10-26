@@ -4,6 +4,11 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.10] — 2026-10-26
+
+- **Unthrottled AlarmClock Scheduling.** Upgraded `AlarmScheduler` to use `AlarmManager.setAlarmClock(...)` as the primary exact alarm mechanism. This guarantees adhan alerts wake the CPU and trigger at the exact second scheduled, bypassing Doze mode and background restrictions on Xiaomi/MIUI, Samsung, Huawei, and Android 12–15.
+- **Graceful Security Exception Handling.** Falls back automatically to `setExactAndAllowWhileIdle` and windowed scheduling if exact alarm permission is restricted, preventing background crashes.
+
 ## [1.0.9] — 2026-10-26
 
 - **Distinct Adhan Audio Files for Every Reciter.** Bundled distinct, authentic, high-quality adhan audio recordings for all 4 selectable reciter voices (Makkah, Madinah, Cairo, Al-Aqsa) for both regular prayers and Fajr.

@@ -115,10 +115,28 @@ class AlarmScheduler(
             intent(prayer, isReminder),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        if (canScheduleExact()) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, pi)
-        } else {
-            // Bounded window keeps delays small without the exact-alarm permission.
+        val showIntent = PendingIntent.getActivity(
+            context,
+            0,
+            Intent(context, io.github.ahmedzakefit.noor.MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(atMillis, showIntent)
+        try {
+            if (canScheduleExact()) {
+                am.setAlarmClock(alarmClockInfo, pi)
+            } else {
+                am.setWindow(AlarmManager.RTC_WAKEUP, atMillis, 10 * 60_000L, pi)
+            }
+        } catch (e: SecurityException) {
+            try {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, pi)
+            } catch (_: Throwable) {
+                am.setWindow(AlarmManager.RTC_WAKEUP, atMillis, 10 * 60_000L, pi)
+            }
+        } catch (_: Throwable) {
             am.setWindow(AlarmManager.RTC_WAKEUP, atMillis, 10 * 60_000L, pi)
         }
     }
