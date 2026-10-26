@@ -4,6 +4,11 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.8] — 2026-10-26
+
+- **App Version Name Sync.** Updated `versionName` in `app/build.gradle.kts` to `1.0.8` (and `versionCode` to `9`) so installed APKs accurately show version 1.0.8 under Settings > About and align with GitHub Releases & landing page.
+- **In-App Update Action Fix.** Unified `UpdateViewModel` instance across `NoorApp`, `HomeScreen`, and `SettingsScreen` so that clicking "Update Now", "View Details", or "Check for Updates" immediately triggers progress bar and package installer.
+
 ## [1.0.7] — 2026-10-26
 
 ### Fixed & Improved
