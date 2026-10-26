@@ -52,6 +52,7 @@
         "A complete recorded adhan that plays at prayer time even with the screen locked, with a separate Fajr adhan",
         "A pre-prayer reminder with a live countdown in the notification",
         "A qibla compass with magnetic-declination correction and the distance to the Kaaba",
+        "Nearby-mosque search on an interactive map with a 1–10 km radius",
         "The official Umm al-Qura Hijri calendar (1924–2076) with a manual adjustment",
         "Shift any individual prayer time by up to ±30 minutes to match your local mosque",
         "No ads, no tracking, no accounts; your data stays on your device"
@@ -65,7 +66,7 @@
           "name": "Does the app work offline?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. All prayer-time, qibla and Hijri-calendar calculations run on your device, and a bundled catalog of about 4,300 cities works with no internet at all (2,088 of them with Arabic names). The app uses the network for only two optional features: the online city search and the update check."
+            "text": "Yes. All prayer-time, qibla and Hijri-calendar calculations run on your device, and a bundled catalog of about 4,300 cities works with no internet at all (2,088 of them with Arabic names). The app uses the network for only three optional features: the online city search, the nearby-mosque search with its map, and the update check."
           }
         },
         {
@@ -105,7 +106,15 @@
           "name": "Can I match the times with my local mosque?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. You can shift any individual prayer time by up to 30 minutes earlier or later to align it with your mosque's adhan. Note that the app does not search for nearby mosques; the adjustment is manual, per prayer."
+            "text": "Yes. You can shift any individual prayer time by up to 30 minutes earlier or later to align it with your mosque's adhan, and a dedicated screen searches for nearby mosques on an interactive map."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I search for the nearest mosque?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Open the “Mosques” tab and tap the search button: the app shows nearby mosques on an interactive map around your current location (after the location permission) or around your saved location, with distances and one-tap navigation, and you can pick a search radius from 1 to 10 km. This search needs an internet connection because it queries open map services (OpenStreetMap); everything else in the app works offline."
           }
         },
         {
@@ -336,6 +345,12 @@ footer a:hover{text-decoration:underline}
         </div>
 
         <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11z" stroke="#14532d" stroke-width="2"/><circle cx="12" cy="10" r="2.6" stroke="#c9a227" stroke-width="2"/></svg></div>
+          <h3>Nearby-mosque search</h3>
+          <p>Find nearby mosques on an interactive map around your current or saved location, with distances, a selectable 1–10 km search radius and one-tap navigation. Two independent open map services are queried in parallel for speed and reliability — this feature needs an internet connection.</p>
+        </div>
+
+        <div class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="16" rx="3" stroke="#14532d" stroke-width="2"/><path d="M8 3v4M16 3v4M8 13h3M8 17h6" stroke="#c9a227" stroke-width="2" stroke-linecap="round"/></svg></div>
           <h3>Hijri calendar</h3>
           <p>The Hijri and Gregorian dates together, using the official Umm al-Qura table (1924–2076), plus midnight and the last third of the night, with a manual day adjustment for local moon sighting.</p>
@@ -344,7 +359,7 @@ footer a:hover{text-decoration:underline}
         <div class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v6c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V6z" stroke="#14532d" stroke-width="2"/><path d="M9 12l2 2 4-4" stroke="#c9a227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>Full privacy</h3>
-          <p>No accounts, ads or tracking; your data stays on your device — the internet is used only for the optional online city search and update checks. The app speaks Arabic and English, with light and dark themes.</p>
+          <p>No accounts, ads or tracking; your data stays on your device — the internet is used only for the optional online city search, the nearby-mosque search, and update checks. The app speaks Arabic and English, with light and dark themes.</p>
         </div>
 
       </div>
@@ -390,7 +405,7 @@ footer a:hover{text-decoration:underline}
 
         <div class="card">
           <h3>Does the app work offline?</h3>
-          <p>Yes. All prayer-time, qibla and Hijri-calendar calculations run on your device, and a bundled catalog of about 4,300 cities (2,088 with Arabic names) works with no internet at all. The app uses the network for only two optional features: the online city search and the update check.</p>
+          <p>Yes. All prayer-time, qibla and Hijri-calendar calculations run on your device, and a bundled catalog of about 4,300 cities (2,088 with Arabic names) works with no internet at all. The app uses the network for only three optional features: the online city search, the nearby-mosque search with its map, and the update check.</p>
         </div>
 
         <div class="card">
@@ -415,7 +430,12 @@ footer a:hover{text-decoration:underline}
 
         <div class="card">
           <h3>Can I match the times with my local mosque?</h3>
-          <p>Yes. You can shift any individual prayer time by up to 30 minutes earlier or later to align it with your mosque's adhan. Note that the app does not search for nearby mosques; the adjustment is manual, per prayer.</p>
+          <p>Yes. You can shift any individual prayer time by up to 30 minutes earlier or later to align it with your mosque's adhan, and a dedicated screen searches for nearby mosques on an interactive map (see the next question).</p>
+        </div>
+
+        <div class="card">
+          <h3>How do I search for the nearest mosque?</h3>
+          <p>Open the “Mosques” tab and tap the search button: the app shows nearby mosques on an interactive map around your current location (after the location permission) or around your saved location, with distances and one-tap navigation, and you can pick a search radius from 1 to 10 km. This search needs an internet connection because it queries open map services (OpenStreetMap); everything else in the app works offline.</p>
         </div>
 
         <div class="card">
