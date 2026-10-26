@@ -37,6 +37,9 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -280,59 +283,163 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                // Toggle: while the adhan (test or real) is reciting, the button
-                // becomes an immediate stop — always visible here, even when the
-                // notification (and its stop action) is hidden by a missing
-                // POST_NOTIFICATIONS grant on Android 13+.
+
+                Spacer(Modifier.height(12.dp))
+
+                val adhanPlaying by vm.adhanPlaying.collectAsStateWithLifecycle()
+                val playingVoice by vm.currentPlayingVoice.collectAsStateWithLifecycle()
+                val playingForFajr by vm.currentPlayingForFajr.collectAsStateWithLifecycle()
+
+                if (adhanPlaying) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                        ),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Filled.Stop,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    stringResource(R.string.notif_adhan_test_title),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                            Button(
+                                onClick = { vm.stopAdhan() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                ),
+                            ) {
+                                Text(stringResource(R.string.notif_adhan_stop))
+                            }
+                        }
+                    }
+                }
+
                 Spacer(Modifier.height(8.dp))
                 Text(
                     stringResource(R.string.adhan_voice_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                RadioRow(
-                    title = "",
-                    options = listOf(
-                        stringResource(R.string.adhan_voice_makkah) to io.github.ahmedzakefit.noor.data.AdhanVoice.MAKKAH,
-                        stringResource(R.string.adhan_voice_madinah) to io.github.ahmedzakefit.noor.data.AdhanVoice.MADINAH,
-                        stringResource(R.string.adhan_voice_cairo) to io.github.ahmedzakefit.noor.data.AdhanVoice.CAIRO,
-                        stringResource(R.string.adhan_voice_aqsa) to io.github.ahmedzakefit.noor.data.AdhanVoice.AQSA,
-                    ),
-                    selected = settings.adhanVoice,
-                    onSelect = { voice -> vm.setAdhanVoice(voice) },
+                Spacer(Modifier.height(4.dp))
+
+                val voices = listOf(
+                    io.github.ahmedzakefit.noor.data.AdhanVoice.MAKKAH to stringResource(R.string.adhan_voice_makkah),
+                    io.github.ahmedzakefit.noor.data.AdhanVoice.MADINAH to stringResource(R.string.adhan_voice_madinah),
+                    io.github.ahmedzakefit.noor.data.AdhanVoice.CAIRO to stringResource(R.string.adhan_voice_cairo),
+                    io.github.ahmedzakefit.noor.data.AdhanVoice.AQSA to stringResource(R.string.adhan_voice_aqsa),
                 )
-                Spacer(Modifier.height(8.dp))
-                val adhanPlaying by vm.adhanPlaying.collectAsStateWithLifecycle()
-                if (adhanPlaying) {
-                    Button(
-                        onClick = { vm.stopAdhan() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Icon(
-                            Icons.Filled.Close,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
+
+                for ((voice, label) in voices) {
+                    val isSelected = settings.adhanVoice == voice
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.notif_adhan_stop))
-                    }
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        TextButton(
-                            onClick = { vm.testAdhan(forFajr = false) },
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(stringResource(R.string.test_adhan_regular))
-                        }
-                        TextButton(
-                            onClick = { vm.testAdhan(forFajr = true) },
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(stringResource(R.string.test_adhan_fajr))
+                        Column(Modifier.padding(8.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = { vm.setAdhanVoice(voice) },
+                                )
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            Row(
+                                Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                val isPlayingRegular = adhanPlaying && playingVoice == voice && !playingForFajr
+                                FilledTonalButton(
+                                    onClick = {
+                                        if (isPlayingRegular) {
+                                            vm.stopAdhan()
+                                        } else {
+                                            vm.setAdhanVoice(voice)
+                                            vm.testAdhan(forFajr = false, voice = voice)
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = if (isPlayingRegular) {
+                                        ButtonDefaults.filledTonalButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                        )
+                                    } else {
+                                        ButtonDefaults.filledTonalButtonColors()
+                                    },
+                                ) {
+                                    Icon(
+                                        if (isPlayingRegular) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        if (isPlayingRegular) stringResource(R.string.test_stop)
+                                        else stringResource(R.string.test_voice_regular),
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                }
+
+                                val isPlayingFajr = adhanPlaying && playingVoice == voice && playingForFajr
+                                FilledTonalButton(
+                                    onClick = {
+                                        if (isPlayingFajr) {
+                                            vm.stopAdhan()
+                                        } else {
+                                            vm.setAdhanVoice(voice)
+                                            vm.testAdhan(forFajr = true, voice = voice)
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    colors = if (isPlayingFajr) {
+                                        ButtonDefaults.filledTonalButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                        )
+                                    } else {
+                                        ButtonDefaults.filledTonalButtonColors()
+                                    },
+                                ) {
+                                    Icon(
+                                        if (isPlayingFajr) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        if (isPlayingFajr) stringResource(R.string.test_stop)
+                                        else stringResource(R.string.test_voice_fajr),
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                }
+                            }
                         }
                     }
                 }

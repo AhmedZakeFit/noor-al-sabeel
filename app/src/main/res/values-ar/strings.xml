@@ -261,4 +261,8 @@
         <item>ذو الحجة</item>
     </string-array>
     <string name="licenses_content">تطبيق نور السبيل مفتوح المصدر ومحمي برخصة Apache-2.0.</string>
+    <string name="test_play">تشغيل</string>
+    <string name="test_stop">إيقاف</string>
+    <string name="test_voice_regular">أذان باقي الصلوات</string>
+    <string name="test_voice_fajr">أذان الفجر</string>
 </resources>

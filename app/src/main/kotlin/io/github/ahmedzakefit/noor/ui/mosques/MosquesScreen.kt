@@ -9,6 +9,8 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.provider.Settings
+import android.view.MotionEvent
+import androidx.compose.ui.draw.clipToBounds
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -247,7 +249,7 @@ fun MosquesScreen() {
         // sync effect below re-runs with true dimensions instead of the
         // pre-measurement fallback estimate.
         var mapMeasured by remember { mutableStateOf(false) }
-        Box(Modifier.fillMaxWidth().height(mapHeight.dp)) {
+        Box(Modifier.fillMaxWidth().height(mapHeight.dp).clipToBounds()) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
@@ -259,6 +261,17 @@ fun MosquesScreen() {
                         setBuiltInZoomControls(false)
                         minZoomLevel = MosquesViewModel.MIN_ZOOM
                         maxZoomLevel = MosquesViewModel.MAX_ZOOM
+                        setOnTouchListener { v, event ->
+                            when (event.action) {
+                                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                                    v.parent?.requestDisallowInterceptTouchEvent(true)
+                                }
+                                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                                    v.parent?.requestDisallowInterceptTouchEvent(false)
+                                }
+                            }
+                            false
+                        }
                     }.also { mv ->
                         mapHolder.mapView = mv
                         mv.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->

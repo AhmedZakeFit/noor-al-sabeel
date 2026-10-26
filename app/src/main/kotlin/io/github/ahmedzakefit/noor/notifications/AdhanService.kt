@@ -130,7 +130,7 @@ class AdhanService : Service() {
     }
 
     private fun startAdhan() {
-        AdhanPlayback.setPlaying(true)
+        AdhanPlayback.setPlaying(true, voice = voice, forFajr = (prayer == Prayer.FAJR))
         // 1) Enter the foreground immediately (5-second window) with a silent
         //    notification; the MediaPlayer below is the actual sound.
         val resId = AdhanAudio.rawResourceFor(this, voice, prayer)

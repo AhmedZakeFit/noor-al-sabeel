@@ -64,14 +64,21 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
      * relying on it. Stop at any time from the notification or the settings
      * screen's stop button (visible while the preview is playing).
      */
-    fun testAdhan(forFajr: Boolean = false) {
+    val currentPlayingVoice: StateFlow<io.github.ahmedzakefit.noor.data.AdhanVoice?> =
+        io.github.ahmedzakefit.noor.notifications.AdhanPlayback.currentVoice
+
+    val currentPlayingForFajr: StateFlow<Boolean> =
+        io.github.ahmedzakefit.noor.notifications.AdhanPlayback.currentForFajr
+
+    fun testAdhan(forFajr: Boolean = false, voice: io.github.ahmedzakefit.noor.data.AdhanVoice? = null) {
         viewModelScope.launch {
             val s = container.settingsRepository.settings.first()
+            val targetVoice = voice ?: s.adhanVoice
             io.github.ahmedzakefit.noor.notifications.AdhanService.start(
                 container.appContext,
                 if (forFajr) io.github.ahmedzakefit.noor.core.model.Prayer.FAJR else io.github.ahmedzakefit.noor.core.model.Prayer.DHUHR,
                 preview = true,
-                voice = s.adhanVoice,
+                voice = targetVoice,
             )
         }
     }

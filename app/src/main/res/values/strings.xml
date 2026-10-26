@@ -261,4 +261,8 @@
         <item>Dhul-Qadah</item>
         <item>Dhul-Hijjah</item>
     </string-array>
+    <string name="test_play">Play</string>
+    <string name="test_stop">Stop</string>
+    <string name="test_voice_regular">Regular Adhan</string>
+    <string name="test_voice_fajr">Fajr Adhan</string>
 </resources>
