@@ -38,8 +38,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -304,7 +302,7 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    Icons.Filled.Stop,
+                                    Icons.Filled.Close,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onErrorContainer,
                                     modifier = Modifier.size(20.dp),
@@ -395,7 +393,7 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                                     },
                                 ) {
                                     Icon(
-                                        if (isPlayingRegular) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                        if (isPlayingRegular) Icons.Filled.Close else Icons.Filled.Add,
                                         contentDescription = null,
                                         modifier = Modifier.size(16.dp),
                                     )
@@ -428,7 +426,7 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                                     },
                                 ) {
                                     Icon(
-                                        if (isPlayingFajr) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                        if (isPlayingFajr) Icons.Filled.Close else Icons.Filled.Add,
                                         contentDescription = null,
                                         modifier = Modifier.size(16.dp),
                                     )

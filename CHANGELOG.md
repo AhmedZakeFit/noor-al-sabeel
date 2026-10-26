@@ -4,6 +4,12 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.7] — 2026-10-26
+
+### Fixed & Improved
+- **Map Gesture Bounds & Touch Interception (MosquesScreen.kt):** Fixed map gesture overflow issue on touch where the interactive MapView moved or rendered outside its bounded container. Added strict Compose `clipToBounds()` framing and parent touch disallow interception during pan/zoom drag operations.
+- **Individual Adhan Voice Test Controls (SettingsScreen.kt):** Enhanced Adhan testing in Settings to provide per-voice, per-prayer testing cards (Makkah, Madinah, Cairo, Al-Aqsa) with dedicated Play ("تشغيل") and Stop ("إيقاف") controls and live playback state indicators.
+
 ## [1.0.6] — 2026-10-26
 
 ### Added
