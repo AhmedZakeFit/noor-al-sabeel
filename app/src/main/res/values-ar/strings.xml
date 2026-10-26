@@ -260,4 +260,5 @@
         <item>ذو القعدة</item>
         <item>ذو الحجة</item>
     </string-array>
+    <string name="licenses_content">تطبيق نور السبيل مفتوح المصدر ومحمي برخصة Apache-2.0.</string>
 </resources>
