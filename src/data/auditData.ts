@@ -163,4 +163,21 @@ return fix ?: best.get()?.let { fixOf(it) } ?: lastKnown(lm)`,
     fixDescriptionAr:
       'تم تجهيز التعديل لاستخدام compilerOptions.jvmTarget.set(JvmTarget.JVM_17) ليتوافق تماماً مع كوتلن 2.4 وAGP 8.7+.',
   },
+  {
+    id: 'PLAY-01',
+    titleAr: 'اعتراض حماية Google Play وتنبيه "تم حظر تطبيق ضار" (Harmful App Blocked)',
+    titleEn: 'Google Play Protect False-Positive & Sideload Warning Mitigation',
+    file: 'app/src/main/AndroidManifest.xml & docs/PLAY_PROTECT.md',
+    severity: 'high',
+    status: 'fixed',
+    categoryAr: 'أمان وتثبيت التطبيق على الأجهزة',
+    summaryAr: 'ظهور شاشة تحذير "Harmful app blocked" من Google Play Protect عند محاولة تثبيت الـ APK.',
+    rootCauseAr:
+      '1) اشتمال البيان على إذن تحسين البطارية REQUEST_IGNORE_BATTERY_OPTIMIZATIONS المصنف عالي الخطورة لدى جوجل، 2) وجود إذن تثبيت الحزم REQUEST_INSTALL_PACKAGES للتحديث الذاتي خارج المتجر، 3) حداثة شهادة التوقيع المستقلة للتطبيق وعدم نشر التطبيق عبر متجر جوجل بلاي.',
+    detailsAr:
+      'في نظام أندرويد 12 و13 و14، يقوم Google Play Protect بفحص التطبيقات المحملة جانبياً عبر المتصفحات. ولأن التطبيق حر ومفتوح المصدر ولا يمر بمتجر جوجل ويحتوي على آلية التحديث الذاتي وإذن البطارية، تطلق خوارزميات جوجل التحذير الوقائي الكاذب.',
+    fixDescriptionAr:
+      '1) تم حذف إذن REQUEST_IGNORE_BATTERY_OPTIMIZATIONS فوراً من البيان واعتماد التوجيه القياسي لإعدادات النظام، 2) تفعيل التوقيع المزدوج v1 و v2 في Gradle، 3) توثيق خطوات التثبيت الآمن عبر الضغط على "Install anyway" (التثبيت على أي حال)، 4) إعداد نموذج استئناف رسمي (Appeal Submission) لإدراج شهادة التوقيع في القائمة البيضاء لدى Google Play Protect.',
+  },
 ];
+

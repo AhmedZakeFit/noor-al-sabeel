@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SecurityAlert } from './components/SecurityAlert';
+import { PlayProtectNotice } from './components/PlayProtectNotice';
 import { AuditReport } from './components/AuditReport';
 import { PrayerSimulator } from './components/PrayerSimulator';
 import { QiblaSimulator } from './components/QiblaSimulator';
@@ -45,7 +46,7 @@ export default function App() {
                   نور السبيل <span className="text-emerald-400 font-sans text-sm font-bold">| Noor Al-Sabeel</span>
                 </h1>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  v1.0.15 Audited
+                  v1.0.16 Audited
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
@@ -93,7 +94,7 @@ export default function App() {
                 id: 'audit',
                 label: 'تقرير الفحص والتشخيص الشامل',
                 icon: <FileSearch className="w-4 h-4" />,
-                badge: '8 نقاط',
+                badge: '9 نقاط',
               },
               {
                 id: 'prayer_sim',
@@ -153,6 +154,9 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Security Warning (Immediate Priority) */}
         <SecurityAlert />
+
+        {/* Play Protect Notice */}
+        <PlayProtectNotice />
 
         {/* Tab Views */}
         {activeTab === 'features' && <FeaturesShowcase />}

@@ -32,7 +32,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Offered as an optional reliability step for users whose vendor kills alarms. -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    
 
     <!-- In-app update check: APKs are downloaded from the project's own GitHub
          Releases and verified (checksum + signature) before the STANDARD Android
