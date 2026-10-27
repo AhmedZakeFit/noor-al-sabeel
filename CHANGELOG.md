@@ -1,3 +1,7 @@
+## [1.0.14] — 2026-10-27
+
+- **Comprehensive UI/UX Refinement.** Redesigned all application screens (Home, Prayer Times, Qibla Compass, Nearby Mosques, Settings, and Update Dialog) with a refined Islamic emerald theme, modern Material Design 3 card shapes, improved typography, and responsive RTL/LTR layout alignment.
+
 ## [1.0.13] — 2026-10-26
 
 - **Comprehensive Features Showcase on Landing Page.** Added a dedicated "ميزات التطبيق والبحث عن المساجد" tab showcasing all core features including Nearby Mosque Search, astronomical prayer calculations, Qibla compass, adhan reciter voices, and unthrottled exact alarm clock scheduling.
