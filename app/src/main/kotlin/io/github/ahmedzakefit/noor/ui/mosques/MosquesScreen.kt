@@ -530,39 +530,58 @@ private fun MosqueRow(
             Formatters.formatDecimal(item.distanceKm, 1, arabicDigits),
         )
     }
-    Row(
-        Modifier
+    androidx.compose.material3.Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        ),
     ) {
-        Icon(
-            Icons.Filled.Place,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(22.dp),
-        )
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.titleMedium)
-            Text(
-                "$distanceLabel • $dirLabel",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        IconButton(onClick = {
-            val uri = Uri.parse(
-                "geo:${mosque.latitude},${mosque.longitude}?q=${mosque.latitude},${mosque.longitude}" +
-                    "(${Uri.encode(name)})",
-            )
-            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
-        }) {
-            Icon(
-                Icons.Filled.Send,
-                contentDescription = stringResource(R.string.navigate),
-                tint = MaterialTheme.colorScheme.primary,
-            )
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = CircleShape,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Filled.Place,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "$distanceLabel • $dirLabel",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(onClick = {
+                val uri = Uri.parse(
+                    "geo:${mosque.latitude},${mosque.longitude}?q=${mosque.latitude},${mosque.longitude}" +
+                        "(${Uri.encode(name)})",
+                )
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+            }) {
+                Icon(
+                    Icons.Filled.Send,
+                    contentDescription = stringResource(R.string.navigate),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

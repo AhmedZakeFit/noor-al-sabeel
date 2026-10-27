@@ -108,10 +108,14 @@ fun NoorApp(
 private fun NoorBottomBar(navController: NavHostController, destinations: List<BottomDestination>) {
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
-    NavigationBar {
+    androidx.compose.material3.NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        tonalElevation = androidx.compose.ui.unit.dp(8),
+    ) {
         destinations.forEach { dest ->
+            val isSelected = currentRoute == dest.route
             NavigationBarItem(
-                selected = currentRoute == dest.route,
+                selected = isSelected,
                 onClick = {
                     navController.navigate(dest.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -121,12 +125,32 @@ private fun NoorBottomBar(navController: NavHostController, destinations: List<B
                 },
                 icon = {
                     if (dest.iconRes != null) {
-                        Icon(painterResource(dest.iconRes), contentDescription = stringResource(dest.labelRes))
+                        Icon(
+                            painterResource(dest.iconRes),
+                            contentDescription = stringResource(dest.labelRes),
+                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     } else {
-                        Icon(dest.vectorIcon!!, contentDescription = stringResource(dest.labelRes))
+                        Icon(
+                            dest.vectorIcon!!,
+                            contentDescription = stringResource(dest.labelRes),
+                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 },
-                label = { Text(stringResource(dest.labelRes)) },
+                label = {
+                    Text(
+                        stringResource(dest.labelRes),
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    )
+                },
+                colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             )
         }
     }
