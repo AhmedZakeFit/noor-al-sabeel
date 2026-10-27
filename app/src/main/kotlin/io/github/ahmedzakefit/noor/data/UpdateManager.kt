@@ -282,12 +282,20 @@ class UpdateManager(
             dir.listFiles()?.forEach { runCatching { it.delete() } }
             target = File(dir, "noor-al-sabeel-${info.versionName}.apk")
 
-            val conn = java.net.URL(info.apkUrl).openConnection() as java.net.HttpURLConnection
+            val conn = try {
+                Http.openWithRedirects(
+                    initialUrl = info.apkUrl,
+                    method = "GET",
+                    connectTimeoutMs = 15_000,
+                    readTimeoutMs = 60_000,
+                    urlValidator = UpdateParser::isAllowedDownloadUrl,
+                )
+            } catch (e: SecurityException) {
+                return@withContext DownloadResult.Failed(DownloadFailure.DISALLOWED_SOURCE, e.message)
+            } catch (e: Throwable) {
+                return@withContext DownloadResult.Failed(DownloadFailure.NETWORK, e.message)
+            }
             try {
-                conn.connectTimeout = 10_000
-                conn.readTimeout = 30_000
-                conn.instanceFollowRedirects = true
-                conn.setRequestProperty("User-Agent", Http.USER_AGENT)
                 val code = conn.responseCode
                 if (code != 200) {
                     return@withContext DownloadResult.Failed(DownloadFailure.HTTP_ERROR, "HTTP $code")
@@ -396,10 +404,24 @@ class UpdateManager(
 
     /** Package facts of a downloaded APK, as far as the platform exposes them. */
     private fun archiveFacts(apk: File): UpdateVerifier.ArchiveFacts = runCatching {
-        val info: PackageInfo? = packageManager.getPackageArchiveInfo(apk.absolutePath, signingFlags())
+        // Basic facts (package name, version code) with 0 flags — works reliably on all API
+        // levels without throwing signature parsing errors on uninstalled archive files.
+        val basicInfo: PackageInfo? = packageManager.getPackageArchiveInfo(apk.absolutePath, 0)
+
+        // Certificate facts: query with modern GET_SIGNING_CERTIFICATES, fall back to GET_SIGNATURES.
+        val signingInfo: PackageInfo? = runCatching {
+            if (Build.VERSION.SDK_INT >= 28) {
+                packageManager.getPackageArchiveInfo(apk.absolutePath, PackageManager.GET_SIGNING_CERTIFICATES)
+            } else null
+        }.getOrNull() ?: runCatching {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageArchiveInfo(apk.absolutePath, PackageManager.GET_SIGNATURES)
+        }.getOrNull()
+
+        val info = signingInfo ?: basicInfo
         UpdateVerifier.ArchiveFacts(
-            packageName = info?.packageName,
-            versionCode = info?.let {
+            packageName = basicInfo?.packageName ?: info?.packageName,
+            versionCode = (basicInfo ?: info)?.let {
                 if (Build.VERSION.SDK_INT >= 28) it.longVersionCode
                 else @Suppress("DEPRECATION") it.versionCode.toLong()
             },

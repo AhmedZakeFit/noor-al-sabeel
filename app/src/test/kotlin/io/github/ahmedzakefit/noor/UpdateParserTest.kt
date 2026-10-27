@@ -154,6 +154,15 @@ class UpdateParserTest {
     // --- host allowlist -------------------------------------------------------
 
     @Test
+    fun `github release cdn domains in redirect chain are allowlisted`() {
+        assertTrue(UpdateParser.isAllowedDownloadUrl("https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.14/noor-al-sabeel-1.0.14.apk"))
+        assertTrue(UpdateParser.isAllowedDownloadUrl("https://release-assets.githubusercontent.com/github-production-release-asset/1430299109/abc?sp=r"))
+        assertTrue(UpdateParser.isAllowedDownloadUrl("https://objects.githubusercontent.com/github-production-release-asset/1430299109/abc?sp=r"))
+        assertFalse(UpdateParser.isAllowedDownloadUrl("https://evil.com/app.apk"))
+        assertFalse(UpdateParser.isAllowedDownloadUrl("http://github.com/app.apk"))
+    }
+
+    @Test
     fun `only https release-asset hosts are allowed downloads`() {
         assertTrue(UpdateParser.isAllowedDownloadUrl("https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.4/a.apk"))
         assertTrue(UpdateParser.isAllowedDownloadUrl("https://objects.githubusercontent.com/x"))

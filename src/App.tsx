@@ -45,7 +45,7 @@ export default function App() {
                   نور السبيل <span className="text-emerald-400 font-sans text-sm font-bold">| Noor Al-Sabeel</span>
                 </h1>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  v1.0.14 Audited
+                  v1.0.15 Audited
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">

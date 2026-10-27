@@ -113,7 +113,7 @@ export const AuditReport: React.FC = () => {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-black text-slate-100">v1.0.14</div>
+            <div className="text-2xl font-black text-slate-100">v1.0.15</div>
             <div className="text-xs text-slate-400 font-medium">الإصدار المفحوص للمشروع</div>
           </div>
         </div>

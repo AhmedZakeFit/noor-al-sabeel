@@ -19,8 +19,8 @@ android {
         applicationId = "io.github.ahmedzakefit.noor"
         minSdk = 24
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.0.14"
+        versionCode = 16
+        versionName = "1.0.15"
         vectorDrawables { useSupportLibrary = true }
         resourceConfigurations += listOf("en", "ar")
     }

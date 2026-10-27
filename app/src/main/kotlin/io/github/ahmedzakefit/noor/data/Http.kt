@@ -1,6 +1,7 @@
 package io.github.ahmedzakefit.noor.data
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.IOException
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -13,11 +14,9 @@ import kotlin.coroutines.resumeWithException
  * update checker. Plain [HttpURLConnection] on a short-lived worker thread —
  * no external dependency.
  *
- * Cancellation actually aborts the transfer: when the calling coroutine is
- * cancelled (user leaves the screen, overall deadline reached, dialog closed),
- * [HttpURLConnection.disconnect] is invoked from the cancellation handler,
- * which immediately unblocks the worker thread's socket read. This is what
- * bounds the wall-clock time of a search regardless of per-socket timeouts.
+ * Handles HTTP/HTTPS redirects across domains (e.g. github.com to
+ * release-assets.githubusercontent.com) which standard Java HttpURLConnection
+ * does not follow automatically for security boundaries.
  */
 internal sealed interface HttpOutcome {
     data class Response(val code: Int, val body: String?) : HttpOutcome
@@ -26,9 +25,56 @@ internal sealed interface HttpOutcome {
 }
 
 internal object Http {
-
     const val USER_AGENT =
         "NoorAlSabeel/1.0.6 (open-source prayer times app; github.com/AhmedZakeFit/noor-al-sabeel)"
+
+    /**
+     * Opens an [HttpURLConnection], explicitly following 3xx redirects (up to
+     * [maxRedirects]) across host boundaries while enforcing [urlValidator].
+     */
+    fun openWithRedirects(
+        initialUrl: String,
+        method: String = "GET",
+        connectTimeoutMs: Int = 10_000,
+        readTimeoutMs: Int = 30_000,
+        maxRedirects: Int = 5,
+        urlValidator: ((String) -> Boolean)? = null,
+        headers: Map<String, String> = emptyMap(),
+    ): HttpURLConnection {
+        var currentUrl = initialUrl
+        var redirects = 0
+        while (true) {
+            if (urlValidator != null && !urlValidator(currentUrl)) {
+                throw SecurityException("Disallowed URL in redirect chain: $currentUrl")
+            }
+            val conn = (URL(currentUrl).openConnection() as HttpURLConnection).apply {
+                this.connectTimeout = connectTimeoutMs
+                this.readTimeout = readTimeoutMs
+                this.requestMethod = method
+                this.instanceFollowRedirects = false
+                this.setRequestProperty("User-Agent", USER_AGENT)
+                for ((k, v) in headers) {
+                    this.setRequestProperty(k, v)
+                }
+            }
+            val code = conn.responseCode
+            if (code in listOf(301, 302, 303, 307, 308)) {
+                val location = conn.getHeaderField("Location")
+                conn.disconnect()
+                if (location.isNullOrBlank()) {
+                    throw IOException("HTTP $code redirect without Location header from $currentUrl")
+                }
+                val nextUrl = URL(URL(currentUrl), location).toString()
+                redirects++
+                if (redirects > maxRedirects) {
+                    throw IOException("Too many redirects (> $maxRedirects) starting from $initialUrl")
+                }
+                currentUrl = nextUrl
+                continue
+            }
+            return conn
+        }
+    }
 
     suspend fun call(
         url: String,
@@ -38,31 +84,20 @@ internal object Http {
         readTimeoutMs: Int = 10_000,
         extraHeaders: Map<String, String> = emptyMap(),
     ): HttpOutcome = suspendCancellableCoroutine { cont ->
-        val conn: HttpURLConnection
-        try {
-            conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = connectTimeoutMs
-                readTimeout = readTimeoutMs
-                requestMethod = method
-                if (formBody != null) doOutput = true
-                setRequestProperty("User-Agent", USER_AGENT)
-                if (formBody != null) {
-                    setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
-                }
-                for ((k, v) in extraHeaders) setRequestProperty(k, v)
-            }
-        } catch (t: Throwable) {
-            if (cont.isActive) cont.resumeWithException(t)
-            return@suspendCancellableCoroutine
-        }
-
-        // Aborting the connection is the only reliable way to interrupt a
-        // blocking socket read on old-style HttpURLConnection.
-        cont.invokeOnCancellation { runCatching { conn.disconnect() } }
-
+        var activeConn: HttpURLConnection? = null
+        cont.invokeOnCancellation { runCatching { activeConn?.disconnect() } }
         thread(isDaemon = true, name = "noor-http") {
             try {
+                val conn = openWithRedirects(
+                    initialUrl = url,
+                    method = method,
+                    connectTimeoutMs = connectTimeoutMs,
+                    readTimeoutMs = readTimeoutMs,
+                    headers = extraHeaders,
+                )
+                activeConn = conn
                 if (formBody != null) {
+                    conn.doOutput = true
                     OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(formBody) }
                 }
                 val code = conn.responseCode
@@ -75,86 +110,63 @@ internal object Http {
             } catch (t: Throwable) {
                 if (cont.isActive) cont.resumeWithException(t)
             } finally {
-                runCatching { conn.disconnect() }
+                runCatching { activeConn?.disconnect() }
             }
         }
     }
 
-    /**
-     * Cheap HEAD probe: returns the URL a redirecting endpoint finally lands
-     * on. Used by the update check to resolve "/releases/latest" without
-     * touching the rate-limited API in the common "no update" case — the
-     * plain website endpoint is not subject to the 60 req/h API quota.
-     */
     suspend fun finalRedirectUrl(
         url: String,
         connectTimeoutMs: Int = 6_000,
         readTimeoutMs: Int = 8_000,
     ): String? = suspendCancellableCoroutine { cont ->
-        val conn: HttpURLConnection
-        try {
-            conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = connectTimeoutMs
-                readTimeout = readTimeoutMs
-                requestMethod = "HEAD"
-                instanceFollowRedirects = true
-                setRequestProperty("User-Agent", USER_AGENT)
-            }
-        } catch (t: Throwable) {
-            if (cont.isActive) cont.resumeWithException(t)
-            return@suspendCancellableCoroutine
-        }
-        cont.invokeOnCancellation { runCatching { conn.disconnect() } }
+        var activeConn: HttpURLConnection? = null
+        cont.invokeOnCancellation { runCatching { activeConn?.disconnect() } }
         thread(isDaemon = true, name = "noor-http") {
             try {
+                val conn = openWithRedirects(
+                    initialUrl = url,
+                    method = "HEAD",
+                    connectTimeoutMs = connectTimeoutMs,
+                    readTimeoutMs = readTimeoutMs,
+                )
+                activeConn = conn
                 val code = conn.responseCode
-                // After following redirects, conn.url is the final address.
-                if (cont.isActive) cont.resume(if (code in 200..399) conn.url.toString() else null)
+                val finalUrl = conn.url.toString()
+                if (cont.isActive) cont.resume(if (code in 200..399) finalUrl else null)
             } catch (t: Throwable) {
                 if (cont.isActive) cont.resumeWithException(t)
             } finally {
-                runCatching { conn.disconnect() }
+                runCatching { activeConn?.disconnect() }
             }
         }
     }
 
-    /**
-     * HEAD probe with the response code and Content-Length of the address the
-     * redirects finally land on (github.com asset links redirect to the CDN).
-     * Used to confirm that a release asset exists and read its size WITHOUT
-     * downloading it — and without touching the rate-limited API. A missing
-     * asset answers 404 with contentLength -1/absent; the caller treats any
-     * non-2xx as "not there".
-     */
     suspend fun head(
         url: String,
         connectTimeoutMs: Int = 6_000,
         readTimeoutMs: Int = 8_000,
     ): HttpOutcome.Head = suspendCancellableCoroutine { cont ->
-        val conn: HttpURLConnection
-        try {
-            conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                connectTimeout = connectTimeoutMs
-                readTimeout = readTimeoutMs
-                requestMethod = "HEAD"
-                instanceFollowRedirects = true
-                setRequestProperty("User-Agent", USER_AGENT)
-            }
-        } catch (t: Throwable) {
-            if (cont.isActive) cont.resumeWithException(t)
-            return@suspendCancellableCoroutine
-        }
-        cont.invokeOnCancellation { runCatching { conn.disconnect() } }
+        var activeConn: HttpURLConnection? = null
+        cont.invokeOnCancellation { runCatching { activeConn?.disconnect() } }
         thread(isDaemon = true, name = "noor-http") {
             try {
+                val conn = openWithRedirects(
+                    initialUrl = url,
+                    method = "HEAD",
+                    connectTimeoutMs = connectTimeoutMs,
+                    readTimeoutMs = readTimeoutMs,
+                )
+                activeConn = conn
                 val code = conn.responseCode
+                val length = conn.contentLengthLong
                 if (cont.isActive) {
-                    cont.resume(HttpOutcome.Head(code, conn.contentLengthLong))
+                    cont.resume(HttpOutcome.Head(code, length))
                 }
             } catch (t: Throwable) {
                 if (cont.isActive) cont.resumeWithException(t)
             } finally {
-                runCatching { conn.disconnect() }
+                runCatching { activeConn?.disconnect() }
             }
         }
     }

@@ -1,3 +1,8 @@
+## [1.0.15] — 2026-10-27
+
+- **Fix Cross-Domain Redirect Handling for In-App Updates.** The built-in `HttpURLConnection` in Android does not follow cross-domain 302 redirects automatically (from `github.com` to `release-assets.githubusercontent.com`). `Http.openWithRedirects` now follows cross-domain redirects explicitly, allowing the published `.sha256` checksum and APK binaries to download cleanly.
+- **Robust Archive Package Fact Extraction.** `packageManager.getPackageArchiveInfo(apkPath, 0)` is used first to safely read `packageName` and `versionCode` across all Android versions without throwing signature-parsing exceptions, followed by certificate extraction.
+
 ## [1.0.14] — 2026-10-27
 
 - **Comprehensive UI/UX Refinement.** Redesigned all application screens (Home, Prayer Times, Qibla Compass, Nearby Mosques, Settings, and Update Dialog) with a refined Islamic emerald theme, modern Material Design 3 card shapes, improved typography, and responsive RTL/LTR layout alignment.
