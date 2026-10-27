@@ -60,8 +60,9 @@ object UpdateParser {
 
     /** "ab12…  filename\n" (sha256sum format) -> lowercase hex; invalid -> null. */
     fun parseChecksumFile(text: String): String? {
-        val first = text.trim().split(Regex("\\s+")).firstOrNull() ?: return null
-        return if (Regex("^[0-9a-fA-F]{64}$").matches(first)) first.lowercase() else null
+        val clean = text.trim()
+        val match = Regex("[0-9a-fA-F]{64}").find(clean)
+        return match?.value?.lowercase()
     }
 
     /** Release body markdown -> compact plain-text summary, capped for a dialog. */
