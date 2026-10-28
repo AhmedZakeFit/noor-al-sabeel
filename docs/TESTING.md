@@ -88,6 +88,27 @@
   pins that every typed download failure (network / HTTP / empty / checksum unavailable /
   checksum mismatch / package / not-newer / signature / disallowed source) maps to a
   distinct localized message so no cause is ever silently swallowed.
+- **Update swap-race regression tests (`UpdateDownloadPolicyTest`, v1.0.17)** — pins the
+  proven root cause of the v1.0.16 "SHA-256 mismatch" wave (the tag was re-published
+  with different bytes while users were mid-update): checksum-family verdicts retry
+  exactly once, package/version/signature verdicts never retry, a served Content-Length
+  that differs from the release-asset size proves an asset swap and aborts before hashing
+  (unknown sizes never abort), and end-to-end pure simulations cover the positive paths
+  (a re-publish between the checksum fetch and the APK download resolves via one
+  checksum re-fetch without re-downloading; a swapped server cache resolves via one
+  re-download) and the negative paths (a genuinely corrupted file fails permanently after
+  the single retry; an unavailable checksum retries once then reports unavailable).
+- **Adhan playback state tests (`AdhanPlaybackStateTest`, extended v1.0.17)** — the
+  live flag the settings screen drives its stop controls from, plus the new preview
+  tracking: a test adhan reports itself as preview, the real prayer-time adhan reports
+  itself as NOT preview, stopping clears the flag, and a start without explicit preview
+  args defaults to real (a prayer-time start can never inherit a stale preview=true).
+- **Adhan asset inventory (`AdhanAssetsTest`, extended v1.0.17)** — every selectable
+  voice must bundle a valid regular + Fajr recording (a missing/invalid file would
+  silently fall back to the default recording at prayer time), all bundled audio stays
+  inside the APK size budget, and every recording is pinned by its exact SHA-256 in a
+  reviewed inventory so audio assets can no longer change silently (the failure mode
+  behind the mislabelled Cairo voice — see NOTICE.md's voices audit).
 - **Post-release link check (`verify-download` workflow)** — after every release publish
   (and weekly) the fixed landing-page link `/releases/latest/download/noor-al-sabeel.apk`
   is downloaded through and verified: HTTP 200, ZIP magic bytes, plausible size, and SHA-256
@@ -144,6 +165,14 @@ on the app:
    disabled prayers stay silent, reminders remain short notifications, and after a reboot
    the next adhan still fires. With the alarm volume set to zero the adhan is silent but the
    heads-up notification still appears.
+   **v1.0.17 — live vs test state:** while the REAL prayer-time adhan is reciting, open
+   Settings: the red card must show the **live adhan** wording (not “test adhan”), the
+   per-voice test buttons are disabled while it plays (tapping one must not start a test
+   or interrupt the real adhan), and after it finishes the test buttons work again. A
+   manual test started from the buttons still shows the “test adhan” card and stop toggle.
+   Known open defect (documented in NOTICE.md, NOT fixed in v1.0.17): the Cairo voice
+   opens with TWO takbirs — verify you hear the currently-documented behaviour and see
+   NOTICE.md before changing any bundled recording.
 11. **Battery optimization:** on vendor ROMs (Xiaomi/Samsung/Huawei...), check whether
    notifications are delayed; the settings screen offers the exemption dialog.
 12. **Qibla:** compare the bearing number against a known value for your city; check the
@@ -165,6 +194,14 @@ on the app:
     rate-limited (HTTP 403): the banner must still appear and the download must still
     verify, because the check falls back to the deterministic release asset URLs. In
     airplane mode nothing pops up and prayer functions are unaffected.
+    **v1.0.17 — update from the published release itself:** after a release is published,
+    update from the PUBLISHED assets (not a local build): the in-app update must download,
+    verify and install cleanly; a release re-published mid-download (if ever possible
+    again) must self-heal via the single checksum re-fetch instead of failing with a
+    false checksum mismatch. Installing the downloaded APK may show Google Play
+    Protect's sideloaded-app caution (a reputation heuristic for self-signed apps —
+    see docs/PLAY_PROTECT.md); the app itself must never ask you to disable it, and the
+    APK can always be verified against the published `.sha256` before installing.
 17. **Landing page:** open <https://ahmedzakefit.github.io/noor-al-sabeel/> — Arabic by
     default, the language toggle flips direction (RTL/LTR) and persists, the download
     button downloads the APK file directly (no intermediate release page; on Android a
@@ -283,6 +320,13 @@ in docs/PRAYER_TIMES.md.
    الإيقاف من شاشة القفل، ويترك الإشعار سجلًا يُلغى باللمس بعد انتهاء الأذان، وتبقى
    الصلوات المعطّلة صامتة، ويبقى التذكير المسبق إشعارًا قصيرًا، ويظل الأذان يعمل بعد
    إعادة التشغيل. مع تصویر مستوى المنبّه إلى الصفر يسكت الصوت لكن يبقى الإشعار ظاهرًا.
+   **v1.0.17 — حالة الأذان الفعلي مقابل التجربة:** أثناء رفع الأذان الفعلي في موعد
+   الصلاة افتح الإعدادات: يجب أن تُظهر البطاقة صياغة **«الأذان الفعلي»** (لا
+   «تجربة الأذان»)، وتكون أزرار تجربة الأصوات معطّلة أثناء رفعه (الضغط عليها لا
+   يبدأ تجربة ولا يقاطع الأذان الفعلي)، وبعد انتهائه تعمل أزرار التجربة مجددًا. أما
+   التجربة اليدوية من الأزرار فتُظهر بطاقة «تجربة الأذان» وزر الإيقاف كالمعتاد.
+   عيب معروف موثّق (NOTICE.md) وغير مُصلح بعد في v1.0.17: يبدأ صوت القاهرة
+   بتكبيرتين — تحقق من السلوك الموثّق الحالي وراجع NOTICE.md قبل تغيير أي تسجيل.
 11. **تحسين البطارية** على رومات الشركات.
 12. **القبلة:** قارن رقم الاتجاه بقيمة معروفة لمدينتك، واستجابة البوصلة والمعايرة.
 13. **المساجد:** المسافة والملاحة والإسناد.
@@ -298,6 +342,13 @@ in docs/PRAYER_TIMES.md.
     المُثبّت) مع إمكانية إعادة المحاولة — بما في ذلك عند تقييد واجهة GitHub‏ (HTTP 403):
     يجب أن يظل الشريط ظاهرًا والتنزيل متحققًا منه لأن الفحص يسقط على روابط أصول
     الإصدار الحتمية. وفي وضع الطيران لا يظهر شيء ولا تتأثر وظائف الصلاة.
+    **v1.0.17 — التحديث من الإصدار المنشور نفسه:** بعد نشر أي إصدار جرّب التحديث من
+    الأصول المنشورة فعليًا (لا من بناء محلي): يجب أن يُنزّل ويتحقق ويثبّت بلا أخطاء؛
+    وإذا أُعيد نشر إصدار أثناء تنزيلٍ قائم (إن أمكن مجددًا) فيجب أن يتعافى المسار
+    بإعادة جلب البصمة مرة واحدة بدل الفشل ببصمةٍ زائفة. وقد يُظهر تثبيت الـ APK
+    تحذير Play Protect للتطبيقات المثبتة خارج المتجر (إجراء سمعة للتطبيقات موقّعة
+    ذاتيًا — انظر docs/PLAY_PROTECT.md)؛ التطبيق نفسه لا يطلب تعطيله أبدًا، ويمكن
+    دائمًا التحقق من الملف مقابل ملف ‏`.sha256` المنشور قبل التثبيت.
 17. **صفحة الهبوط:** افتح <https://ahmedzakefit.github.io/noor-al-sabeel/> — العربية هي
     الافتراضية، وزر اللغة يبدّل الاتجاه (RTL/LTR) ويحفظ الاختيار، وزر التحميل يُنزّل ملف
     الـ APK مباشرة عبر الرابط الثابت `/releases/latest/download/noor-al-sabeel.apk` دون

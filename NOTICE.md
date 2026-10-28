@@ -78,6 +78,43 @@ Changes applied to the bundled copies: leading silence trimmed from the standard
 and both recordings loudness-normalized (EBU R128, linear two-pass, −16 LUFS) and transcoded
 to 128 kbps MP3 at 44.1 kHz. The recitations themselves are otherwise unmodified.
 
+#### Adhan voices audit (added v1.0.17)
+
+The four selectable reciter voices (`Makkah`, `Madinah`, `Cairo`, `Aqsa`) resolve to
+additional bundled recordings in `res/raw/`. A byte-level and speech-recognition audit on
+2026-10-28 established the following facts, which the release carries **as documented
+known defects** (also pinned by `AdhanAssetsTest`'s asset inventory so no future audio
+change can happen silently):
+
+- **Cairo voice = the default recording.** `adhan_cairo.mp3` is byte-identical to
+  `adhan.mp3` and `adhan_cairo_fajr.mp3` is byte-identical to `adhan_fajr.mp3`. The
+  opening of that recording recites **two** takbirs — ASR transcript of the first 16 s:
+  “الله أكبر الله أكبر … أشهد أن لا إله إلا الله” — not the **four** takbirs of the
+  Egyptian (radio/Egyptian-style) adhan tradition. This contradicts the v1.0.12 release
+  notes, which claimed a “Cairo adhan corrected to 4 takbeers”: that commit only copied
+  the default Fajr file over `adhan_cairo_fajr.mp3` (hash comparison proves it), never
+  touched the regular file, and never produced a 4-takbir recording.
+- **Source and license of the Cairo pair:** identical to the default pair above, i.e.
+  the Fouad Charif archive.org recording under Public Domain Mark 1.0 (the copies were
+  introduced during the v1.0.11 size-optimization re-compression).
+- **Madinah and Aqsa Fajr variants equal their regular variants** byte-for-byte, so the
+  Fajr phrase “aṣ-ṣalātu khayrun min an-nawm” is not actually specific to Fajr for those
+  two voices.
+- **The Makkah, Madinah and Aqsa recordings have no documented source or license**
+  (introduced in v1.0.9–v1.0.10 without provenance). Their redistribution licensing is
+  therefore *unverified* and must be resolved before any future release treats them as
+  cleared assets. The Makkah pair opens with four takbirs (ASR-verified), matching the
+  label.
+
+**Replacement criteria for the Cairo voice (open):** any replacement recording must
+(a) open with four takbirs in the Egyptian style, (b) carry a redistribution license that
+can be verified (e.g. CC0/CC-PDM from the author, or an expired-rights historical
+recording), and (c) be content-verified by an ASR transcript of its opening published in
+this file. Free-license candidates evaluated for v1.0.17 were rejected on exactly these
+grounds: Wikimedia Commons CC0 candidates could not be retrieved for verification during
+the audit window, and other freely-licensed candidates were either not Egyptian-style or
+their openings could not be machine-verified at all.
+
 ## Trademarks
 
 "Noor Al-Sabeel" is used as the name of this open-source project. Other applications named

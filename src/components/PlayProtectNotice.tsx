@@ -3,14 +3,24 @@ import {
   ShieldAlert,
   ShieldCheck,
   CheckCircle2,
-  AlertTriangle,
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  FileText,
   Info,
 } from 'lucide-react';
 
+/**
+ * Play Protect notice — v1.0.17 rewrite.
+ *
+ * Earlier versions of this component told users to tap "Install anyway" as
+ * step 1 and claimed facts that do not hold (a "v1+v2 strict dual signing"
+ * that the shipped APK does not carry, a battery-permission "main cause",
+ * and a docs/PLAY_PROTECT.md appeal document that did not exist). This
+ * version reports only what has actually been verified, explains WHICH
+ * warning the user is seeing, and points at the real resolution path —
+ * it never instructs the user to bypass the warning and never suggests
+ * disabling Play Protect.
+ */
 export const PlayProtectNotice: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -26,14 +36,17 @@ export const PlayProtectNotice: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500 text-slate-950">
-                إرشاد حماية Google Play
+                فحص Google Play Protect
               </span>
               <h3 className="text-lg font-bold text-amber-100">
-                حل تنبيه «تم حظر تطبيق ضار» (Harmful app blocked)
+                لماذا قد يظهر تحذير عند تثبيت التطبيق؟
               </h3>
             </div>
             <p className="text-sm text-amber-200/90 mt-1.5 leading-relaxed">
-              إذا ظهرت لك نافذة Google Play Protect التحذيرية عند تثبيت الـ APK، فهذا <strong>إنذار وقائي كاذب</strong> يظهر تلقائياً للتطبيقات الحرة مفتوحة المصدر المحملة خارج متجر جوجل.
+              تطبيق نور السبيل يُوزَّع من GitHub Releases وليس من متجر Google Play، لذا يفحصه
+              Play Protect ويُظهر أحيانًا تحذيرًا وقائيًا للتطبيقات غير المفهرسة لديه. هذا التحذير
+              <strong> لا يعني بالضرورة وجود ضرر</strong>، ولا نطلب منك تجاهله — بل نعرض لك هنا كيف
+              تتحقق بنفسك من سلامة الملف الذي نزّلته قبل أي قرار.
             </p>
           </div>
         </div>
@@ -43,25 +56,31 @@ export const PlayProtectNotice: React.FC = () => {
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-1.5 px-4 py-2 bg-amber-600/30 hover:bg-amber-600/40 text-amber-200 border border-amber-500/30 rounded-xl font-bold text-xs transition-all active:scale-95"
           >
-            <span>{isExpanded ? 'إخفاء التفاصيل' : 'كيفية التثبيت والحل'}</span>
+            <span>{isExpanded ? 'إخفاء التفاصيل' : 'التحقق والتفاصيل'}</span>
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Quick steps banner */}
+      {/* Verification facts banner */}
       <div className="mt-4 pt-3.5 border-t border-amber-500/20 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-amber-200/80">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>1. في نافذة Play Protect، اضغط على <strong>«Install anyway» (التثبيت على أي حال)</strong></span>
+        <div className="flex items-start gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            بصمة SHA-256 لكل APK منشور مرفوعة بجانبه في ملف <code>.sha256</code> — قارنها بنفسك قبل التثبيت
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>2. تم تنظيف البيان (Manifest) في <strong>v1.0.16</strong> وحذف إذن البطارية المثير للشك</span>
+        <div className="flex items-start gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            شهادة توقيع واحدة ثابتة عبر جميع الإصدارات المنشورة (تحقق بايت-ببايت من v1.0.13 حتى v1.0.16)
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>3. تم تجهيز استئناف رسمي لجوجل لإدراج شهادة التوقيع في القائمة البيضاء</span>
+        <div className="flex items-start gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            مسار التحديث داخل التطبيق يرفض أي ملف لا يطابق البصمة والشهادة واسم الحزمة ورقم الإصدار
+          </span>
         </div>
       </div>
 
@@ -72,17 +91,17 @@ export const PlayProtectNotice: React.FC = () => {
             <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-2.5">
               <h4 className="font-bold text-white flex items-center gap-2 text-xs">
                 <Info className="w-4 h-4 text-amber-400" />
-                لماذا يعترض Google Play Protect التطبيق؟
+                أي تحذير ترى بالضبط؟
               </h4>
               <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside leading-relaxed">
                 <li>
-                  <strong className="text-slate-300">تثبيت خارجي (Sideload):</strong> أندرويد 12+ يفحص كل APK محمل من المتصفح بنظام الفحص السحابي الوقائي.
+                  <strong className="text-slate-300">تحذير مصدر التثبيت:</strong> «معطل تثبيت تطبيقات غير معروفة» — إعداد نظام يطلب منح التطبيق صلاحية «تثبيت تطبيقات غير معروفة» مرة واحدة، ولا علاقة له بالضرر.
                 </li>
                 <li>
-                  <strong className="text-slate-300">إذن التحديث الداخلي:</strong> إذن <code className="text-amber-300">REQUEST_INSTALL_PACKAGES</code> الذي يتيح التحديث الذاتي يُصنف وقائياً كبرنامج تثبيت.
+                  <strong className="text-slate-300">فحص Play Protect:</strong> «قد يكون التطبيق ضارًا» — فحص سمعة للتطبيقات المثبتة خارج المتجر. تطبيق موقّع بشهادة مستقلة غير مفهرسة لدى Google يستدعي هذا الفحص تلقائيًا، دون أن يعني اكتشاف أي ضرر فعلي.
                 </li>
                 <li>
-                  <strong className="text-slate-300">شهادة توقيع مستقلة:</strong> لم تُفهرس بعد في خوادم Google Play كجهة مطور معروفة تجارياً.
+                  <strong className="text-slate-300">حجب فعلي:</strong> إذا رفض النظام التثبيت رفضًا تامًا فغالبًا لا تطابق بصمة التوقيع مع نسخة قائمة — وهذا مسار ممنوع في هذا التطبيق أصلًا (سنوات التحديث تعتمد على ثبات الشهادة).
                 </li>
               </ul>
             </div>
@@ -90,36 +109,61 @@ export const PlayProtectNotice: React.FC = () => {
             <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-2.5">
               <h4 className="font-bold text-white flex items-center gap-2 text-xs">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                الإصلاحات المنفذة في v1.0.16:
+                ما الذي تم التحقق منه فعليًا؟
               </h4>
               <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside leading-relaxed">
                 <li>
-                  <strong className="text-emerald-300">حذف إذن تحسين البطارية:</strong> أزلنا <code className="text-emerald-300">REQUEST_IGNORE_BATTERY_OPTIMIZATIONS</code> المسبب الرئيسي لحظر Play Protect.
+                  <strong className="text-slate-300">سلامة الملف:</strong> كل APK منشور يطابق بصمة SHA-256 المنشورة معه، وسير عمل النشر يتحقق من الرابط الثابت آليًا بعد كل إصدار.
                 </li>
                 <li>
-                  <strong className="text-emerald-300">توقيع مزدوج صارم:</strong> تفعيل v1 (JAR) و v2 (APK Signature Scheme) معاً.
+                  <strong className="text-slate-300">ثبات التوقيع:</strong> تحليل كتلة توقيع APK (v2 Signature Scheme) أثبت أن الإصدارات v1.0.13 حتى v1.0.16 موقّعة بنفس الشهادة تمامًا — أي أن التحديث من أي إصدار سابق ممكن دون كسر التوافق.
                 </li>
                 <li>
-                  <strong className="text-emerald-300">نموذج استئناف رسمي:</strong> متاح في <code className="text-emerald-300">docs/PLAY_PROTECT.md</code> لاعتماد شهادة التوقيع لدى جوجل.
+                  <strong className="text-slate-300">منذ v1.0.17:</strong> يمنع سير عمل النشر استبدال بايتات إصدار منشور تحت نفس الوسم — السيناريو الذي جعل بعض المستخدمين يتلقون ملفًا لا يطابق بصمته أثناء تحديث v1.0.16.
                 </li>
               </ul>
             </div>
           </div>
 
+          <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-2.5">
+            <h4 className="font-bold text-white flex items-center gap-2 text-xs">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              كيف تتحقق بنفسك قبل التثبيت؟
+            </h4>
+            <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside leading-relaxed">
+              <li>
+                نزّل الـ APK ثم نزّل ملف <code className="text-amber-300">.sha256</code> المرفق به في صفحة الإصدارات.
+              </li>
+              <li>
+                على أندرويد/لينكس: <code className="text-amber-300">sha256sum noor-al-sabeel.apk</code> ثم قارن الناتج بالبصمة المرفوعة.
+              </li>
+              <li>
+                في مسار التحديث داخل التطبيق يقوم التطبيق بهذه المقارنة تلقائيًا ويرفض أي ملف غير متطابق قبل فتح مثبّت النظام.
+              </li>
+            </ul>
+          </div>
+
           <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-900/90 border border-amber-500/20 rounded-xl text-xs">
             <span className="text-slate-300">
-              للمزيد من التفاصيل ونموذج الاستئناف الرسمي الموجه لجوجل:
+              الحل الجذري المعتمد: فهرسة التطبيق لدى Google (نموذج استئناف Play Protect للمطورين) —
+              <a
+                href="https://support.google.com/googleplay/android-developer/contact/protectappeals"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-bold underline inline-flex mr-1"
+              >
+                <span>نموذج الاستئناف الرسمي</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
             </span>
-            <a
-              href="https://support.google.com/googleplay/android-developer/contact/protectappeals"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-bold underline"
-            >
-              <span>رابط نموذج استئناف Google Play Protect</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
           </div>
+
+          <p className="text-xs text-slate-500 leading-relaxed">
+            نحن لا نعطّل Google Play Protect ولا نطلب منك تعطيله، ولا يطلب التطبيق أي صلاحية لتعطيل
+            الفحص. التفاصيل التقنية الكاملة وتحليل التوقيع موجودة في
+            <code className="text-amber-300 mx-1">docs/PLAY_PROTECT.md</code>
+            داخل المستودع.
+          </p>
         </div>
       )}
     </div>

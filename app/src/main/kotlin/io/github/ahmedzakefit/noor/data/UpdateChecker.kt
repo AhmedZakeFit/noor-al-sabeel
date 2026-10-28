@@ -241,3 +241,46 @@ object UpdateVerifier {
         else -> Verdict.OK
     }
 }
+
+/**
+ * Pure retry policy for the update download+verify sequence (v1.0.17).
+ *
+ * Root cause it guards: the published .sha256 checksum and the APK are two
+ * separate HTTP requests, and a release that is RE-PUBLISHED (assets swapped)
+ * between the two requests makes an in-flight update verify two different
+ * builds against each other — a false "SHA-256 mismatch" that is not
+ * corruption at all. Proven in the wild on v1.0.16: the release was re-run
+ * ~19 minutes after the first publish, replacing both files under live users.
+ *
+ * The policy allows exactly ONE re-verify pass: re-fetch the published
+ * checksum first (cheap), and only re-download when the bytes on disk still
+ * disagree with it. Security is unchanged — the file must equal the checksum
+ * the release publishes NOW, and a final disagreement still fails the update.
+ */
+object UpdateDownloadPolicy {
+
+    /** Download+verify passes per user request: the original plus one retry. */
+    const val MAX_ATTEMPTS = 2
+
+    /**
+     * Whether one more pass can help after this verdict. Only checksum-family
+     * verdicts are retryable (a re-publish race looks exactly like this);
+     * package/version/signature verdicts are properties of the bytes
+     * themselves and cannot change with a re-fetch.
+     */
+    fun shouldRetry(verdict: UpdateVerifier.Verdict, attemptsDone: Int): Boolean =
+        attemptsDone < MAX_ATTEMPTS && (
+            verdict == UpdateVerifier.Verdict.CHECKSUM_MISMATCH ||
+                verdict == UpdateVerifier.Verdict.CHECKSUM_UNKNOWN
+            )
+
+    /**
+     * The release document records the APK asset's byte size. When the server
+     * reports a different non-unknown body size, the served file provably is
+     * not the release the check resolved (an asset swap in progress) — abort
+     * before hashing. Unknown sizes (-1 / 0) never prove anything.
+     */
+    fun sizeProvesAssetSwap(servedContentLength: Long, releaseAssetSizeBytes: Long): Boolean =
+        servedContentLength > 0 && releaseAssetSizeBytes > 0 &&
+            servedContentLength != releaseAssetSizeBytes
+}

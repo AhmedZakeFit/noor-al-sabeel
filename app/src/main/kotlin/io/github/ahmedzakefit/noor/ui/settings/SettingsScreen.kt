@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -294,11 +295,22 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                 val adhanPlaying by vm.adhanPlaying.collectAsStateWithLifecycle()
                 val playingVoice by vm.currentPlayingVoice.collectAsStateWithLifecycle()
                 val playingForFajr by vm.currentPlayingForFajr.collectAsStateWithLifecycle()
+                val playingIsPreview by vm.currentPlayingIsPreview.collectAsStateWithLifecycle()
 
+                // v1.0.17 fix: tell the REAL prayer-time adhan apart from a
+                // user-initiated TEST. Before this, every playing adhan —
+                // including the one the alarm scheduler starts at prayer time —
+                // was shown here as "test adhan", which users read as the test
+                // starting by itself; and the per-voice test buttons could
+                // silently replace the real adhan mid-recitation.
                 if (adhanPlaying) {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            containerColor = if (playingIsPreview) {
+                                MaterialTheme.colorScheme.errorContainer
+                            } else {
+                                MaterialTheme.colorScheme.primaryContainer
+                            },
                         ),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     ) {
@@ -309,18 +321,38 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    Icons.Filled.Close,
+                                    if (playingIsPreview) Icons.Filled.Close else Icons.Filled.Notifications,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    tint = if (playingIsPreview) {
+                                        MaterialTheme.colorScheme.onErrorContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    },
                                     modifier = Modifier.size(20.dp),
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text(
-                                    stringResource(R.string.notif_adhan_test_title),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    fontWeight = FontWeight.Bold,
-                                )
+                                Column {
+                                    Text(
+                                        stringResource(
+                                            if (playingIsPreview) R.string.notif_adhan_test_title
+                                            else R.string.adhan_live_title
+                                        ),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (playingIsPreview) {
+                                            MaterialTheme.colorScheme.onErrorContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        },
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    if (!playingIsPreview) {
+                                        Text(
+                                            stringResource(R.string.adhan_live_body),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                                        )
+                                    }
+                                }
                             }
                             Button(
                                 onClick = { vm.stopAdhan() },
@@ -379,8 +411,12 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                                 Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                val isPlayingRegular = adhanPlaying && playingVoice == voice && !playingForFajr
+                                // Tests are disabled while the REAL adhan is
+                                // reciting (they would replace it mid-prayer);
+                                // a running TEST keeps the toggle behaviour.
+                                val isPlayingRegular = adhanPlaying && playingIsPreview && playingVoice == voice && !playingForFajr
                                 FilledTonalButton(
+                                    enabled = !adhanPlaying || playingIsPreview,
                                     onClick = {
                                         if (isPlayingRegular) {
                                             vm.stopAdhan()
@@ -412,8 +448,9 @@ private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
                                     )
                                 }
 
-                                val isPlayingFajr = adhanPlaying && playingVoice == voice && playingForFajr
+                                val isPlayingFajr = adhanPlaying && playingIsPreview && playingVoice == voice && playingForFajr
                                 FilledTonalButton(
+                                    enabled = !adhanPlaying || playingIsPreview,
                                     onClick = {
                                         if (isPlayingFajr) {
                                             vm.stopAdhan()

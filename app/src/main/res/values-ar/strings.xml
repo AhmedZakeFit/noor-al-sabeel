@@ -185,6 +185,8 @@
     <string name="notif_adhan_stop">إيقاف الأذان</string>
     <string name="notif_adhan_test_title">تجربة الأذان</string>
     <string name="notif_adhan_test_body">هكذا يُسمَع الأذان عند دخول وقت الصلاة، ويمكن إيقافه من هذا الإشعار.</string>
+    <string name="adhan_live_title">الأذان الفعلي قيد الرفع الآن</string>
+    <string name="adhan_live_body">هذا أذان موعد الصلاة وليس تجربة، وأزرار تجربة الأصوات معطّلة حتى ينتهي.</string>
     <string name="notif_reminder_title">اقترب وقت صلاة %1$s</string>
     <string name="notif_reminder_body">الموعد %1$s • %2$s</string>
     <string name="notif_test_title">إشعار تجريبي</string>

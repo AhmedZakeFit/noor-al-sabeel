@@ -117,7 +117,12 @@ class AdhanService : Service() {
                 intent.getStringExtra(EXTRA_PRAYER)?.let { name ->
                     runCatching { Prayer.valueOf(name) }.getOrNull()?.let { prayer = it }
                 }
-                preview = intent.getBooleanExtra(EXTRA_PREVIEW, preview)
+                // A start intent ALWAYS carries the preview flag from
+                // AdhanService.start; reading it with `false` as the default
+                // (instead of the stale field value) keeps a real prayer-time
+                // start from inheriting `preview=true` of an earlier test run
+                // in the same service instance.
+                preview = intent.getBooleanExtra(EXTRA_PREVIEW, false)
                 timeLabel = intent.getStringExtra(EXTRA_TIME_LABEL) ?: timeLabel
                 locationLabel = intent.getStringExtra(EXTRA_LOCATION_LABEL) ?: locationLabel
                 intent.getStringExtra(EXTRA_VOICE)?.let {
@@ -130,7 +135,12 @@ class AdhanService : Service() {
     }
 
     private fun startAdhan() {
-        AdhanPlayback.setPlaying(true, voice = voice, forFajr = (prayer == Prayer.FAJR))
+        AdhanPlayback.setPlaying(
+            playing = true,
+            voice = voice,
+            forFajr = (prayer == Prayer.FAJR),
+            isPreview = preview,
+        )
         // 1) Enter the foreground immediately (5-second window) with a silent
         //    notification; the MediaPlayer below is the actual sound.
         val resId = AdhanAudio.rawResourceFor(this, voice, prayer)

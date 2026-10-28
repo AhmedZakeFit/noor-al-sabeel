@@ -178,6 +178,8 @@
     <string name="notif_adhan_stop">Stop the adhan</string>
     <string name="notif_adhan_test_title">Test adhan</string>
     <string name="notif_adhan_test_body">This is how the adhan sounds at prayer time. You can stop it from this notification.</string>
+    <string name="adhan_live_title">Live adhan in progress</string>
+    <string name="adhan_live_body">This is the real prayer-time adhan, not a test. Voice tests are paused until it finishes.</string>
     <string name="notif_reminder_title">%1$s is approaching</string>
     <string name="notif_reminder_body">Begins at %1$s • %2$s</string>
     <string name="notif_test_title">Test notification</string>

@@ -70,8 +70,26 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     val currentPlayingForFajr: StateFlow<Boolean> =
         io.github.ahmedzakefit.noor.notifications.AdhanPlayback.currentForFajr
 
+    /** True while the adhan currently reciting is a user-initiated test —
+     * false while it is the REAL prayer-time adhan. Used by the settings UI
+     * so a prayer-time adhan is never mislabelled as a test (v1.0.17 fix). */
+    val currentPlayingIsPreview: StateFlow<Boolean> =
+        io.github.ahmedzakefit.noor.notifications.AdhanPlayback.currentIsPreview
+
+    /** True while the adhan currently reciting is a user-initiated test —
+     * false while it is the REAL prayer-time adhan that the alarm scheduler
+     * started at prayer time. Guards the per-voice test buttons so a test can
+     * never replace or interrupt the real adhan (v1.0.17 fix). */
     fun testAdhan(forFajr: Boolean = false, voice: io.github.ahmedzakefit.noor.data.AdhanVoice? = null) {
         viewModelScope.launch {
+            // Never let a manual test interrupt the REAL prayer-time adhan;
+            // tests are only meaningful when nothing is reciting or when the
+            // running adhan is itself a test the user wants to switch.
+            if (io.github.ahmedzakefit.noor.notifications.AdhanPlayback.isPlaying.value &&
+                !io.github.ahmedzakefit.noor.notifications.AdhanPlayback.currentIsPreview.value
+            ) {
+                return@launch
+            }
             val s = container.settingsRepository.settings.first()
             val targetVoice = voice ?: s.adhanVoice
             io.github.ahmedzakefit.noor.notifications.AdhanService.start(

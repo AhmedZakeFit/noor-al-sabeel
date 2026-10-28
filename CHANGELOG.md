@@ -1,3 +1,65 @@
+## [1.0.17] — 2026-10-28
+
+This release fixes three verified root causes and documents one verified-but-blocked
+audio defect. Nothing below is claimed without the evidence linked in the repository
+(NOTICE.md, docs/PLAY_PROTECT.md, the new regression tests and the release workflow).
+
+- **Fixed: the "test adhan" that appeared by itself at prayer time.** The playback
+  state (`AdhanPlayback`) did not distinguish a user-initiated TEST from the REAL
+  prayer-time adhan, so the settings screen labelled every playing adhan — including
+  the one the alarm starts at prayer time — as "تجربة الأذان" (test adhan), and the
+  per-voice test buttons could silently replace the real adhan mid-recitation. The
+  state now tracks the preview flag, the settings screen shows an honest "live adhan"
+  card for the real adhan, and starting a test is refused while the real adhan is
+  reciting (manual testing is unchanged when nothing real is playing). v1.0.16's
+  release notes claimed this fix but shipped no app-side change; the regression tests
+  (`AdhanPlaybackStateTest`) now pin the behaviour.
+- **Fixed: in-app update failing with "downloaded file does not match the published
+  SHA-256" (v1.0.16 wave).** Root cause, proven from the release history: the v1.0.16
+  tag was published TWICE ~19 minutes apart with different APK bytes
+  (`17cddeb5…` → `370a4deb…`); users whose update fetched the checksum before the
+  asset swap and the APK after it (or vice versa) verified two different builds
+  against each other. Fixes, without weakening any verification:
+  `UpdateDownloadPolicy` gives exactly one re-verify pass (re-fetch the published
+  checksum first; re-download only if the bytes still disagree — a genuinely bad file
+  still fails), a served-size check aborts provably-swapped downloads before hashing,
+  and the checksum URL is now allowlist-checked like the APK URL. On the publishing
+  side, the Release workflow refuses to re-publish an existing release with different
+  bytes (identical bytes become a no-op) and refuses to publish unsigned builds, so
+  the swap window that caused the false mismatches cannot recur. Pinned by
+  `UpdateDownloadPolicyTest` including end-to-end simulations of the v1.0.16 race.
+- **Fixed (documentation + honesty): Play Protect install warning.** Signature and
+  integrity facts verified for every published release v1.0.13–v1.0.16: identical
+  signer certificate `a0ccfb6a…` in the v2 signing blocks, APK bytes match the
+  published checksums. The warning is Play Protect's reputation heuristic for
+  sideloaded self-signed apps, not evidence of a broken or tampered file. The
+  landing-page notice no longer tells users to tap "Install anyway" and no longer
+  claims a "v1+v2 strict dual signing" or a battery-permission "main cause" (both
+  were false); it now explains which warning is which, how to verify the downloaded
+  file against the published `.sha256`, and points to the official appeal form.
+  Full analysis in docs/PLAY_PROTECT.md. Google Play Protect is never disabled and
+  users are never instructed to bypass it.
+- **Documented (not yet fixed): the Cairo adhan still opens with two takbirs.** The
+  audit proved that `adhan_cairo.mp3`/`adhan_cairo_fajr.mp3` are byte-identical
+  copies of the default Fouad Charif recordings (introduced silently by the v1.0.11
+  size-optimization), whose opening recites two takbirs
+  (ASR-verified transcript in NOTICE.md), and that v1.0.12's claimed "4 takbeers fix"
+  never happened (that commit only copied the default fajr file over the Cairo fajr
+  file). A replacement was NOT shipped: every freely-licensed candidate that could be
+  obtained was either not Egyptian-style or its opening could not be machine-verified
+  (see NOTICE.md "Replacement criteria for the Cairo voice"). The new pinned asset
+  inventory (`AdhanAssetsTest`) makes every future audio change an explicit,
+  reviewable act carrying its source, license and takbir verification.
+
+## [1.0.16] — 2026-10-27
+
+- **Note added in v1.0.17:** this release's notes claimed "Fix adhan preview state at
+  prayer time, mitigate Play Protect warnings" but the commit shipped no app-side
+  adhan change (only a version bump, a removed battery permission and landing-page
+  edits), and it was published twice under the same tag with different APK bytes,
+  which is the root cause of the v1.0.16 update failures — see the v1.0.17 entry above.
+- Removed `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` from the manifest.
+
 ## [1.0.15] — 2026-10-27
 
 - **Fix Cross-Domain Redirect Handling for In-App Updates.** The built-in `HttpURLConnection` in Android does not follow cross-domain 302 redirects automatically (from `github.com` to `release-assets.githubusercontent.com`). `Http.openWithRedirects` now follows cross-domain redirects explicitly, allowing the published `.sha256` checksum and APK binaries to download cleanly.

@@ -165,19 +165,20 @@ return fix ?: best.get()?.let { fixOf(it) } ?: lastKnown(lm)`,
   },
   {
     id: 'PLAY-01',
-    titleAr: 'اعتراض حماية Google Play وتنبيه "تم حظر تطبيق ضار" (Harmful App Blocked)',
-    titleEn: 'Google Play Protect False-Positive & Sideload Warning Mitigation',
-    file: 'app/src/main/AndroidManifest.xml & docs/PLAY_PROTECT.md',
+    titleAr: 'تحذير Google Play Protect عند تثبيت الـ APK (تطبيقات خارج المتجر)',
+    titleEn: 'Google Play Protect caution when installing sideloaded APKs',
+    file: 'docs/PLAY_PROTECT.md & src/components/PlayProtectNotice.tsx',
     severity: 'high',
-    status: 'fixed',
+    status: 'recommendation',
     categoryAr: 'أمان وتثبيت التطبيق على الأجهزة',
-    summaryAr: 'ظهور شاشة تحذير "Harmful app blocked" من Google Play Protect عند محاولة تثبيت الـ APK.',
+    summaryAr:
+      'قد يعرض Play Protect تحذيرًا وقائيًا عند تثبيت التطبيق لأنه يُوزَّع خارج متجر Google Play وبشهادة توقيع مستقلة غير مفهرسة لديه.',
     rootCauseAr:
-      '1) اشتمال البيان على إذن تحسين البطارية REQUEST_IGNORE_BATTERY_OPTIMIZATIONS المصنف عالي الخطورة لدى جوجل، 2) وجود إذن تثبيت الحزم REQUEST_INSTALL_PACKAGES للتحديث الذاتي خارج المتجر، 3) حداثة شهادة التوقيع المستقلة للتطبيق وعدم نشر التطبيق عبر متجر جوجل بلاي.',
+      'فحص Play Protect للتطبيقات المحمّلة جانبيًا هو إجراء سمعة (heuristic): تطبيق موقَّع بشهادة مستقلة بلا قائمة في Play بلا سجل تنزيلات معروف يستدعي التحذير تلقائيًا. التحقق الفعلي من ملفات الإصدارات المنشورة (v1.0.13 حتى v1.0.16) أثبت: بايتات كل APK تطابق بصمة SHA-256 المنشورة معه، وشهادة الموقِّع واحدة وثابتة في كتلة توقيع v2 عبر كل الإصدارات (a0ccfb6a…) — أي أن التحذير ليس دليلًا على تلف أو عبث بالملف.',
     detailsAr:
-      'في نظام أندرويد 12 و13 و14، يقوم Google Play Protect بفحص التطبيقات المحملة جانبياً عبر المتصفحات. ولأن التطبيق حر ومفتوح المصدر ولا يمر بمتجر جوجل ويحتوي على آلية التحديث الذاتي وإذن البطارية، تطلق خوارزميات جوجل التحذير الوقائي الكاذب.',
+      'إصدارات سابقة من هذا التقرير ادعت «توقيعًا مزدوجًا v1+v2» و«أن إذن البطارية كان السبب الرئيسي» وكلاهما غير صحيح: الـ APK موقَّع بمخطط v2 فقط (وهو المطلوب من Android 7+)، وإذن REQUEST_INSTALL_PACKAGES مطلوب لمسار التحديث الذاتي ولا يُلغى. كما لا يطلب التطبيق من المستخدم تجاوز التحذير أو تعطيل Play Protect — الحل الجذري هو فهرسة الشهادة لدى Google عبر نموذج الاستئناف الرسمي أو النشر عبر متجر Play.',
     fixDescriptionAr:
-      '1) تم حذف إذن REQUEST_IGNORE_BATTERY_OPTIMIZATIONS فوراً من البيان واعتماد التوجيه القياسي لإعدادات النظام، 2) تفعيل التوقيع المزدوج v1 و v2 في Gradle، 3) توثيق خطوات التثبيت الآمن عبر الضغط على "Install anyway" (التثبيت على أي حال)، 4) إعداد نموذج استئناف رسمي (Appeal Submission) لإدراج شهادة التوقيع في القائمة البيضاء لدى Google Play Protect.',
+      '1) إعادة كتابة إشعار صفحة الهبوط ليشرح أي تحذير يراه المستخدم (مصدر التثبيت مقابل فحص Play Protect) وكيف يتحقق بنفسه من الملف مقابل بصمة .sha256 المنشورة قبل أي قرار، 2) إلغاء التوجيه «Install anyway» وإلغاء الادعاءات غير الصحيحة، 3) توثيق التحليل التقني الكامل في docs/PLAY_PROTECT.md، 4) منذ v1.0.17 يمنع سير عمل النشر تبديل بايتات إصدار منشور أو نشر بناء غير موقَّع، ما يزيل إنذارات عدم التطابق الزائفة التي ارتبطت بإعادة نشر v1.0.16.',
   },
 ];
 

@@ -85,8 +85,57 @@ jobs:
           cd release-out
           for f in *.apk; do sha256sum "$f" > "$f.sha256"; done
           echo "SIGNED=$SIGNED" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: "Guard: never publish an unsigned update"
+        if: env.SIGNED == '0'
+        run: |
+          echo "::error::The release APK is UNSIGNED (signing secrets missing). Publishing it would brick every in-app update with a signature mismatch. Refusing to publish." >&2
+          exit 1
+
+      # v1.0.17 root-cause guard: the v1.0.16 release was re-published with
+      # DIFFERENT APK bytes ~19 minutes after its first publish (the workflow
+      # was re-run for the same tag). softprops then deleted and re-uploaded
+      # the assets one by one under live users, so in-flight in-app updates
+      # verified the OLD checksum against the NEW APK (or vice versa) and
+      # failed with a false "SHA-256 mismatch". Re-publishing a tag is
+      # therefore forbidden: identical bytes are a no-op, different bytes
+      # fail the build and force a NEW version tag instead.
+      - name: "Guard: never swap bytes of an already-published release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          if ! gh api "repos/${{ github.repository }}/releases/tags/$TAG" > /dev/null 2>&1; then
+            echo "No existing release for $TAG — publishing fresh."
+            echo "SKIP_UPLOAD=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          NEW_SHA="$(sha256sum "release-out/noor-al-sabeel-$VERSION.apk" | cut -d' ' -f1)"
+          FOUND=0
+          for ASSET in "noor-al-sabeel-$VERSION.apk.sha256" "noor-al-sabeel.apk.sha256"; do
+            if gh release download "$TAG" --repo "${{ github.repository }}" \
+                 --pattern "$ASSET" \
+                 --output "existing-$ASSET" >/dev/null 2>&1 && [ -s "existing-$ASSET" ]; then
+              PUBLISHED_SHA="$(awk '{print tolower($1)}' "existing-$ASSET")"
+              FOUND=1
+              if [ "$NEW_SHA" != "$PUBLISHED_SHA" ]; then
+                echo "::error::Release $TAG is already published with DIFFERENT bytes ($ASSET: published $PUBLISHED_SHA vs this build $NEW_SHA). Never mutate a published release: in-flight in-app updates verify the old checksum against the new APK and fail with a false SHA-256 mismatch. Publish a NEW version tag instead." >&2
+                exit 1
+              fi
+            fi
+          done
+          if [ "$FOUND" = "1" ]; then
+            echo "Release $TAG is already published with EXACTLY these bytes ($NEW_SHA) — skipping re-upload (no asset swap window)."
+            echo "SKIP_UPLOAD=true" >> "$GITHUB_ENV"
+          else
+            echo "Release $TAG exists but has no published checksum asset (partial publish?) — completing it now."
+            echo "SKIP_UPLOAD=false" >> "$GITHUB_ENV"
+          fi
 
       - name: Create GitHub Release
+        if: env.SKIP_UPLOAD != 'true'
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

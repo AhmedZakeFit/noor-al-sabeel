@@ -249,113 +249,218 @@ class UpdateManager(
      * signature. Any mismatch deletes the file — a bad update is never
      * offered for installation. The failure reason is typed so the UI can
      * tell the user WHAT failed, not just that something did.
+     *
+     * v1.0.17 TOCTOU hardening (root cause of the "SHA-256 mismatch" wave on
+     * v1.0.16): the published checksum and the APK are fetched in two separate
+     * HTTP requests, and the v1.0.16 release was re-published with different
+     * bytes ~19 minutes after its first publish — users who fetched the
+     * checksum before the asset swap and the APK after it (or vice versa)
+     * verified two DIFFERENT builds against each other and saw a false
+     * mismatch. The fix is [UpdateDownloadPolicy]: on a checksum mismatch or
+     * an unavailable checksum, re-fetch the published checksum once and, only
+     * if it still disagrees with the downloaded bytes, re-download; a final
+     * disagreement still fails. Verification is NOT weakened — the bytes on
+     * disk must equal the checksum the release publishes NOW, byte for byte,
+     * and every package/version/signature check still applies.
      */
     suspend fun downloadApk(
         info: ReleaseInfo,
         onProgress: (bytesRead: Long, totalBytes: Long) -> Unit = { _, _ -> },
     ): DownloadResult = withContext(Dispatchers.IO) {
-        var target: File? = null
+        if (!UpdateParser.isAllowedDownloadUrl(info.apkUrl)) {
+            return@withContext DownloadResult.Failed(DownloadFailure.DISALLOWED_SOURCE)
+        }
+        if (!info.sha256Url.isNullOrEmpty() && !UpdateParser.isAllowedDownloadUrl(info.sha256Url!!)) {
+            return@withContext DownloadResult.Failed(DownloadFailure.DISALLOWED_SOURCE, "checksum url not allowlisted")
+        }
+
+        val dir = File(context.cacheDir, "updates").apply { mkdirs() }
+        // Clear older cached updates — only one staged file at a time.
+        dir.listFiles()?.forEach { runCatching { it.delete() } }
+        val target = File(dir, "noor-al-sabeel-${info.versionName}.apk")
+
+        var attempts = 0
+        // Hash of the file already on disk from an earlier attempt of THIS
+        // call (the file is only re-downloaded when it provably disagrees).
+        var downloadedSha256: String? = null
+        var verdict: UpdateVerifier.Verdict = UpdateVerifier.Verdict.CHECKSUM_UNKNOWN
+        var publishedSha256: String? = null
+
         try {
-            if (!UpdateParser.isAllowedDownloadUrl(info.apkUrl)) {
-                return@withContext DownloadResult.Failed(DownloadFailure.DISALLOWED_SOURCE)
-            }
-            // The published checksum is fetched first — without it there is
-            // nothing to verify against, so refuse rather than trust blindly.
-            val publishedSha256: String = try {
-                info.sha256Url?.let { url ->
-                    val checksumOutcome = Http.call(
-                        url = url,
-                        connectTimeoutMs = 6_000,
-                        readTimeoutMs = 10_000,
-                    ) as HttpOutcome.Response
-                    if (checksumOutcome.code != 200) null else checksumOutcome.body
-                }?.let { UpdateParser.parseChecksumFile(it) }
-                    ?: return@withContext DownloadResult.Failed(DownloadFailure.CHECKSUM_UNAVAILABLE)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Throwable) {
-                return@withContext DownloadResult.Failed(DownloadFailure.NETWORK, "checksum fetch failed")
-            }
+            while (true) {
+                attempts++
 
-            val dir = File(context.cacheDir, "updates").apply { mkdirs() }
-            // Clear older cached updates — only one staged file at a time.
-            dir.listFiles()?.forEach { runCatching { it.delete() } }
-            target = File(dir, "noor-al-sabeel-${info.versionName}.apk")
-
-            val conn = try {
-                Http.openWithRedirects(
-                    initialUrl = info.apkUrl,
-                    method = "GET",
-                    connectTimeoutMs = 15_000,
-                    readTimeoutMs = 60_000,
-                    urlValidator = UpdateParser::isAllowedDownloadUrl,
-                )
-            } catch (e: SecurityException) {
-                return@withContext DownloadResult.Failed(DownloadFailure.DISALLOWED_SOURCE, e.message)
-            } catch (e: Throwable) {
-                return@withContext DownloadResult.Failed(DownloadFailure.NETWORK, e.message)
-            }
-            try {
-                val code = conn.responseCode
-                if (code != 200) {
-                    return@withContext DownloadResult.Failed(DownloadFailure.HTTP_ERROR, "HTTP $code")
+                // 1) The published checksum is always fetched first — without
+                //    it there is nothing to verify against. On a retry this
+                //    re-fetch picks up a release re-published mid-flight.
+                publishedSha256 = fetchPublishedSha256(info)
+                if (publishedSha256 == null) {
+                    verdict = UpdateVerifier.Verdict.CHECKSUM_UNKNOWN
+                    if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) break
+                    continue
                 }
-                val total = if (conn.contentLengthLong > 0) conn.contentLengthLong else info.apkSizeBytes
-                val digest = MessageDigest.getInstance("SHA-256")
-                var read = 0L
-                conn.inputStream.use { input ->
-                    target.outputStream().use { out ->
-                        val buf = ByteArray(64 * 1024)
-                        while (true) {
-                            val n = input.read(buf)
-                            if (n < 0) break
-                            digest.update(buf, 0, n)
-                            out.write(buf, 0, n)
-                            read += n
-                            onProgress(read, total)
-                            // Abandon promptly when the dialog closes mid-download.
-                            coroutineContext.ensureActive()
-                        }
+
+                // 2) A file downloaded by an earlier attempt of this call may
+                //    already satisfy the (re-)fetched checksum — the release
+                //    was swapped between the two requests of that attempt. No
+                //    need to re-download 24 MB to prove the same fact twice.
+                if (downloadedSha256 != null && downloadedSha256 == publishedSha256) {
+                    verdict = UpdateVerifier.verdict(
+                        publishedSha256 = publishedSha256,
+                        actualSha256 = downloadedSha256,
+                        archive = archiveFacts(target),
+                        installedPackageName = context.packageName,
+                        installedVersionCode = installedVersionCode(),
+                        installedSignerSha256 = installedSignerSha256() ?: "",
+                    )
+                    if (verdict == UpdateVerifier.Verdict.OK) break
+                    if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) break
+                    continue
+                }
+
+                // 3) Download (first attempt, or the disk file is provably not
+                //    what the release publishes now).
+                when (val fetch = downloadToFile(info, target, onProgress)) {
+                    is FetchOutcome.Failed -> {
+                        // A partial write may be on disk; never stage it.
+                        runCatching { target.delete() }
+                        return@withContext DownloadResult.Failed(fetch.failure, fetch.detail)
                     }
+                    is FetchOutcome.Swapped -> {
+                        // The server itself reports a size that differs from
+                        //    the release document — a re-publish mid-swap. Do
+                        //    not hash garbage; retry (policy decides when to give up).
+                        verdict = UpdateVerifier.Verdict.CHECKSUM_MISMATCH
+                        if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) {
+                            runCatching { target.delete() }
+                            return@withContext DownloadResult.Failed(
+                                DownloadFailure.CHECKSUM_MISMATCH,
+                                "served size differs from release asset size",
+                            )
+                        }
+                        continue
+                    }
+                    is FetchOutcome.Downloaded -> downloadedSha256 = fetch.sha256
                 }
-                if (read == 0L) return@withContext DownloadResult.Failed(DownloadFailure.EMPTY_DOWNLOAD)
 
-                val actualSha256 = sha256Hex(digest.digest())
-                val archive = archiveFacts(target)
-                val verdict = UpdateVerifier.verdict(
+                // 4) Verify the bytes against the currently published checksum.
+                verdict = UpdateVerifier.verdict(
                     publishedSha256 = publishedSha256,
-                    actualSha256 = actualSha256,
-                    archive = archive,
+                    actualSha256 = downloadedSha256,
+                    archive = archiveFacts(target),
                     installedPackageName = context.packageName,
                     installedVersionCode = installedVersionCode(),
                     installedSignerSha256 = installedSignerSha256() ?: "",
                 )
-                if (verdict == UpdateVerifier.Verdict.OK) {
-                    DownloadResult.Verified(target)
-                } else {
-                    runCatching { target.delete() }
-                    DownloadResult.Failed(
-                        when (verdict) {
-                            UpdateVerifier.Verdict.CHECKSUM_UNKNOWN -> DownloadFailure.CHECKSUM_UNAVAILABLE
-                            UpdateVerifier.Verdict.CHECKSUM_MISMATCH -> DownloadFailure.CHECKSUM_MISMATCH
-                            UpdateVerifier.Verdict.PACKAGE_MISMATCH -> DownloadFailure.PACKAGE_MISMATCH
-                            UpdateVerifier.Verdict.NOT_NEWER -> DownloadFailure.NOT_NEWER
-                            UpdateVerifier.Verdict.SIGNATURE_MISMATCH -> DownloadFailure.SIGNATURE_MISMATCH
-                            UpdateVerifier.Verdict.OK -> DownloadFailure.NETWORK // unreachable
-                        },
-                        verdict.name,
-                    )
-                }
-            } finally {
-                conn.disconnect()
+                if (verdict == UpdateVerifier.Verdict.OK) break
+                if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) break
+                // else: loop once more — re-fetch the checksum first; the
+                // re-download happens only if it still does not match.
+            }
+
+            if (verdict == UpdateVerifier.Verdict.OK) {
+                DownloadResult.Verified(target)
+            } else {
+                runCatching { target.delete() }
+                DownloadResult.Failed(
+                    when (verdict) {
+                        UpdateVerifier.Verdict.CHECKSUM_UNKNOWN -> DownloadFailure.CHECKSUM_UNAVAILABLE
+                        UpdateVerifier.Verdict.CHECKSUM_MISMATCH -> DownloadFailure.CHECKSUM_MISMATCH
+                        UpdateVerifier.Verdict.PACKAGE_MISMATCH -> DownloadFailure.PACKAGE_MISMATCH
+                        UpdateVerifier.Verdict.NOT_NEWER -> DownloadFailure.NOT_NEWER
+                        UpdateVerifier.Verdict.SIGNATURE_MISMATCH -> DownloadFailure.SIGNATURE_MISMATCH
+                        UpdateVerifier.Verdict.OK -> DownloadFailure.NETWORK // unreachable
+                    },
+                    verdict.name,
+                )
             }
         } catch (e: CancellationException) {
-            target?.let { runCatching { it.delete() } }
+            target.let { runCatching { it.delete() } }
             throw e
         } catch (e: Throwable) {
-            target?.let { runCatching { it.delete() } }
+            target.let { runCatching { it.delete() } }
             DownloadResult.Failed(DownloadFailure.NETWORK, e.message)
         }
+    }
+
+    /** Outcome of a single checksum fetch. Null-checkable wrapper kept out of the public API. */
+    private suspend fun fetchPublishedSha256(info: ReleaseInfo): String? = try {
+        info.sha256Url?.let { url ->
+            val checksumOutcome = Http.call(
+                url = url,
+                connectTimeoutMs = 6_000,
+                readTimeoutMs = 10_000,
+            ) as HttpOutcome.Response
+            if (checksumOutcome.code != 200) null else checksumOutcome.body
+        }?.let { UpdateParser.parseChecksumFile(it) }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Throwable) {
+        null
+    }
+
+    /** One streamed download of [info] into [target]; hashes while writing. */
+    private suspend fun downloadToFile(
+        info: ReleaseInfo,
+        target: File,
+        onProgress: (bytesRead: Long, totalBytes: Long) -> Unit,
+    ): FetchOutcome = withContext(Dispatchers.IO) {
+        val conn = try {
+            Http.openWithRedirects(
+                initialUrl = info.apkUrl,
+                method = "GET",
+                connectTimeoutMs = 15_000,
+                readTimeoutMs = 60_000,
+                urlValidator = UpdateParser::isAllowedDownloadUrl,
+            )
+        } catch (e: SecurityException) {
+            return@withContext FetchOutcome.Failed(DownloadFailure.DISALLOWED_SOURCE, e.message)
+        } catch (e: Throwable) {
+            return@withContext FetchOutcome.Failed(DownloadFailure.NETWORK, e.message)
+        }
+        try {
+            val code = conn.responseCode
+            if (code != 200) {
+                return@withContext FetchOutcome.Failed(DownloadFailure.HTTP_ERROR, "HTTP $code")
+            }
+            // The release document says how many bytes this asset has. When
+            // the server disagrees, the served file is NOT the release the
+            // check resolved (a re-published release mid-asset-swap) — stop
+            // before hashing, retry per UpdateDownloadPolicy.
+            if (UpdateDownloadPolicy.sizeProvesAssetSwap(conn.contentLengthLong, info.apkSizeBytes)) {
+                return@withContext FetchOutcome.Swapped
+            }
+            val total = if (conn.contentLengthLong > 0) conn.contentLengthLong else info.apkSizeBytes
+            val digest = MessageDigest.getInstance("SHA-256")
+            var read = 0L
+            conn.inputStream.use { input ->
+                target.outputStream().use { out ->
+                    val buf = ByteArray(64 * 1024)
+                    while (true) {
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        digest.update(buf, 0, n)
+                        out.write(buf, 0, n)
+                        read += n
+                        onProgress(read, total)
+                        // Abandon promptly when the dialog closes mid-download.
+                        coroutineContext.ensureActive()
+                    }
+                }
+            }
+            if (read == 0L) return@withContext FetchOutcome.Failed(DownloadFailure.EMPTY_DOWNLOAD)
+            FetchOutcome.Downloaded(sha256Hex(digest.digest()))
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    /** Internal result of one download leg of [downloadApk]. */
+    private sealed interface FetchOutcome {
+        data class Downloaded(val sha256: String) : FetchOutcome
+        data class Failed(val failure: DownloadFailure, val detail: String? = null) : FetchOutcome
+        /** Server-reported size differs from the release asset size (swap in progress). */
+        data object Swapped : FetchOutcome
     }
 
     /**
