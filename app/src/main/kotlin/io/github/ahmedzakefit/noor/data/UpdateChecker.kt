@@ -193,6 +193,22 @@ object UpdateParser {
         )
     }
 
+    /**
+     * Direct download URL handed to the SYSTEM BROWSER (v1.0.21). Some
+     * mobile networks corrupt or replace the body of the 24 MB release
+     * asset even though every retry of the in-app downloader fails the
+     * SHA-256 comparison (proven in the wild on v1.0.20: the published
+     * checksum was fetched correctly, the received bytes were neither the
+     * APK nor any prefix of it). The browser download is a genuinely
+     * different transport on Android — the system download stack with its
+     * own retry/resume — so it is the escape hatch that keeps an update
+     * deliverable when the in-app path is not. Invalid version -> null.
+     */
+    fun browserDownloadUrl(version: String): String? {
+        val v = versionNameFromTag(version) ?: return null
+        return "https://github.com/$REPO_PATH/releases/download/v$v/noor-al-sabeel-$v.apk"
+    }
+
     /** Outcome of evaluating a fetched release document. */
     enum class Decision { AVAILABLE, UP_TO_DATE, FAILED }
 

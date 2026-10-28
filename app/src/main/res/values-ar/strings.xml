@@ -258,6 +258,10 @@
     <string name="update_failed_signature_mismatch">الملف المنزّل موقّع بشهادة مختلفة عن شهادة هذا التطبيق وقد حُذف. حدّث من صفحة إصدارات GitHub للمشروع.</string>
     <string name="update_failed_source">مصدر التنزيل غير مسموح به وقد حُذف الملف.</string>
     <string name="update_install_open_failed">تعذّر فتح مُثبّت أندرويد. أعد المحاولة.</string>
+    <!-- v1.0.21: مسار النجاة عبر المتصفح عندما يتعذّر تسليم التنزيل داخل التطبيق -->
+    <string name="update_download_via_browser">التنزيل عبر المتصفح</string>
+    <string name="update_browser_fallback_note">إذا استمر فشل التنزيل داخل التطبيق على هذه الشبكة، نزّل التحديث عبر متصفحك ثم ثبّته من شريط الإشعارات.</string>
+    <string name="update_browser_open_failed">تعذّر فتح المتصفح. أعد المحاولة.</string>
     <string name="update_install_permission_note">يطلب أندرويد موافقتك مرة واحدة: اضغط «السماح بالتثبيت» وفعّل «السماح من هذا المصدر» ثم عُد واضغط «تثبيت».</string>
     <string name="update_install_permission_button">السماح بالتثبيت</string>
     <string name="update_changelog_title">الجديد في هذا الإصدار</string>

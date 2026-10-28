@@ -84,7 +84,10 @@
   versionCode, or a mismatched signing certificate. The API-free fallback pins the
   deterministic asset URLs (versioned pair first, stable pair fallback, every URL HTTPS on
   the allowlisted github.com, malformed/test versions rejected, and the constructed URLs
-  byte-identical to a real release's published asset URLs), and the failure-mapping test
+  byte-identical to a real release's published asset URLs), the v1.0.21 browser
+  escape-hatch URL (the versioned APK asset URL handed to the system browser when the
+  in-app download cannot be delivered, tag-shaped inputs normalised, malformed versions
+  rejected), and the failure-mapping test
   pins that every typed download failure (network / HTTP / empty / checksum unavailable /
   checksum mismatch / package / not-newer / signature / disallowed source) maps to a
   distinct localized message so no cause is ever silently swallowed.

@@ -4,6 +4,25 @@ All notable changes to Noor Al-Sabeel are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.21] — 2026-10-29
+
+### Fixed
+
+- **Update delivery can no longer dead-end on hostile networks.** When the
+  in-app download fails verification (checksum mismatch, truncation,
+  connection or HTTP errors), the dialog now offers **"التنزيل عبر المتصفح /
+  Download via browser"**: it opens the release's direct APK URL in the system
+  browser, where Android's own download stack — a genuinely different
+  transport with its own retry and resume — takes over, and the OS still
+  verifies the APK signature at install time. Root cause: on v1.0.20 a real
+  device fetched the correct published checksum but received download bytes
+  matching no published build and no prefix of it (a network-path corruption
+  outside both the release and the app); retrying the same transport looped
+  forever with no way out. The release itself was verified byte-for-byte
+  consistent (both asset pairs, checksums and CDN paths). No security gate is
+  weakened: the button appears only after a failed in-app download, and the
+  browser path is the same public GitHub URL the landing page links to.
+
 ## [1.0.20] — 2026-10-29
 
 A full redesign of the app's visual identity and the landing page, with **zero

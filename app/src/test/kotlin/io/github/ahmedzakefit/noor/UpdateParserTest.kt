@@ -285,6 +285,38 @@ class UpdateParserTest {
         assertNull(UpdateParser.fallbackAssetUrls("beta"))
     }
 
+    // --- v1.0.21: browser escape-hatch URL --------------------------------------
+
+    @Test
+    fun `browser download url is the versioned apk asset url`() {
+        // The URL handed to the system browser when the in-app download
+        // cannot be delivered verifiably — the same deterministic versioned
+        // asset URL the fallback path and the API both resolve to.
+        assertEquals(
+            "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.20/noor-al-sabeel-1.0.20.apk",
+            UpdateParser.browserDownloadUrl("1.0.20"),
+        )
+        // Tag-shaped input normalizes to the same URL.
+        assertEquals(
+            UpdateParser.browserDownloadUrl("1.0.21"),
+            UpdateParser.browserDownloadUrl("v1.0.21"),
+        )
+    }
+
+    @Test
+    fun `browser download url is https on github com and allowlisted`() {
+        val url = UpdateParser.browserDownloadUrl("1.0.21")!!
+        assertTrue(url.startsWith("https://github.com/"))
+        assertTrue(UpdateParser.isAllowedDownloadUrl(url))
+    }
+
+    @Test
+    fun `malformed versions yield no browser download url`() {
+        assertNull(UpdateParser.browserDownloadUrl("1.0.5.1-test.5b022cb1")) // test prerelease
+        assertNull(UpdateParser.browserDownloadUrl(""))
+        assertNull(UpdateParser.browserDownloadUrl("latest"))
+    }
+
     @Test
     fun `fallback urls match what the real release publishes`() {
         // Cross-check against the real v1.0.13 release layout: the versioned

@@ -231,6 +231,42 @@ fun UpdateFlowHost(vm: UpdateViewModel) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                        // v1.0.21: when the in-app downloader cannot deliver a
+                        // verifiable file on this network (checksum mismatch,
+                        // truncation, connection errors), retrying the SAME
+                        // path can loop forever — proven in the wild on
+                        // v1.0.20 where a mobile network kept delivering
+                        // bytes that matched no published build. Hand the
+                        // download to the system browser instead: Android's
+                        // download stack is a different transport, with its
+                        // own retry and resume, and the OS still verifies
+                        // the APK signature at install time.
+                        if (download.reason in setOf(
+                                UpdateManager.DownloadFailure.CHECKSUM_MISMATCH,
+                                UpdateManager.DownloadFailure.CHECKSUM_UNAVAILABLE,
+                                UpdateManager.DownloadFailure.TRUNCATED,
+                                UpdateManager.DownloadFailure.NETWORK,
+                                UpdateManager.DownloadFailure.HTTP_ERROR,
+                                UpdateManager.DownloadFailure.SIGNATURE_MISMATCH,
+                            )
+                        ) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                stringResource(R.string.update_browser_fallback_note),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            TextButton(onClick = { vm.downloadViaBrowser(info) }) {
+                                Text(stringResource(R.string.update_download_via_browser))
+                            }
+                            if (state.browserOpenError != null) {
+                                Text(
+                                    stringResource(R.string.update_browser_open_failed),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
                     }
                     null -> Unit
                 }

@@ -645,6 +645,25 @@ class UpdateManager(
         InstallPromptResult.Failed(e.message ?: e.javaClass.simpleName)
     }
 
+    /**
+     * v1.0.21: opens the release's direct APK download URL in the system
+     * browser. This is the ESCAPE HATCH for networks on which the in-app
+     * downloader cannot deliver a verifiable file: the browser download runs
+     * on Android's system download stack (its own retry, resume and integrity
+     * handling) — a genuinely different transport from this app's
+     * HttpURLConnection — and the OS then verifies the APK signature at
+     * install time exactly as for the in-app path. Purely user-driven: the
+     * button that calls this appears only after a failed in-app download.
+     */
+    fun openDownloadInBrowser(url: String): InstallPromptResult = try {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            .apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+        context.startActivity(intent)
+        InstallPromptResult.Opened
+    } catch (e: Throwable) {
+        InstallPromptResult.Failed(e.message ?: e.javaClass.simpleName)
+    }
+
     /** Package facts of a downloaded APK, as far as the platform exposes them. */
     private fun archiveFacts(apk: File): UpdateVerifier.ArchiveFacts = runCatching {
         // Basic facts (package name, version code) with 0 flags — works reliably on all API

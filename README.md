@@ -34,7 +34,8 @@ No ads. No subscriptions. No accounts. No tracking.
   release on open (manual re-check in Settings → About), shows the changelog, and can
   download and verify the update (checksum + signature) before offering the standard
   Android install prompt. Postponing an update silences it; nothing is installed without
-  your approval.
+  your approval. If the in-app download keeps failing on a given network, the dialog
+  offers to hand the download to your browser (Android's own download stack) instead.
 - **Full adhan (audio prayer call)** — choose the complete adhan instead of a short sound;
   Fajr uses its own dawn adhan. Bundled and fully offline, plays on the alarm volume with
   the screen off, and can be stopped from the notification. See [NOTICE](NOTICE.md) for the

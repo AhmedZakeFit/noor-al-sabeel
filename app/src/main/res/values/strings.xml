@@ -258,6 +258,10 @@
     <string name="update_failed_signature_mismatch">The downloaded file is signed with a different certificate than this app and was discarded. Update from the project\'s GitHub releases page instead.</string>
     <string name="update_failed_source">The download source is not allowed and the file was discarded.</string>
     <string name="update_install_open_failed">Could not open the Android installer. Try again.</string>
+    <!-- v1.0.21: browser escape hatch when the in-app download cannot be delivered -->
+    <string name="update_download_via_browser">Download via browser</string>
+    <string name="update_browser_fallback_note">If the in-app download keeps failing on this network, download the update with your browser instead, then install it from the notification.</string>
+    <string name="update_browser_open_failed">Could not open the browser. Try again.</string>
     <string name="update_install_permission_note">Android needs your one-time approval: tap \"Allow installs\", turn on \"Allow from this source\", then come back and tap Install.</string>
     <string name="update_install_permission_button">Allow installs</string>
     <string name="update_changelog_title">What\'s new</string>

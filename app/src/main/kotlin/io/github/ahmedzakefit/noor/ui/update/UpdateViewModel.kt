@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import io.github.ahmedzakefit.noor.AppContainer
 import io.github.ahmedzakefit.noor.data.UpdateManager
+import io.github.ahmedzakefit.noor.data.UpdateParser
 import io.github.ahmedzakefit.noor.data.UpdateParser.ReleaseInfo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,6 +50,8 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
         val download: DownloadState? = null,
         /** Non-null when handing the verified file to the system installer failed. */
         val installOpenError: String? = null,
+        /** Non-null when opening the browser download fallback failed. */
+        val browserOpenError: String? = null,
     )
 
     private val _state = MutableStateFlow(UiState())
@@ -85,6 +88,7 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
                     dialog = result.info,
                     download = null,
                     installOpenError = null,
+                    browserOpenError = null,
                 )
                 UpdateManager.CheckResult.UpToDate -> _state.value.copy(
                     checking = false,
@@ -105,14 +109,14 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
     fun closeDialog() {
         downloadJob?.cancel()
         downloadJob = null
-        _state.value = _state.value.copy(dialog = null, download = null, installOpenError = null)
+        _state.value = _state.value.copy(dialog = null, download = null, installOpenError = null, browserOpenError = null)
     }
 
     /** Postpone exactly this version: auto checks stay quiet until a newer one. */
     fun postpone(info: ReleaseInfo) {
         viewModelScope.launch {
             container.updateManager.postpone(info)
-            _state.value = _state.value.copy(banner = null, dialog = null, download = null, installOpenError = null)
+            _state.value = _state.value.copy(banner = null, dialog = null, download = null, installOpenError = null, browserOpenError = null)
         }
     }
 
@@ -121,6 +125,7 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
         _state.value = _state.value.copy(
             download = DownloadState.Progress(0, info.apkSizeBytes.takeIf { it > 0 }),
             installOpenError = null,
+            browserOpenError = null,
         )
         downloadJob = viewModelScope.launch {
             val result = container.updateManager.downloadApk(info) { read, total ->
@@ -167,6 +172,25 @@ class UpdateViewModel(private val container: AppContainer) : ViewModel() {
     /** Opens the system "install unknown apps" page for this app (Android 8+). */
     fun openInstallPermissionSettings() {
         container.updateManager.openInstallPermissionSettings()
+    }
+
+    /**
+     * v1.0.21: hand the update download to the system browser — the escape
+     * hatch shown when the in-app download failed and retrying cannot help
+     * (e.g. a network that keeps delivering bytes that fail the published
+     * checksum). The browser/system download stack is a different transport
+     * on Android and survives networks the in-app downloader does not.
+     */
+    fun downloadViaBrowser(info: ReleaseInfo) {
+        val url = UpdateParser.browserDownloadUrl(info.versionName) ?: return
+        when (val opened = container.updateManager.openDownloadInBrowser(url)) {
+            is UpdateManager.InstallPromptResult.Opened ->
+                _state.value = _state.value.copy(browserOpenError = null)
+            is UpdateManager.InstallPromptResult.Failed ->
+                _state.value = _state.value.copy(
+                    browserOpenError = opened.detail ?: "browser unavailable",
+                )
+        }
     }
 
     /** Whether the Android 8+ "install unknown apps" grant is missing (null: N/A). */
