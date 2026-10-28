@@ -238,10 +238,14 @@ jobs:
           # file for years. Pin the bytes embedded in the release APK against
           # the repository's verified Al-Husari recording. AAPT2 shortens
           # resource paths inside the APK (res/xx.mp3), so match by hash.
+          # NOTE: hash to a FILE, then grep the file — piping sha256sum into
+          # `grep -q` under `set -o pipefail` makes the early-exiting grep
+          # SIGPIPE sha256sum and fail the step spuriously.
           mkdir -p apk-res && unzip -j -o "noor-al-sabeel-$VERSION.apk" 'res/*.mp3' -d apk-res/ > /dev/null
+          sha256sum apk-res/*.mp3 > embedded-hashes.txt
           for expected in adhan_cairo.mp3 adhan_cairo_fajr.mp3; do
             WANT="$(sha256sum "$REPO_FILE/$expected" | cut -d' ' -f1)"
-            if ! sha256sum apk-res/*.mp3 | grep -q "$WANT"; then
+            if ! grep -q "$WANT" embedded-hashes.txt; then
               echo "::error::the APK does not embed the repository's verified $expected"
               exit 1
             fi
