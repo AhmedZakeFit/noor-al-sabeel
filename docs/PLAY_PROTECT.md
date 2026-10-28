@@ -1,10 +1,16 @@
-# Play Protect warnings — technical analysis (v1.0.17)
+# Play Protect warnings — technical analysis (v1.0.17, re-verified after v1.0.18)
 
 This document is the technical record behind the landing-page Play Protect
 notice. It states only facts that were actually verified, separates the
 different warnings a user may see, and describes the corrective actions taken.
 It deliberately does **not** instruct users to bypass warnings or disable
 Google Play Protect.
+
+**Status after the v1.0.18 release (2026-10-28): the warning is still expected
+on install.** Nothing verified below suggests the v1.0.18 bytes trigger a *new*
+kind of warning — the analysis in this document still applies, and no claim is
+made that the warning has disappeared; that can only be observed on a real
+device.
 
 ## What warnings exist (and which one is which)
 
@@ -48,6 +54,41 @@ its publisher and shows the caution sheet. That is a property of the
 *distribution channel*, not a defect in a specific release, and no evidence of
 tampering or malware exists in the published bytes (see the checks above and
 the automated post-release verification in `.github/workflows/verify-download.yml`).
+
+## New evidence gathered after the v1.0.18 publish (2026-10-28)
+
+All of the following were checked directly against the **published release
+bytes** (downloaded from the public GitHub release, not local builds):
+
+- **Certificate stability extends through v1.0.18.** The signer certificate
+  (SHA-256 `a0ccfb6ac39a957e91caf5f5c4e5293a6dc14762600b945f7da44d934768a21f`)
+  is byte-identical across v1.0.13 … v1.0.18, so an in-place update still passes
+  the OS signature check on every published version.
+- **The v1.0.18 manifest is identical to v1.0.17's** in every dimension the
+  Play Protect heuristics look at: exactly the same permission set (no new or
+  removed permissions), the same receiver/service/activity counts, the same
+  `minSdk 24` / `targetSdk 35`, and the same package name. Nothing was added
+  in v1.0.18 that a scanner could react to as *new* behavior; the audio fix and
+  playback-state hardening are content/logic-only changes.
+- **The v1.0.18 release was verified before it was made public.** The release
+  workflow now publishes atomically: it creates the release as a draft,
+  re-downloads every asset, verifies the checksums, ZIP magic bytes and
+  `apksigner` validity, checks signing-certificate stability against the
+  previous release, and confirms the embedded Cairo audio hashes — and only
+  then makes the release visible.
+- **The update path was verified against the published bytes**: from a
+  simulated v1.0.17 install, the check resolves v1.0.18 through the live
+  redirect AND the API, and the downloaded APK matches the published
+  checksum, package, versionCode and signer certificate. A device-side test
+  from an installed v1.0.17 is still pending (see the report).
+
+Given a byte-verified APK, an unchanged permission set and an unchanged
+certificate, the warning users see on installing v1.0.18 is the same
+*reputation-based* caution this document describes: the app is not distributed
+through Play and its self-signed certificate carries no Play Store reputation.
+There is **no evidence of any defect in the published bytes** that could cause
+a harmful-app verdict, and none of this can make the caution sheet vanish on
+its own.
 
 ## Corrective actions actually taken
 

@@ -49,6 +49,28 @@ security check weakened; all update gates still run before any install prompt.
   invariants, the update download policy, and the new half-published-release
   parser rejections).
 
+### Post-release verification (2026-10-28, against the published bytes)
+
+No app code changed in this pass — it records what was re-verified from the
+live v1.0.18 release, not a new build:
+
+- **Update path from v1.0.17 → v1.0.18:** the published APK's SHA-256 matches
+  its published `.sha256` asset, the package name and versionCode (19 > 18)
+  advance, and the signer certificate is unchanged — so the updater's
+  checksum/package/version/signature gates all pass against the live release,
+  through both the API path and the redirect fallback path. A real on-device
+  install test from v1.0.17 is still pending.
+- **Update-path audit:** the home (prayer-times) banner remains the single
+  primary path; the Settings entry is a manual re-check over the same shared
+  `UpdateViewModel`/`UpdateManager` (one check per app open, one dialog, one
+  download job). No duplicate checks, downloads or conflicting banners exist.
+- **Play Protect status:** documented in `docs/PLAY_PROTECT.md` — the warning
+  still appears on install and is expected to keep appearing while the app is
+  only distributed through GitHub Releases; the v1.0.18 manifest is identical
+  to v1.0.17's (same permissions, components and SDK levels) and the signer
+  certificate is unchanged, so nothing new in v1.0.18 changes the warning's
+  cause. No protection was disabled and no bypass is requested.
+
 ### Compatibility
 
 - The application ID stays `io.github.ahmedzakefit.noor` and the signing
