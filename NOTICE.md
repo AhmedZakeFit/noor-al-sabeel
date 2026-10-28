@@ -82,38 +82,46 @@ to 128 kbps MP3 at 44.1 kHz. The recitations themselves are otherwise unmodified
 
 The four selectable reciter voices (`Makkah`, `Madinah`, `Cairo`, `Aqsa`) resolve to
 additional bundled recordings in `res/raw/`. A byte-level and speech-recognition audit on
-2026-10-28 established the following facts, which the release carries **as documented
-known defects** (also pinned by `AdhanAssetsTest`'s asset inventory so no future audio
-change can happen silently):
+2026-10-28 established the following facts (also pinned by `AdhanAssetsTest`'s
+asset inventory so no future audio change can happen silently):
 
-- **Cairo voice = the default recording.** `adhan_cairo.mp3` is byte-identical to
-  `adhan.mp3` and `adhan_cairo_fajr.mp3` is byte-identical to `adhan_fajr.mp3`. The
-  opening of that recording recites **two** takbirs — ASR transcript of the first 16 s:
-  “الله أكبر الله أكبر … أشهد أن لا إله إلا الله” — not the **four** takbirs of the
-  Egyptian (radio/Egyptian-style) adhan tradition. This contradicts the v1.0.12 release
-  notes, which claimed a “Cairo adhan corrected to 4 takbeers”: that commit only copied
-  the default Fajr file over `adhan_cairo_fajr.mp3` (hash comparison proves it), never
-  touched the regular file, and never produced a 4-takbir recording.
-- **Source and license of the Cairo pair:** identical to the default pair above, i.e.
-  the Fouad Charif archive.org recording under Public Domain Mark 1.0 (the copies were
-  introduced during the v1.0.11 size-optimization re-compression).
+- **Cairo voice — defect history.** `adhan_cairo.mp3` had been byte-identical to
+  `adhan.mp3` (and `adhan_cairo_fajr.mp3` to `adhan_fajr.mp3`) since the copies were
+  introduced. The opening of the default recording recites **two** takbirs — ASR
+  transcript of the first 16 s: "الله أكبر الله أكبر … أشهد أن لا إله إلا الله" —
+  not the **four** takbirs of the Egyptian adhan tradition. This contradicts the
+  v1.0.12 release notes, which claimed a "Cairo adhan corrected to 4 takbeers": that
+  commit only copied the default Fajr file over `adhan_cairo_fajr.mp3` (hash comparison
+  proves it), never touched the regular file, and never produced a 4-takbir recording.
+- **Cairo voice — replaced in v1.0.18.** The replacement criteria set by the v1.0.17
+  audit (four Egyptian-style opening takbirs, a verifiable redistribution license, an
+  ASR-verified opening) are now met by the canonical Egyptian recording of **Mahmoud
+  Khalil Al-Husary**, published in the "Azaan of World Mosques" archive.org collection
+  under **Creative Commons Public Domain Mark 1.0** (the same license class as the
+  default recordings above):
+
+  | Bundled file | Source recording | Author | License |
+  |---|---|---|---|
+  | `app/src/main/res/raw/adhan_cairo.mp3` | [Azaan of World Mosques — `Cairo Al Hosari.mp3`](https://archive.org/details/azaan-of-world-mosques-english) | Mahmoud Khalil Al-Husary (أذان القاهرة) | Public Domain Mark 1.0 |
+  | `app/src/main/res/raw/adhan_cairo_fajr.mp3` | [Azaan of World Mosques — `Cairo AlFajr.mp3`](https://archive.org/details/azaan-of-world-mosques-english) | Mahmoud Khalil Al-Husary (dawn adhan, القاهرة) | Public Domain Mark 1.0 |
+
+  Content verification (2026-10-28, automated speech recognition over the
+  bundled bytes): the regular recording opens with two takbir pairs (0–3.5 s and
+  8–11.5 s; the second pair transcribes as "Allahu Akbar, Allahu Akbar") followed
+  by the first shahada, and the dawn recording contains "aṣ-ṣalātu khayrun min
+  an-nawm" before the closing takbirs (segment ~186–211 s). Processing applied to
+  the bundled copies: leading silence trimmed, loudness-normalized to −16 LUFS via
+  measured linear two-pass gain, transcoded to 64 kbps mono 44.1 kHz MP3, with the
+  source files' embedded cover art and metadata removed; the recitations themselves
+  are unmodified.
 - **Madinah and Aqsa Fajr variants equal their regular variants** byte-for-byte, so the
-  Fajr phrase “aṣ-ṣalātu khayrun min an-nawm” is not actually specific to Fajr for those
-  two voices.
+  Fajr phrase "aṣ-ṣalātu khayrun min an-nawm" is not actually specific to Fajr for those
+  two voices — a remaining known defect; fixing it needs licensed source recordings.
 - **The Makkah, Madinah and Aqsa recordings have no documented source or license**
   (introduced in v1.0.9–v1.0.10 without provenance). Their redistribution licensing is
   therefore *unverified* and must be resolved before any future release treats them as
   cleared assets. The Makkah pair opens with four takbirs (ASR-verified), matching the
   label.
-
-**Replacement criteria for the Cairo voice (open):** any replacement recording must
-(a) open with four takbirs in the Egyptian style, (b) carry a redistribution license that
-can be verified (e.g. CC0/CC-PDM from the author, or an expired-rights historical
-recording), and (c) be content-verified by an ASR transcript of its opening published in
-this file. Free-license candidates evaluated for v1.0.17 were rejected on exactly these
-grounds: Wikimedia Commons CC0 candidates could not be retrieved for verification during
-the audit window, and other freely-licensed candidates were either not Egyptian-style or
-their openings could not be machine-verified at all.
 
 ## Trademarks
 

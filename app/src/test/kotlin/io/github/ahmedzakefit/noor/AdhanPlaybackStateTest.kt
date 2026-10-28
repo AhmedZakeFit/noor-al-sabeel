@@ -2,6 +2,10 @@ package io.github.ahmedzakefit.noor
 
 import io.github.ahmedzakefit.noor.data.AdhanVoice
 import io.github.ahmedzakefit.noor.notifications.AdhanPlayback
+import io.github.ahmedzakefit.noor.notifications.AdhanStartPolicy
+import io.github.ahmedzakefit.noor.notifications.AdhanStartPolicy.Command
+import io.github.ahmedzakefit.noor.notifications.AdhanStartPolicy.Current
+import io.github.ahmedzakefit.noor.notifications.AdhanStartPolicy.Decision
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -97,5 +101,70 @@ class AdhanPlaybackStateTest {
         AdhanPlayback.setPlaying(true, voice = AdhanVoice.AQSA, forFajr = false) // preview omitted
         assertFalse(AdhanPlayback.currentIsPreview.value)
         reset()
+    }
+
+    // --- v1.0.18: the service start policy -------------------------------------
+    // The decision table AdhanService consults on EVERY start command. The
+    // reported bug is pinned here: whatever path delivers a TEST start
+    // intent (tap, stale delivery, vendor ROM restart), it may NEVER start
+    // while a REAL adhan is playing.
+
+    @Test
+    fun `test start is ignored while a real adhan is playing`() {
+        assertEquals(
+            Decision.IGNORE,
+            AdhanStartPolicy.decide(Current(active = true, isPreview = false), Command.PreviewAdhan),
+        )
+    }
+
+    @Test
+    fun `test start works when idle`() {
+        assertEquals(
+            Decision.START,
+            AdhanStartPolicy.decide(Current(active = false, isPreview = false), Command.PreviewAdhan),
+        )
+    }
+
+    @Test
+    fun `test start replaces an ongoing test (switching voices)`() {
+        assertEquals(
+            Decision.START,
+            AdhanStartPolicy.decide(Current(active = true, isPreview = true), Command.PreviewAdhan),
+        )
+    }
+
+    @Test
+    fun `real adhan always wins over a running test`() {
+        assertEquals(
+            Decision.START,
+            AdhanStartPolicy.decide(Current(active = true, isPreview = true), Command.RealAdhan),
+        )
+    }
+
+    @Test
+    fun `real adhan always wins over a running real adhan (reschedule edge)`() {
+        assertEquals(
+            Decision.START,
+            AdhanStartPolicy.decide(Current(active = true, isPreview = false), Command.RealAdhan),
+        )
+    }
+
+    @Test
+    fun `real adhan starts when idle`() {
+        assertEquals(
+            Decision.START,
+            AdhanStartPolicy.decide(Current(active = false, isPreview = false), Command.RealAdhan),
+        )
+    }
+
+    @Test
+    fun `stop always stops`() {
+        for (current in listOf(
+            Current(active = false, isPreview = false),
+            Current(active = true, isPreview = false),
+            Current(active = true, isPreview = true),
+        )) {
+            assertEquals(Decision.STOP, AdhanStartPolicy.decide(current, Command.Stop))
+        }
     }
 }

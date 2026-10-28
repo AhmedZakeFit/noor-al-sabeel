@@ -82,6 +82,24 @@ object UpdateParser {
      */
     internal const val STABLE_APK_ASSET = "noor-al-sabeel.apk"
 
+    /**
+     * Only assets that are FULLY uploaded and have a real byte size are
+     * usable. GitHub lists an asset in the release document from the moment
+     * its upload STARTS (state "starter", size 0) until it is committed
+     * (state "uploaded") — during that window the API can show a FINAL
+     * checksum next to an APK whose bytes are not committed yet, and
+     * downloading the pair fails the SHA-256 comparison on genuinely
+     * incomplete bytes. v1.0.16's eager-updater wave hit exactly this
+     * window (the .sha256 assets upload in ~0.1 s, the 24 MB APKs take
+     * minutes); a half-published release must yield NO update at all — the
+     * next check finds it complete.
+     */
+    fun assetUsable(a: JSONObject): Boolean {
+        val state = a.optString("state")
+        if (state.isNotEmpty() && state != "uploaded") return false
+        return a.optLong("size", 0L) > 0L
+    }
+
     /** Parses the /releases/latest JSON; null when unusable (no tag/APK).
      *
      * Releases carry up to four APK-related assets: the versioned APK
@@ -89,7 +107,10 @@ object UpdateParser {
      * (noor-al-sabeel.apk + checksum) that the landing page links to. The
      * versioned pair is preferred — identical bytes, unambiguous in caches
      * and logs — with the stable pair as fallback, deterministically instead
-     * of whatever order the assets happen to come in.
+     * of whatever order the assets happen to come in. Assets that are still
+     * mid-upload (state "starter" / size 0) are never accepted (see
+     * [assetUsable]): a checksum may only be paired with a fully published
+     * APK of the same release.
      */
     fun parseRelease(json: String): ReleaseInfo? {
         val obj = JSONObject(json)
@@ -104,6 +125,7 @@ object UpdateParser {
             val a = assets.getJSONObject(i)
             val name = a.optString("name")
             val url = a.optString("browser_download_url")
+            if (!assetUsable(a)) continue
             when {
                 name == "$versionedApk.sha256" -> shaUrl = url
                 name == "$STABLE_APK_ASSET.sha256" -> if (shaUrl == null) shaUrl = url

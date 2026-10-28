@@ -1,3 +1,60 @@
+## [1.0.18] — 2026-10-28
+
+Completes the fix set with the piece v1.0.17 audited but could not land, and
+closes the second publication window behind the v1.0.17 byte-swap guard. No
+security check weakened; all update gates still run before any install prompt.
+
+- **Fixed: the Egypt (Cairo) adhan now actually opens with four takbeers.**
+  v1.0.17 proved with byte hashes that `adhan_cairo.mp3` had been a
+  byte-identical copy of the default two-takbeer recording since it was
+  introduced (and that the v1.0.12 "fix" never touched the regular file) and
+  left the replacement open pending a licensed, verifiable recording. That
+  replacement has now landed: both Cairo files are Mahmoud Khalil Al-Husary's
+  canonical Egyptian adhan (Public Domain Mark 1.0 via the archive.org "Azaan
+  of World Mosques" collection — source, license and content verification in
+  NOTICE.md). Verified on the bundled bytes: the head opens with two takbir
+  pairs (automated transcription of the second pair: "Allahu Akbar, Allahu
+  Akbar") followed by the first shahada, and the dawn recording contains
+  "aṣ-ṣalātu khayrun min an-nawm". The asset-inventory hashes are updated and
+  the documented-defect test flipped to the distinctness invariant its comment
+  prescribed; the release workflow additionally compares the APK-embedded
+  copies against the repository's verified files before publishing.
+- **Fixed: a test adhan can no longer interrupt a real adhan — from any intent
+  path, and a real adhan can no longer be swallowed by stale service state.**
+  On top of v1.0.17's preview-flag work: `AdhanService` is one reusable
+  instance, and its `finalized` flag used to survive across start commands — a
+  real adhan arriving right after a finished TEST on the same instance was
+  silently killed (the player never started and the watchdog no-opped on the
+  already-final flag). Every accepted start now resets the finalization state,
+  and a new unit-tested `AdhanStartPolicy` makes the service IGNORE test
+  starts while a real adhan is actively playing (the real adhan still replaces
+  a running test; manual testing is unchanged when idle).
+- **Fixed: the second update-mismatch window — half-uploaded releases.**
+  GitHub lists a release asset from the moment its upload STARTS (state
+  "starter", size 0); the tiny `.sha256` files commit within ~0.1 s while the
+  24 MB APKs take minutes, so an eager updater could pair a final checksum
+  with incomplete APK bytes even on a first publish. `parseRelease` now only
+  accepts assets with `state: "uploaded"` and a real size (a half-published
+  release therefore yields no update at all; the next check finds it
+  complete), the HEAD-probed fallback path requires a positive content length
+  on both assets, and the Release workflow publishes ATOMICALLY: the release
+  is created as a draft, every asset is downloaded back and verified
+  (checksums, ZIP magic bytes, `apksigner`, signing-certificate stability
+  against the previous release, package name, version, embedded Cairo audio),
+  and only then is the draft made public. Together with v1.0.17's retry policy
+  and byte-swap guard, no known publication race can serve an unmatchable
+  checksum pair anymore.
+- **Tests:** 130+ unit tests pass locally (playback state and start-policy
+  tables, the asset inventory with the new Cairo hashes and distinctness
+  invariants, the update download policy, and the new half-published-release
+  parser rejections).
+
+### Compatibility
+
+- The application ID stays `io.github.ahmedzakefit.noor` and the signing
+  certificate is unchanged, so this update installs directly over every
+  published version with settings and data preserved.
+
 ## [1.0.17] — 2026-10-28
 
 This release fixes three verified root causes and documents one verified-but-blocked

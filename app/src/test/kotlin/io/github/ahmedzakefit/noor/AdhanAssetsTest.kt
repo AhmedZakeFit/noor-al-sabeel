@@ -119,17 +119,25 @@ class AdhanAssetsTest {
     // --- v1.0.17: asset inventory pinned by SHA-256 --------------------------
 
     /**
-     * The exact bytes shipped in v1.0.16 (and unchanged into v1.0.17).
+     * The exact bytes shipped (v1.0.18 inventory).
      *
-     * ⚠ KNOWN ASSET DEFECTS, documented — not endorsed (audit 2026-10-28):
-     *  - `adhan_cairo` == `adhan` (the default Fouad Charif recording) and
-     *    `adhan_cairo_fajr` == `adhan_fajr`: the "Cairo" voice is a
-     *    byte-identical copy of the default pair, whose opening recites only
-     *    TWO takbirs (ASR-verified: "الله أكبر الله أكبر … أشهد أن لا إله إلا
-     *    الله"), not the FOUR that the Egyptian adhan tradition expects.
+     * v1.0.18 REPLACED the Cairo pair: the "Cairo" voice had been a
+     * byte-identical copy of the default (two-takbir) pair since it was
+     * introduced, and no release ever shipped a 4-takbeer Egyptian recording
+     * (the v1.0.12 "fix" replaced only the fajr file — with another default
+     * copy; hashes prove it). The replacement is Mahmoud Khalil Al-Husary's
+     * canonical Egyptian adhan (Public Domain Mark 1.0, archive.org),
+     * content-verified before bundling: the head carries two takbir pairs
+     * (ASR transcript of the second pair: "Allahu Akbar, Allahu Akbar")
+     * followed by the shahada, and the dawn recording contains
+     * "aṣ-ṣalātu khayrun min an-nawm". Source, license and verification are
+     * documented in NOTICE.md.
+     *
+     * ⚠ REMAINING KNOWN ASSET DEFECT, documented — not endorsed:
      *  - `adhan_madinah` == `adhan_madinah_fajr` and `adhan_aqsa` ==
      *    `adhan_aqsa_fajr`: the fajr variants of these voices are the same
-     *    recording as the regular ones.
+     *    recording as the regular ones (no dawn phrase). Fixing these needs
+     *    licensed source recordings — tracked for the maintainer.
      *
      * Replacing any file below is a CONSCIOUS act: update this map in the same
      * commit and document the new recording's source, license and an ASR
@@ -142,8 +150,8 @@ class AdhanAssetsTest {
         "adhan_makkah_fajr" to "ec64d39f881573a6279bc4dff7bc3ae4fb3e23f1b865d19b02918db0aa59053e",
         "adhan_madinah" to "9053a1b82df7d163ec5ade7880ff4ee2e3339b2478486997bf6d4257ed3f8dd8",
         "adhan_madinah_fajr" to "9053a1b82df7d163ec5ade7880ff4ee2e3339b2478486997bf6d4257ed3f8dd8",
-        "adhan_cairo" to "b738232f9956e057a889fafc50cb69ac99a76c33464c90475ecfcaf206f437fb",
-        "adhan_cairo_fajr" to "9d7362697ff2d9c94a0fd4dd6934ba17005d7ff081bd80621562e0ecba084d66",
+        "adhan_cairo" to "e37d348ea03f6f04d36932189cafa56ec6f27631c2b88578397619440cf4331c",
+        "adhan_cairo_fajr" to "a763a625d0491cb3a27e8f9d1df3512b5efe54210ab643487e1972686f17a30c",
         "adhan_aqsa" to "51c6abbc0e1b91001a0ea900a20cc6fc4b48948b099c6ded0ae7c2c58ca80fe5",
         "adhan_aqsa_fajr" to "51c6abbc0e1b91001a0ea900a20cc6fc4b48948b099c6ded0ae7c2c58ca80fe5",
     )
@@ -174,20 +182,45 @@ class AdhanAssetsTest {
     }
 
     @Test
-    fun `the cairo voice defect is documented by the inventory not hidden by it`() {
-        // Pins the AUDITED fact this release ships with (see NOTICE.md):
-        // the "Cairo" voice is currently a byte-copy of the default pair and
-        // opens with two takbirs. When a licensed replacement lands, this
-        // assertion flips to the distinctness requirement it guards.
+    fun `the cairo voice is a distinct recording not the default pair`() {
+        // v1.0.18: the licensed Al-Husary replacement has LANDED — this is
+        // the distinctness requirement the v1.0.17 audit said it would flip
+        // to. The Cairo pair must NEVER silently revert to the default
+        // (two-takbir) pair.
         val cairo = inventory.getValue("adhan_cairo")
         val default = inventory.getValue("adhan")
         val cairoFajr = inventory.getValue("adhan_cairo_fajr")
         val defaultFajr = inventory.getValue("adhan_fajr")
-        assertEquals(
-            "if the Cairo pair stops being the default pair, update NOTICE.md " +
-                "and the KNOWN ASSET DEFECTS note with the new recording's provenance",
-            cairo == default && cairoFajr == defaultFajr,
-            true,
+        assertTrue(
+            "adhan_cairo.mp3 must not be a byte-identical copy of the default adhan.mp3",
+            cairo != default,
+        )
+        assertTrue(
+            "adhan_cairo_fajr.mp3 must not be a byte-identical copy of the default adhan_fajr.mp3",
+            cairoFajr != defaultFajr,
+        )
+        // And the pinned Cairo bytes must match the actual files (the
+        // inventory test above already enforces this; here we pin the
+        // distinctness invariant explicitly).
+    }
+
+    @Test
+    fun `cairo adhan keeps the Al-Husari recording shape (four opening takbeers then shahada)`() {
+        // The Al-Husari Egyptian adhan opens with two takbir pairs separated
+        // by a pause, then the first shahada. At the repo's 64 kbps mono
+        // encoding: ~127 s (~1.02 MB) regular, ~246 s (~1.97 MB) dawn. A
+        // re-bundled default file (996 KB / 124.5 s) falls outside the window.
+        val cairo = raw("adhan_cairo")
+        assertTrue(
+            "adhan_cairo.mp3 (${cairo.length()} bytes) does not look like the bundled " +
+                "64 kbps Al-Husari recording (~1.0 MB, 127 s)",
+            cairo.length() in 950_000..1_150_000,
+        )
+        val cairoFajr = raw("adhan_cairo_fajr")
+        assertTrue(
+            "adhan_cairo_fajr.mp3 (${cairoFajr.length()} bytes) does not look like the " +
+                "bundled 64 kbps Al-Husari dawn adhan (~1.97 MB, 246 s)",
+            cairoFajr.length() in 1_800_000..2_200_000,
         )
     }
 }

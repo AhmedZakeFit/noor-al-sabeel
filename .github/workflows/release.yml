@@ -134,16 +134,139 @@ jobs:
             echo "SKIP_UPLOAD=false" >> "$GITHUB_ENV"
           fi
 
-      - name: Create GitHub Release
+      # ─────────────────────────────────────────────────────────────────────
+      # v1.0.18: publish ATOMICALLY. The release is created as a DRAFT first,
+      # its four assets are downloaded back and fully verified, and only then
+      # is the release made public. Before the publish step, /releases/latest
+      # and the API keep serving the previous release — a half-uploaded
+      # release is never observable. This closes the SECOND window behind
+      # the byte-swap guard above: GitHub lists an asset from the moment its
+      # upload STARTS (state "starter", size 0), and the small .sha256 files
+      # commit within ~0.1 s while the 24 MB APKs take minutes — eager
+      # updaters who checked in that window (v1.0.16) downloaded a final
+      # checksum against incomplete APK bytes and correctly saw "SHA-256
+      # does not match the published checksum".
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Create GitHub Release as a draft
         if: env.SKIP_UPLOAD != 'true'
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           generate_release_notes: true
           files: |
             release-out/*.apk
             release-out/*.sha256
           body: |
             ${{ env.SIGNED == '1' && format('**Noor Al-Sabeel (نور السبيل) v{0}** — signed release APK. See [CHANGELOG](https://github.com/AhmedZakeFit/noor-al-sabeel/blob/main/CHANGELOG.md) and [install steps](https://github.com/AhmedZakeFit/noor-al-sabeel#install).' , github.ref_name) || '**Unsigned build** — signing secrets were not configured; use the debug APK from CI or build it yourself (docs/BUILDING.md).' }}
+
+      - name: Verify the draft release assets end-to-end before publishing
+        if: env.SKIP_UPLOAD != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          BT="${ANDROID_HOME}/build-tools/35.0.0"
+          REPO_FILE="$GITHUB_WORKSPACE/app/src/main/res/raw"
+          rm -rf verify-dl && mkdir verify-dl && cd verify-dl
+
+          echo "::group::Download every published asset back"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'noor-al-sabeel.apk' \
+            --pattern 'noor-al-sabeel.apk.sha256' \
+            --pattern "noor-al-sabeel-$VERSION.apk" \
+            --pattern "noor-al-sabeel-$VERSION.apk.sha256"
+          ls -la
+          echo "::endgroup::"
+
+          echo "::group::All four assets are present with real sizes"
+          for f in "noor-al-sabeel-$VERSION.apk" "noor-al-sabeel-$VERSION.apk.sha256" \
+                   "noor-al-sabeel.apk" "noor-al-sabeel.apk.sha256"; do
+            [ -s "$f" ] || { echo "::error::asset $f is missing or empty — the release is half-published"; exit 1; }
+          done
+          echo "::endgroup::"
+
+          echo "::group::The two APK copies are identical and match the published checksums"
+          sha256sum noor-al-sabeel.apk "noor-al-sabeel-$VERSION.apk"
+          cmp noor-al-sabeel.apk "noor-al-sabeel-$VERSION.apk" \
+            || { echo "::error::stable APK differs from the versioned APK"; exit 1; }
+          ACTUAL="$(sha256sum noor-al-sabeel.apk | cut -d' ' -f1)"
+          for sha_file in "noor-al-sabeel.apk.sha256" "noor-al-sabeel-$VERSION.apk.sha256"; do
+            PUBLISHED="$(awk '{print tolower($1)}' "$sha_file")"
+            [ "$PUBLISHED" = "$ACTUAL" ] \
+              || { echo "::error::$sha_file publishes $PUBLISHED but the APK is $ACTUAL"; exit 1; }
+          done
+          echo "Checksum assets match the downloadable APK bytes: $ACTUAL"
+          echo "::endgroup::"
+
+          echo "::group::The APK is a valid, correctly signed archive"
+          MAGIC="$(head -c 4 "noor-al-sabeel-$VERSION.apk" | od -An -tx1 | tr -d ' \n')"
+          [ "$MAGIC" = "504b0304" ] || { echo "::error::not a ZIP/APK (magic $MAGIC)"; exit 1; }
+          "$BT/apksigner" verify "noor-al-sabeel-$VERSION.apk" \
+            || { echo "::error::apksigner rejected the release APK"; exit 1; }
+          CERT="$( "$BT/apksigner" verify --print-certs "noor-al-sabeel-$VERSION.apk" \
+                   | grep 'certificate SHA-256 digest' | head -1 | sed 's/.*digest: //' )"
+          echo "Release signing certificate: $CERT"
+          PREV_TAG="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)"
+          if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "$TAG" ]; then
+            mkdir -p prev && gh release download "$PREV_TAG" --repo "$GITHUB_REPOSITORY" \
+              --pattern 'noor-al-sabeel.apk' --dir prev/ || true
+            if [ -s prev/noor-al-sabeel.apk ]; then
+              "$BT/apksigner" verify prev/noor-al-sabeel.apk || { echo "::error::previous release APK no longer verifies"; exit 1; }
+              PREV_CERT="$( "$BT/apksigner" verify --print-certs prev/noor-al-sabeel.apk \
+                            | grep 'certificate SHA-256 digest' | head -1 | sed 's/.*digest: //' )"
+              [ "$CERT" = "$PREV_CERT" ] || {
+                echo "::error::signing certificate changed between $PREV_TAG and $TAG ($PREV_CERT -> $CERT); published updates would be refused by Android"
+                exit 1
+              }
+              echo "Signing certificate unchanged since $PREV_TAG — in-place updates stay installable."
+            fi
+          fi
+          echo "::endgroup::"
+
+          echo "::group::Package identity and version"
+          BADGE="$( "$BT/aapt2" dump badging "noor-al-sabeel-$VERSION.apk" | head -1 )"
+          echo "$BADGE"
+          echo "$BADGE" | grep -q "name='io.github.ahmedzakefit.noor'" \
+            || { echo "::error::package name changed: $BADGE"; exit 1; }
+          echo "$BADGE" | grep -q "versionName='$VERSION'" \
+            || { echo "::error::versionName mismatch: expected $VERSION in $BADGE"; exit 1; }
+          echo "::endgroup::"
+
+          echo "::group::The bundled Cairo (Egypt) adhan asset is the verified recording"
+          # The v1.0.16 report: the 'Cairo' voice shipped the generic 2-takbeer
+          # file for years. Pin the bytes embedded in the release APK against
+          # the repository's verified Al-Husari recording. AAPT2 shortens
+          # resource paths inside the APK (res/xx.mp3), so match by hash.
+          mkdir -p apk-res && unzip -j -o "noor-al-sabeel-$VERSION.apk" 'res/*.mp3' -d apk-res/ > /dev/null
+          for expected in adhan_cairo.mp3 adhan_cairo_fajr.mp3; do
+            WANT="$(sha256sum "$REPO_FILE/$expected" | cut -d' ' -f1)"
+            if ! sha256sum apk-res/*.mp3 | grep -q "$WANT"; then
+              echo "::error::the APK does not embed the repository's verified $expected"
+              exit 1
+            fi
+          done
+          echo "Bundled Cairo adhan assets match the repository files (byte-identical)."
+          echo "::endgroup::"
+
+          echo "All pre-publish checks passed for $TAG."
+
+      - name: Publish the verified release
+        if: env.SKIP_UPLOAD != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release edit "${GITHUB_REF_NAME}" --repo "$GITHUB_REPOSITORY" --draft=false
+          echo "Published ${GITHUB_REF_NAME} — /releases/latest now serves the fully verified release."
+
+      - name: Nothing to re-publish (identical bytes) — confirm the live release is healthy
+        if: env.SKIP_UPLOAD == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "Release ${GITHUB_REF_NAME} already carries exactly these bytes; leaving the published assets untouched."
 
   verify-download-link:
     # Runs immediately after the release is published: downloads the APK

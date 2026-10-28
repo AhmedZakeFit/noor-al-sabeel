@@ -139,6 +139,73 @@ class UpdateParserTest {
         assertEquals(UpdateParser.STABLE_APK_ASSET, "noor-al-sabeel.apk")
     }
 
+    // --- half-published releases: the v1.0.16 SHA-256 mismatch, second window ---
+
+    @Test
+    fun `assets still mid-upload are never accepted`() {
+        // GitHub lists an asset from the moment its upload STARTS (state
+        // "starter", size 0) until it is committed (state "uploaded"). The
+        // small .sha256 files commit within ~0.1 s while the 24 MB APKs take
+        // minutes, so a freshly published release can show a FINAL checksum
+        // next to an uncommitted APK. Downloading that pair is guaranteed to
+        // fail the SHA-256 comparison on genuinely incomplete bytes; the
+        // updater must report NO update for such a release (the next check
+        // finds it complete) instead of a doomed download.
+        val halfPublished = """
+        {
+          "tag_name": "v1.0.7",
+          "assets": [
+            {"name": "noor-al-sabeel-1.0.7.apk", "size": 0, "state": "starter",
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.7/noor-al-sabeel-1.0.7.apk"},
+            {"name": "noor-al-sabeel-1.0.7.apk.sha256", "size": 92, "state": "uploaded",
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.7/noor-al-sabeel-1.0.7.apk.sha256"}
+          ]
+        }
+        """.trimIndent()
+        assertNull(UpdateParser.parseRelease(halfPublished))
+
+        // Same rule on the checksum side: a starter checksum is not a checksum.
+        val checksumNotReady = """
+        {
+          "tag_name": "v1.0.7",
+          "assets": [
+            {"name": "noor-al-sabeel-1.0.7.apk", "size": 24000000, "state": "uploaded",
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.7/noor-al-sabeel-1.0.7.apk"},
+            {"name": "noor-al-sabeel-1.0.7.apk.sha256", "size": 0, "state": "starter",
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.7/noor-al-sabeel-1.0.7.apk.sha256"}
+          ]
+        }
+        """.trimIndent()
+        // The release parses (the APK alone is usable) but carries NO
+        // checksum URL — downloadApk refuses to proceed without a published
+        // checksum instead of pairing it with a stale one.
+        val noSha = UpdateParser.parseRelease(checksumNotReady)!!
+        assertNull(noSha.sha256Url)
+    }
+
+    @Test
+    fun `a fully published release parses identically with and without state fields`() {
+        // Historical releases (and the fixtures above) carry no "state" field;
+        // production documents always do. Both must parse.
+        val withState = """
+        {
+          "tag_name": "v1.0.8",
+          "assets": [
+            {"name": "noor-al-sabeel-1.0.8.apk", "size": 24000000, "state": "uploaded",
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.8/noor-al-sabeel-1.0.8.apk"},
+            {"name": "noor-al-sabeel-1.0.8.apk.sha256", "size": 92, "state": "uploaded",
+             "browser_download_url": "https://github.com/AhmedZakeFit/noor-al-sabeel/releases/download/v1.0.8/noor-al-sabeel-1.0.8.apk.sha256"}
+          ]
+        }
+        """.trimIndent()
+        val withoutState = withState.replace(", \"state\": \"uploaded\"", "")
+        val a = UpdateParser.parseRelease(withState)!!
+        val b = UpdateParser.parseRelease(withoutState)!!
+        assertEquals(a.apkUrl, b.apkUrl)
+        assertEquals(a.sha256Url, b.sha256Url)
+        assertEquals(24000000L, b.apkSizeBytes)
+    }
+
     // --- checksum file --------------------------------------------------------
 
     @Test

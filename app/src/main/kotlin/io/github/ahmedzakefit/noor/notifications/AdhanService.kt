@@ -93,6 +93,8 @@ class AdhanService : Service() {
     private var locationLabel: String? = null
     private var pausedByFocus = false
     private var finalized = false
+    /** True while this instance is actively reciting a playback (real or test). */
+    private var activelyPlaying = false
     private val watchdog = Runnable { finalize(stopService = true, postFinal = true) }
 
     override fun onBind(intent: Intent?) = null
@@ -114,6 +116,29 @@ class AdhanService : Service() {
                 return START_NOT_STICKY
             }
             else -> {
+                // v1.0.18 hardening on top of the preview-strict fix: one
+                // reusable service instance also used to inherit a stale
+                // `finalized=true` from a previous playback — a real adhan
+                // arriving right after a finished TEST on the same instance
+                // was silently swallowed (its player never started and the
+                // watchdog no-opped on the already-final flag). The guard
+                // below additionally makes a TEST start structurally unable
+                // to interrupt, replace or shadow a live REAL adhan — the
+                // reported "a trial adhan starts around the real adhan"
+                // cannot be produced by any intent-delivery path anymore.
+                val incomingPreview = intent.getBooleanExtra(EXTRA_PREVIEW, false)
+                val decision = AdhanStartPolicy.decide(
+                    current = AdhanStartPolicy.Current(active = activelyPlaying, isPreview = preview),
+                    command = if (incomingPreview) {
+                        AdhanStartPolicy.Command.PreviewAdhan
+                    } else {
+                        AdhanStartPolicy.Command.RealAdhan
+                    },
+                )
+                if (decision == AdhanStartPolicy.Decision.IGNORE) {
+                    Log.i(TAG, "ignoring preview start while the real adhan is playing")
+                    return START_NOT_STICKY
+                }
                 intent.getStringExtra(EXTRA_PRAYER)?.let { name ->
                     runCatching { Prayer.valueOf(name) }.getOrNull()?.let { prayer = it }
                 }
@@ -122,12 +147,17 @@ class AdhanService : Service() {
                 // (instead of the stale field value) keeps a real prayer-time
                 // start from inheriting `preview=true` of an earlier test run
                 // in the same service instance.
-                preview = intent.getBooleanExtra(EXTRA_PREVIEW, false)
+                preview = incomingPreview
                 timeLabel = intent.getStringExtra(EXTRA_TIME_LABEL) ?: timeLabel
                 locationLabel = intent.getStringExtra(EXTRA_LOCATION_LABEL) ?: locationLabel
                 intent.getStringExtra(EXTRA_VOICE)?.let {
                     runCatching { io.github.ahmedzakefit.noor.data.AdhanVoice.valueOf(it) }.getOrNull()?.let { voice = it }
                 }
+                // Every ACCEPTED start is a fresh playback: reset the final
+                // state so the new player actually starts and its completion
+                // posts the prayer notification governed by THIS start's flag.
+                finalized = false
+                pausedByFocus = false
                 startAdhan()
             }
         }
@@ -141,6 +171,10 @@ class AdhanService : Service() {
             forFajr = (prayer == Prayer.FAJR),
             isPreview = preview,
         )
+        activelyPlaying = true
+        // Drop any watchdog a previous playback on this reused instance may
+        // have left pending before arming a new one.
+        handler.removeCallbacks(watchdog)
         // 1) Enter the foreground immediately (5-second window) with a silent
         //    notification; the MediaPlayer below is the actual sound.
         val resId = AdhanAudio.rawResourceFor(this, voice, prayer)
@@ -242,6 +276,7 @@ class AdhanService : Service() {
     private fun finalize(stopService: Boolean, postFinal: Boolean) {
         if (finalized) return
         finalized = true
+        activelyPlaying = false
         AdhanPlayback.setPlaying(false)
         handler.removeCallbacks(watchdog)
         abandonFocus()
@@ -264,6 +299,7 @@ class AdhanService : Service() {
     }
 
     override fun onDestroy() {
+        activelyPlaying = false
         AdhanPlayback.setPlaying(false)
         handler.removeCallbacksAndMessages(null)
         abandonFocus()

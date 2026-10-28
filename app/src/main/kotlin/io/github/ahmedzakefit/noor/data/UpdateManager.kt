@@ -212,15 +212,20 @@ class UpdateManager(
             if (!UpdateParser.isAllowedDownloadUrl(sha256Url)) continue
             try {
                 val shaHead = Http.head(sha256Url)
-                if (shaHead.code != 200) continue
+                // A checksum asset that HEAD-probes without a real body is
+                // not committed yet (mid-upload/half-published release).
+                if (shaHead.code != 200 || shaHead.contentLength <= 0) continue
                 val apkHead = Http.head(apkUrl)
-                if (apkHead.code != 200) continue
+                // Same rule for the APK: no content length, no complete
+                // asset — offering it would download truncated bytes that
+                // can only fail verification.
+                if (apkHead.code != 200 || apkHead.contentLength <= 0) continue
                 return CheckResult.Available(
                     ReleaseInfo(
                         tag = "v$version",
                         versionName = version,
                         apkUrl = apkUrl,
-                        apkSizeBytes = apkHead.contentLength.takeIf { it > 0 } ?: 0L,
+                        apkSizeBytes = apkHead.contentLength,
                         sha256Url = sha256Url,
                         // Changelog needs the API; the dialog already falls
                         // back to the source note when the summary is blank.

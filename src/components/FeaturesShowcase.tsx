@@ -67,7 +67,7 @@ export const FeaturesShowcase: React.FC = () => {
       <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-slate-950 border border-emerald-500/20 rounded-3xl p-6 sm:p-8">
         <div className="max-w-3xl">
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            ميزات تطبيق نور السبيل (v1.0.16)
+            ميزات تطبيق نور السبيل (v1.0.18)
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-white font-amiri mt-3 mb-2">
             كل ما يحتاجه المسلم في تطبيق واحد، بلا إعلانات ولا تتبع
