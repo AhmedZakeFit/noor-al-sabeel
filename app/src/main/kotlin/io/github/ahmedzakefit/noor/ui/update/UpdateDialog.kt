@@ -109,6 +109,8 @@ fun downloadFailureMessage(reason: UpdateManager.DownloadFailure, detail: String
             stringResource(R.string.update_failed_http, detail ?: "")
         UpdateManager.DownloadFailure.EMPTY_DOWNLOAD ->
             stringResource(R.string.update_failed_empty)
+        UpdateManager.DownloadFailure.TRUNCATED ->
+            stringResource(R.string.update_failed_truncated)
         UpdateManager.DownloadFailure.CHECKSUM_UNAVAILABLE ->
             stringResource(R.string.update_failed_checksum_unavailable)
         UpdateManager.DownloadFailure.CHECKSUM_MISMATCH ->
@@ -214,6 +216,21 @@ fun UpdateFlowHost(vm: UpdateViewModel) {
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
                         )
+                        // v1.0.19: the typed reason above is localized; this
+                        // small secondary line carries the raw diagnostic
+                        // (bytes received vs expected, the hashes a mismatch
+                        // compared, …) so a user report says exactly WHAT
+                        // failed instead of just "the same error again".
+                        if (!download.detail.isNullOrBlank() &&
+                            download.reason != UpdateManager.DownloadFailure.HTTP_ERROR
+                        ) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                download.detail,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                     null -> Unit
                 }

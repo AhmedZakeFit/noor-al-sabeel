@@ -469,6 +469,7 @@ class UpdateFailureMappingTest {
             io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.NETWORK -> "network"
             io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.HTTP_ERROR -> "http"
             io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.EMPTY_DOWNLOAD -> "empty"
+            io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.TRUNCATED -> "truncated"
             io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.CHECKSUM_UNAVAILABLE -> "checksum_unavailable"
             io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.CHECKSUM_MISMATCH -> "checksum_mismatch"
             io.github.ahmedzakefit.noor.data.UpdateManager.DownloadFailure.PACKAGE_MISMATCH -> "package_mismatch"

@@ -15,6 +15,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.security.MessageDigest
 
 /**
@@ -68,6 +70,8 @@ class UpdateManager(
         HTTP_ERROR,
         /** The download produced zero bytes. */
         EMPTY_DOWNLOAD,
+        /** The connection kept dropping before the whole body arrived. */
+        TRUNCATED,
         /** The published .sha256 asset could not be fetched/parsed. */
         CHECKSUM_UNAVAILABLE,
         /** Downloaded bytes do not match the published checksum. */
@@ -345,6 +349,26 @@ class UpdateManager(
                         }
                         continue
                     }
+                    is FetchOutcome.Truncated -> {
+                        // The connection dropped mid-body (the standard mobile-
+                        //    network failure for a 24 MB download). This is a
+                        //    NETWORK problem, not a checksum problem — and
+                        //    crucially it must never be hashed and reported as
+                        //    a "SHA-256 mismatch" (the v1.0.16-era message that
+                        //    made a flaky connection look like a broken
+                        //    release). The leg loop in downloadToFile already
+                        //    exhausted its resume budget; give the heal policy
+                        //    its pass, then fail with the honest reason.
+                        runCatching { target.delete() }
+                        verdict = UpdateVerifier.Verdict.CHECKSUM_UNKNOWN
+                        if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) {
+                            return@withContext DownloadResult.Failed(
+                                DownloadFailure.TRUNCATED,
+                                fetch.detail,
+                            )
+                        }
+                        continue
+                    }
                     is FetchOutcome.Downloaded -> downloadedSha256 = fetch.sha256
                 }
 
@@ -376,7 +400,7 @@ class UpdateManager(
                         UpdateVerifier.Verdict.SIGNATURE_MISMATCH -> DownloadFailure.SIGNATURE_MISMATCH
                         UpdateVerifier.Verdict.OK -> DownloadFailure.NETWORK // unreachable
                     },
-                    verdict.name,
+                    verifyDetail(verdict, publishedSha256, downloadedSha256),
                 )
             }
         } catch (e: CancellationException) {
@@ -385,6 +409,28 @@ class UpdateManager(
         } catch (e: Throwable) {
             target.let { runCatching { it.delete() } }
             DownloadResult.Failed(DownloadFailure.NETWORK, e.message)
+        }
+    }
+
+    /**
+     * Diagnostic line for a failed verify — the verdict plus, for a checksum
+     * mismatch, the two hashes it compared (both are public values from the
+     * release; prefixes are enough to tell builds apart). Shown as the small
+     * detail line under the localized dialog message so a report says WHAT
+     * disagreed, not just that something did.
+     */
+    private fun verifyDetail(
+        verdict: UpdateVerifier.Verdict,
+        published: String?,
+        computed: String?,
+    ): String = buildString {
+        append(verdict.name)
+        if (verdict == UpdateVerifier.Verdict.CHECKSUM_MISMATCH) {
+            append(": computed ")
+            append(computed?.take(16) ?: "?")
+            append("… vs published ")
+            append(published?.take(16) ?: "?")
+            append("…")
         }
     }
 
@@ -404,68 +450,155 @@ class UpdateManager(
         null
     }
 
-    /** One streamed download of [info] into [target]; hashes while writing. */
+    /**
+     * One streamed download of [info] into [target]; hashes while writing.
+     *
+     * v1.0.19: the transfer is RESUMABLE. A connection that ends before the
+     * expected body size — the routine mobile-network failure for a 24 MB
+     * download — is no longer hashed and reported as a checksum mismatch;
+     * that exact misclassification is why the v1.0.16-era "SHA-256
+     * mismatch" message kept reappearing on flaky networks even against a
+     * perfectly consistent release. Instead the download re-opens the URL
+     * with an HTTP `Range: bytes=<read>-` request, APPENDS to the partial
+     * file and CONTINUES the running SHA-256 digest (a resume replays no
+     * bytes and wastes no data allowance), for up to
+     * [UpdateDownloadPolicy.MAX_TRUNCATION_LEGS] bodies in one attempt.
+     * A server that ignores Range and restarts the body from zero resets
+     * the file and the digest cleanly. When the legs are exhausted the
+     * outcome is [FetchOutcome.Truncated] — a network failure with an
+     * honest, detailed message — and the caller's policy decides whether
+     * a fresh attempt is worth it. The swap check and every security gate
+     * are unchanged.
+     */
     private suspend fun downloadToFile(
         info: ReleaseInfo,
         target: File,
         onProgress: (bytesRead: Long, totalBytes: Long) -> Unit,
     ): FetchOutcome = withContext(Dispatchers.IO) {
-        val conn = try {
-            Http.openWithRedirects(
-                initialUrl = info.apkUrl,
-                method = "GET",
-                connectTimeoutMs = 15_000,
-                readTimeoutMs = 60_000,
-                urlValidator = UpdateParser::isAllowedDownloadUrl,
-            )
-        } catch (e: SecurityException) {
-            return@withContext FetchOutcome.Failed(DownloadFailure.DISALLOWED_SOURCE, e.message)
-        } catch (e: Throwable) {
-            return@withContext FetchOutcome.Failed(DownloadFailure.NETWORK, e.message)
-        }
-        try {
-            val code = conn.responseCode
-            if (code != 200) {
-                return@withContext FetchOutcome.Failed(DownloadFailure.HTTP_ERROR, "HTTP $code")
+        val digest = MessageDigest.getInstance("SHA-256")
+        var read = 0L
+        var legs = 0
+        // Expected total: the release document's size when known, refined by
+        // the server's own Content-Length (full, or remaining for 206 legs).
+        var expectedTotal = info.apkSizeBytes
+
+        while (true) {
+            val resuming = read > 0
+            val conn = try {
+                Http.openWithRedirects(
+                    initialUrl = info.apkUrl,
+                    method = "GET",
+                    connectTimeoutMs = 15_000,
+                    readTimeoutMs = 60_000,
+                    urlValidator = UpdateParser::isAllowedDownloadUrl,
+                    headers = if (resuming) mapOf("Range" to "bytes=$read-") else emptyMap(),
+                )
+            } catch (e: SecurityException) {
+                return@withContext FetchOutcome.Failed(DownloadFailure.DISALLOWED_SOURCE, e.message)
+            } catch (e: Throwable) {
+                return@withContext FetchOutcome.Failed(DownloadFailure.NETWORK, e.message)
             }
-            // The release document says how many bytes this asset has. When
-            // the server disagrees, the served file is NOT the release the
-            // check resolved (a re-published release mid-asset-swap) — stop
-            // before hashing, retry per UpdateDownloadPolicy.
-            if (UpdateDownloadPolicy.sizeProvesAssetSwap(conn.contentLengthLong, info.apkSizeBytes)) {
-                return@withContext FetchOutcome.Swapped
-            }
-            val total = if (conn.contentLengthLong > 0) conn.contentLengthLong else info.apkSizeBytes
-            val digest = MessageDigest.getInstance("SHA-256")
-            var read = 0L
-            conn.inputStream.use { input ->
-                target.outputStream().use { out ->
-                    val buf = ByteArray(64 * 1024)
-                    while (true) {
-                        val n = input.read(buf)
-                        if (n < 0) break
-                        digest.update(buf, 0, n)
-                        out.write(buf, 0, n)
-                        read += n
-                        onProgress(read, total)
-                        // Abandon promptly when the dialog closes mid-download.
-                        coroutineContext.ensureActive()
+            try {
+                val code = conn.responseCode
+                if (code != 200 && code != 206) {
+                    return@withContext FetchOutcome.Failed(DownloadFailure.HTTP_ERROR, "HTTP $code")
+                }
+                if (code == 200) {
+                    if (resuming) {
+                        // Server ignored the Range request and restarted the
+                        // body from byte zero — reset the partial file and the
+                        // digest so the copy on disk stays exactly the bytes
+                        // that are hashed.
+                        read = 0L
+                        digest.reset()
+                        runCatching { target.delete() }
+                    }
+                    val servedLen = conn.contentLengthLong
+                    // The release document says how many bytes this asset
+                    // has. When the server disagrees, the served file is NOT
+                    // the release the check resolved (a re-published release
+                    // mid-asset-swap) — stop before hashing, retry per policy.
+                    if (UpdateDownloadPolicy.sizeProvesAssetSwap(servedLen, info.apkSizeBytes)) {
+                        return@withContext FetchOutcome.Swapped
+                    }
+                    if (expectedTotal <= 0 && servedLen > 0) expectedTotal = servedLen
+                } else {
+                    // 206: Content-Length is the REMAINING body; the total is
+                    // what we already have plus it.
+                    val remaining = conn.contentLengthLong
+                    if (remaining > 0) {
+                        val totalNow = read + remaining
+                        if (UpdateDownloadPolicy.sizeProvesAssetSwap(totalNow, info.apkSizeBytes)) {
+                            return@withContext FetchOutcome.Swapped
+                        }
+                        if (expectedTotal <= 0) expectedTotal = totalNow
                     }
                 }
+
+                val append = code == 206 && read > 0
+                var legEndedCleanly = true
+                try {
+                    conn.inputStream.use { input ->
+                        FileOutputStream(target, append).use { out ->
+                            val buf = ByteArray(64 * 1024)
+                            while (true) {
+                                val n = input.read(buf)
+                                if (n < 0) break
+                                digest.update(buf, 0, n)
+                                out.write(buf, 0, n)
+                                read += n
+                                onProgress(read, expectedTotal)
+                                // Abandon promptly when the dialog closes mid-download.
+                                coroutineContext.ensureActive()
+                            }
+                        }
+                    }
+                } catch (e: IOException) {
+                    // Transport died mid-body (RST, read timeout): resumable —
+                    // keep the partial file and continue from `read` on the
+                    // next leg. CancellationException is not an IOException
+                    // and still propagates.
+                    legEndedCleanly = false
+                }
+                legs++
+
+                if (UpdateDownloadPolicy.isTruncated(read, expectedTotal)) {
+                    // The body ended — cleanly or by error — before the
+                    // expected size: RESUME, never hash the partial file.
+                    if (UpdateDownloadPolicy.shouldResumeAfterTruncation(legs)) continue
+                    return@withContext FetchOutcome.Truncated(
+                        detail = "received $read of $expectedTotal bytes across $legs connection legs",
+                    )
+                }
+                if (!legEndedCleanly) {
+                    // Transport error where truncation is not provable (the
+                    // expected total is unknown); report a network failure
+                    // instead of guessing a mismatch.
+                    return@withContext FetchOutcome.Failed(
+                        DownloadFailure.NETWORK,
+                        "connection error mid-download after $read bytes",
+                    )
+                }
+                if (read == 0L) {
+                    return@withContext FetchOutcome.Failed(DownloadFailure.EMPTY_DOWNLOAD)
+                }
+                return@withContext FetchOutcome.Downloaded(sha256Hex(digest.digest()))
+            } finally {
+                conn.disconnect()
             }
-            if (read == 0L) return@withContext FetchOutcome.Failed(DownloadFailure.EMPTY_DOWNLOAD)
-            FetchOutcome.Downloaded(sha256Hex(digest.digest()))
-        } finally {
-            conn.disconnect()
         }
+        // Unreachable: the loop above only exits via return@withContext.
+        throw IllegalStateException("download leg loop must not fall through")
     }
 
-    /** Internal result of one download leg of [downloadApk]. */
+    /** Internal result of one download leg sequence of [downloadApk]. */
     private sealed interface FetchOutcome {
         data class Downloaded(val sha256: String) : FetchOutcome
         data class Failed(val failure: DownloadFailure, val detail: String? = null) : FetchOutcome
         /** Server-reported size differs from the release asset size (swap in progress). */
         data object Swapped : FetchOutcome
+        /** The body ended before the expected size and the resume budget is spent. */
+        data class Truncated(val detail: String? = null) : FetchOutcome
     }
 
     /**

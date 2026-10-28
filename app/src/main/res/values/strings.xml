@@ -250,6 +250,7 @@
     <string name="update_failed_network">The download failed due to a network error. Check your connection and try again.</string>
     <string name="update_failed_http">The server refused the download (HTTP %1$s). Try again later.</string>
     <string name="update_failed_empty">The downloaded file was empty. Try again.</string>
+    <string name="update_failed_truncated">The connection kept dropping before the download could finish. This is a network problem, not a bad update file. Try again, preferably on a more stable connection.</string>
     <string name="update_failed_checksum_unavailable">The published checksum could not be fetched, so the file cannot be verified. Try again later.</string>
     <string name="update_failed_checksum_mismatch">The downloaded file does not match the published SHA-256 checksum and was discarded. Try again.</string>
     <string name="update_failed_package_mismatch">The downloaded file belongs to a different app and was discarded.</string>

@@ -250,6 +250,7 @@
     <string name="update_failed_network">فشل التنزيل بسبب خطأ في الشبكة. تحقّق من اتصالك ثم أعد المحاولة.</string>
     <string name="update_failed_http">رفض الخادم التنزيل (HTTP %1$s). أعد المحاولة لاحقًا.</string>
     <string name="update_failed_empty">كان الملف المنزّل فارغًا. أعد المحاولة.</string>
+    <string name="update_failed_truncated">ظل الاتصال ينقطع قبل اكتمال التنزيل. هذه مشكلة شبكة وليست ملف تحديث تالفًا. أعد المحاولة على اتصال أكثر استقرارًا.</string>
     <string name="update_failed_checksum_unavailable">تعذّر جلب بصمة الملف المنشورة، فلا يمكن التحقق من سلامته. أعد المحاولة لاحقًا.</string>
     <string name="update_failed_checksum_mismatch">الملف المنزّل لا يطابق بصمة SHA-256 المنشورة وقد حُذف. أعد المحاولة.</string>
     <string name="update_failed_package_mismatch">الملف المنزّل يخص تطبيقًا آخر وقد حُذف.</string>

@@ -1,3 +1,59 @@
+## [1.0.19] — 2026-10-29
+
+Diagnoses why the in-app update from v1.0.17 to v1.0.18 failed on a real
+device "for the same reason" as the v1.0.16 wave — and fixes the app-side
+defect that made it possible. The release itself was exonerated first:
+byte-for-byte re-verification of the published v1.0.18 assets (both APK
+copies match both published `.sha256` files), the signing certificate is
+unchanged across v1.0.16–v1.0.18 (`a0ccfb6a…`), and a full simulation of the
+updater's exact flow (redirect resolve → API/rate-limited fallback → checksum
+fetch → redirected download → verify) succeeds against the live release. The
+remaining failure mode is in the download itself: a connection that ends
+before the whole 24 MB body arrives — the routine mobile-network failure —
+was hashed as if it were the complete file, producing exactly the same
+"الملف المنزّل لا يطابق بصمة SHA-256 المنشورة" message as a genuinely bad
+update. v1.0.17's two blind re-downloads cannot beat a systematically
+dropping connection.
+
+- **Fixed: truncated downloads are now detected, resumed, and honestly
+  reported.** The download streams with resumable "legs": when the body ends
+  before the expected size (release-document size or the server's own
+  Content-Length), the updater re-opens the URL with `Range: bytes=<read>-`,
+  appends to the partial file and continues the running SHA-256 — no bytes
+  are replayed and no data allowance is wasted — for up to 6 connection legs
+  per attempt (12 across the two verify passes). GitHub's release CDN honours
+  Range requests (verified: `206 Partial Content`), so progress is never
+  thrown away. A mid-body transport error (RST/timeout) resumes the same way.
+  When the legs are exhausted the failure is the new network-family
+  `TRUNCATED` reason with an honest message — a network problem is never
+  again reported as a checksum mismatch. A server that ignores Range and
+  restarts from zero resets the file and digest cleanly first.
+- **Fixed: every update failure now shows its raw diagnostic.** The dialog
+  previously localized only the reason; the small detail line under it now
+  carries what actually happened — "received 9,437,184 of 25,462,681 bytes
+  across 6 connection legs" for truncation, "computed <prefix>… vs published
+  <prefix>…" for a real checksum mismatch (both are public release values) —
+  so the next device report says WHAT failed instead of "the same error".
+- **Unchanged: every security gate.** Published-checksum comparison, package
+  name, versionCode, signer-certificate equality and the https/GitHub-host
+  allowlist all still run before any install prompt; a file that does not
+  byte-match the currently published checksum is still deleted and refused.
+  The versioned-pair asset preference, the re-publish byte-swap guard, the
+  half-published-release rejection and the atomic draft-then-verify-then-
+  publish workflow are exactly as in v1.0.18.
+- **Honest bootstrap note:** a device still on v1.0.17/v1.0.18 whose network
+  truncates downloads cannot receive this fix through the in-app updater its
+  own code provides — that code is frozen on the device. If the in-app update
+  keeps failing, install v1.0.19 once from the GitHub releases page in a
+  browser (browsers resume automatically); from v1.0.19 on, in-app updates
+  survive dropping connections and diagnose themselves.
+- **Tests:** new `UpdateTruncationPolicyTest` and `UpdateResumeSimulationTest`
+  pin the truncation/resume policy (short bodies are truncation, complete and
+  oversized bodies are not, unknown totals stay checksum-gated, the leg
+  budget is bounded at 6) and simulate the leg loop over dropping connections
+  (progress is never lost, a dropping network still completes, a hopeless
+  network fails as TRUNCATED — never as a checksum mismatch).
+
 ## [1.0.18] — 2026-10-28
 
 Completes the fix set with the piece v1.0.17 audited but could not land, and

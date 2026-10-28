@@ -285,7 +285,20 @@ object UpdateDownloadPolicy {
     const val MAX_ATTEMPTS = 2
 
     /**
-     * Whether one more pass can help after this verdict. Only checksum-family
+     * v1.0.19: how many times one download attempt may RESUME a connection
+     * that dropped mid-transfer (HTTP Range). A mobile network that closes
+     * the socket before the 24 MB body finishes delivers a truncated file;
+     * hashing those bytes used to surface as a false "SHA-256 mismatch"
+     * (exactly the v1.0.16-era message) even though the release was fine.
+     * Each attempt therefore gets fresh legs: up to
+     * [MAX_TRUNCATION_LEGS] connection bodies that append to the partial
+     * file and continue the running digest, so progress is never thrown
+     * away. Bounded, so a pathological network can never loop forever.
+     */
+    const val MAX_TRUNCATION_LEGS = 6
+
+    /**
+     * Whether one more download leg can help after this verdict. Only checksum-family
      * verdicts are retryable (a re-publish race looks exactly like this);
      * package/version/signature verdicts are properties of the bytes
      * themselves and cannot change with a re-fetch.
@@ -295,6 +308,23 @@ object UpdateDownloadPolicy {
             verdict == UpdateVerifier.Verdict.CHECKSUM_MISMATCH ||
                 verdict == UpdateVerifier.Verdict.CHECKSUM_UNKNOWN
             )
+
+    /**
+     * Whether the stream ended before the file was complete. Only provable
+     * when the expected total is known (release document size or the
+     * server's own Content-Length); with an unknown total the checksum
+     * comparison stays the only integrity gate, as before.
+     */
+    fun isTruncated(bytesRead: Long, expectedTotalBytes: Long): Boolean =
+        expectedTotalBytes > 0 && bytesRead > 0 && bytesRead < expectedTotalBytes
+
+    /**
+     * Whether one more resuming connection body (HTTP Range) may be opened
+     * after [legsDone] truncated legs. [MAX_TRUNCATION_LEGS] bounds the
+     * total number of legs in a single download attempt.
+     */
+    fun shouldResumeAfterTruncation(legsDone: Int): Boolean =
+        legsDone < MAX_TRUNCATION_LEGS
 
     /**
      * The release document records the APK asset's byte size. When the server
