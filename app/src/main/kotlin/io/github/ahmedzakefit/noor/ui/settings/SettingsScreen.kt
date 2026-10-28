@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -36,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.FilledTonalButton
@@ -47,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -132,11 +137,44 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SectionCard(title: String, content: @Composable () -> Unit) {
-    Card(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+private fun SectionCard(
+    title: String,
+    iconRes: Int? = null,
+    content: @Composable () -> Unit,
+) {
+    Card(
+        Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
         Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (iconRes != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = CircleShape,
+                        modifier = Modifier.size(30.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painterResource(iconRes),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(10.dp))
+                }
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Spacer(Modifier.height(10.dp))
             content()
         }
     }
@@ -144,7 +182,7 @@ private fun SectionCard(title: String, content: @Composable () -> Unit) {
 
 @Composable
 private fun LocationSection(settings: AppSettings, onChange: () -> Unit) {
-    SectionCard(stringResource(R.string.section_location)) {
+    SectionCard(stringResource(R.string.section_location), R.drawable.ic_sec_location) {
         val locale = Locale.getDefault()
         ListItem(
             headlineContent = {
@@ -182,7 +220,7 @@ private fun CalculationSection(
     onOffsets: () -> Unit,
 ) {
     val context = LocalContext.current
-    SectionCard(stringResource(R.string.section_calculation)) {
+    SectionCard(stringResource(R.string.section_calculation), R.drawable.ic_sec_calc) {
         ListItem(
             headlineContent = { Text(stringResource(R.string.calculation_method)) },
             supportingContent = { Text(CalculationMethodLabels.label(context, settings.method)) },
@@ -258,7 +296,7 @@ private fun AngleSlider(label: String, value: Double, onChange: (Double) -> Unit
 
 @Composable
 private fun NotificationsSection(settings: AppSettings, vm: SettingsViewModel) {
-    SectionCard(stringResource(R.string.section_notifications)) {
+    SectionCard(stringResource(R.string.section_notifications), R.drawable.ic_sec_bell) {
         ToggleRow(stringResource(R.string.notifications_master), settings.notificationsMaster) { on ->
             vm.update { it.copy(notificationsMaster = on) }
         }
@@ -654,7 +692,7 @@ private fun BatteryReliability() {
 
 @Composable
 private fun AppearanceSection(settings: AppSettings, vm: SettingsViewModel) {
-    SectionCard(stringResource(R.string.section_appearance)) {
+    SectionCard(stringResource(R.string.section_appearance), R.drawable.ic_sec_appearance) {
         Text(stringResource(R.string.theme_label), style = MaterialTheme.typography.titleMedium)
         RadioRow(
             title = "",
@@ -695,7 +733,7 @@ private fun AppearanceSection(settings: AppSettings, vm: SettingsViewModel) {
 
 @Composable
 private fun CalendarSection(settings: AppSettings, vm: SettingsViewModel) {
-    SectionCard(stringResource(R.string.section_calendar)) {
+    SectionCard(stringResource(R.string.section_calendar), R.drawable.ic_sec_calendar) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -731,7 +769,7 @@ private fun CalendarSection(settings: AppSettings, vm: SettingsViewModel) {
 private fun AboutSection(updateVm: io.github.ahmedzakefit.noor.ui.update.UpdateViewModel) {
     val context = LocalContext.current
     val updateState by updateVm.state.collectAsStateWithLifecycle()
-    SectionCard(stringResource(R.string.section_about)) {
+    SectionCard(stringResource(R.string.section_about), R.drawable.ic_sec_info) {
         val version = remember {
             runCatching {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName

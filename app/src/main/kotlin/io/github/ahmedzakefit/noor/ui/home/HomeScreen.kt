@@ -4,9 +4,12 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.text.format.DateFormat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -26,6 +30,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,12 +48,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,6 +67,12 @@ import io.github.ahmedzakefit.noor.core.model.Prayer
 import io.github.ahmedzakefit.noor.data.AppSettings
 import io.github.ahmedzakefit.noor.data.CalculationMethodLabels
 import io.github.ahmedzakefit.noor.ui.common.Formatters
+import io.github.ahmedzakefit.noor.ui.theme.BrandBrass
+import io.github.ahmedzakefit.noor.ui.theme.BrandIvory
+import io.github.ahmedzakefit.noor.ui.theme.BrandPatina
+import io.github.ahmedzakefit.noor.ui.theme.MihrabArchShape
+import io.github.ahmedzakefit.noor.ui.theme.StarMark
+import io.github.ahmedzakefit.noor.ui.theme.zelligeLattice
 import io.github.ahmedzakefit.noor.ui.update.UpdateBanner
 import io.github.ahmedzakefit.noor.ui.update.UpdateViewModel
 import java.time.LocalDate
@@ -134,7 +148,7 @@ fun HomeScreen(
                 use24h = use24h,
                 arabicDigits = arabicDigits,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
             TimesCard(
                 state = state,
                 locale = locale,
@@ -158,17 +172,18 @@ private fun Header(state: HomeViewModel.UiState, locale: Locale, arabicDigits: B
                 Icons.Filled.LocationOn,
                 contentDescription = stringResource(R.string.current_location),
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(17.dp),
             )
             Spacer(Modifier.width(6.dp))
             Text(
                 text = location?.displayLabel(locale.toLanguageTag())
                     ?: stringResource(R.string.location_not_set),
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
             )
         }
-        val zoneId = location?.timeZoneId ?: Locale.getDefault().toString()
         val todayAtLocation = remember(location, state.now) {
             state.now?.toLocalDate() ?: LocalDate.now()
         }
@@ -180,17 +195,16 @@ private fun Header(state: HomeViewModel.UiState, locale: Locale, arabicDigits: B
             text = Formatters.formatHijri(
                 hijri.year, hijri.month, hijri.day, months.toList(),
                 stringResource(R.string.hijri_ah), arabicDigits,
-            ) + (if (hijri.isApproximate) "" else ""),
-            style = MaterialTheme.typography.titleMedium,
+            ),
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold,
         )
         Text(
             text = Formatters.formatGregorian(todayAtLocation, locale, arabicDigits),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
         AssistChip(
             onClick = {},
             label = { Text(CalculationMethodLabels.label(context, state.settings.method)) },
@@ -203,29 +217,47 @@ private fun Header(state: HomeViewModel.UiState, locale: Locale, arabicDigits: B
 private fun NoLocationCard(onOpenLocationPicker: () -> Unit) {
     Card(
         Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
+        shape = RoundedCornerShape(22.dp),
     ) {
-        Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Filled.Place,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(40.dp),
-            )
-            Spacer(Modifier.height(8.dp))
+        Column(Modifier.padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                shape = CircleShape,
+                modifier = Modifier.size(56.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Filled.Place,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(26.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(10.dp))
             Text(
                 stringResource(R.string.location_not_set),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(12.dp))
-            TextButton(onClick = onOpenLocationPicker) {
+            Button(onClick = onOpenLocationPicker) {
                 Text(stringResource(R.string.set_location_now))
             }
         }
     }
 }
 
+/**
+ * The next prayer, framed by a pointed mihrab arch on deep verdigris —
+ * the one surface that carries the architectural identity, with a faint
+ * khatim lattice and a brass keyline. Fixed brand colours (not the
+ * scheme's) so the composition reads identically in light and dark.
+ */
 @Composable
 private fun NextPrayerCard(
     state: HomeViewModel.UiState,
@@ -235,11 +267,30 @@ private fun NextPrayerCard(
 ) {
     val prayer = state.nextPrayer ?: return
     val time = state.nextTime ?: return
-    Card(
-        Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+    val archFraction = 0.32f
+    val shape = remember { MihrabArchShape(archFraction = archFraction, corner = 28.dp) }
+
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(BrandPatina)
+            .zelligeLattice(color = Color.White, alpha = 0.055f)
+            .border(1.dp, BrandBrass.copy(alpha = 0.55f), shape),
     ) {
-        Column(Modifier.padding(20.dp)) {
+        // Keep the headline clear of the arch's shoulders.
+        val topInset = (maxWidth.value * archFraction * 0.52f)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    top = topInset.dp,
+                    bottom = 24.dp,
+                    start = 30.dp,
+                    end = 30.dp,
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(
                 stringResource(R.string.next_prayer) + if (state.nextIsTomorrow) {
                     " • " + stringResource(R.string.tomorrow)
@@ -247,32 +298,37 @@ private fun NextPrayerCard(
                     ""
                 },
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                color = BrandBrass.copy(alpha = 0.92f),
+                textAlign = TextAlign.Center,
             )
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    prayerLabel(prayer),
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    Formatters.formatClock(time, use24h, locale, arabicDigits),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                prayerLabel(prayer),
+                style = MaterialTheme.typography.displayMedium,
+                color = BrandIvory,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                Formatters.formatClock(time, use24h, locale, arabicDigits),
+                style = MaterialTheme.typography.headlineMedium,
+                color = BrandBrass,
+                textAlign = TextAlign.Center,
+            )
             state.remainingMinutes?.let { minutes ->
-                Spacer(Modifier.height(6.dp))
-                val pattern = stringResource(R.string.remaining_time)
-                Text(
-                    Formatters.formatCountdown(minutes, { h, m -> String.format(pattern, h, m) }, arabicDigits),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Spacer(Modifier.height(14.dp))
+                Surface(
+                    color = Color.White.copy(alpha = 0.13f),
+                    shape = RoundedCornerShape(50),
+                ) {
+                    val pattern = stringResource(R.string.remaining_time)
+                    Text(
+                        Formatters.formatCountdown(minutes, { h, m -> String.format(pattern, h, m) }, arabicDigits),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = BrandIvory,
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 7.dp),
+                    )
+                }
             }
         }
     }
@@ -288,8 +344,14 @@ private fun TimesCard(
     onToggleExtras: () -> Unit,
 ) {
     val times = state.times ?: return
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(vertical = 8.dp)) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(Modifier.padding(vertical = 10.dp)) {
             for ((prayer, time) in times.entries) {
                 TimeRow(
                     prayer = prayer,
@@ -315,7 +377,16 @@ private fun TimesCard(
                 Text(
                     if (showExtras) stringResource(R.string.show_less) else stringResource(R.string.show_more),
                 )
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null)
+                val rotation by animateFloatAsState(
+                    targetValue = if (showExtras) 180f else 0f,
+                    animationSpec = tween(durationMillis = 200),
+                    label = "extras-chevron",
+                )
+                Icon(
+                    Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.graphicsLayer { rotationZ = rotation },
+                )
             }
             if (showExtras) {
                 times.midnight?.let {
@@ -338,31 +409,30 @@ private fun TimeRow(
     use24h: Boolean,
     arabicDigits: Boolean,
 ) {
-    val containerColor = if (isNext) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-    } else {
-        Color.Transparent
-    }
     Row(
         Modifier
             .fillMaxWidth()
-            .background(containerColor)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                if (isNext) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+            )
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (isNext) {
-                Surface(
+                StarMark(
+                    starSize = 11.dp,
                     color = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape,
-                    modifier = Modifier.size(8.dp),
-                ) {}
-                Spacer(Modifier.width(8.dp))
+                )
+                Spacer(Modifier.width(9.dp))
             }
             Text(
                 prayerLabel(prayer),
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (isNext) FontWeight.SemiBold else FontWeight.Medium,
                 color = if (prayer == Prayer.SUNRISE) {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 } else {
@@ -391,7 +461,7 @@ private fun ExtraRow(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(
@@ -420,6 +490,7 @@ private fun NotificationPermissionBanner(
         Modifier
             .fillMaxWidth()
             .padding(bottom = 12.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer,
         ),

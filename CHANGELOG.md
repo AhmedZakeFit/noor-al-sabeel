@@ -1,3 +1,64 @@
+# Changelog
+
+All notable changes to Noor Al-Sabeel are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
+[Semantic Versioning](https://semver.org/).
+
+## [1.0.20] — 2026-10-29
+
+A full redesign of the app's visual identity and the landing page, with **zero
+functional changes**: every calculation, alarm, notification, search, map and
+update flow behaves exactly as in v1.0.19 — verified by the unchanged test
+suite and a clean debug build.
+
+- **New identity, «الزليج الفيرديغريسي» (verdigris zellige).** The palette is
+  drawn from Islamic architecture rather than the usual app-store green or the
+  generic blue/purple gradient: the patina teal of aged copper domes
+  (#11564E), manuscript parchment (#FAF6EC), mosque brass (#C9A24B), Mamluk
+  clay (#77574A) and calligraphy ink. Full Material 3 schemes (light and
+  dark) with every container role specified — no baseline purple leaks
+  through. All text/background pairs pass WCAG AA (verified contrast ≥ 4.5:1).
+- **Bundled Arabic typography, offline.** Amiri (the classical Bulaq-press
+  Naskh revival) carries display moments — prayer names, the Hijri date,
+  screen headlines — and IBM Plex Sans Arabic carries the UI. Six static TTFs
+  ship in `res/font` (SIL OFL 1.1, license texts in `third_party/fonts/`),
+  so the app keeps its offline-first promise with no downloadable-fonts
+  service.
+- **Home screen recomposed.** The next prayer now sits inside a pointed
+  *mihrab* arch — a real two-centred arch drawn with springline geometry —
+  on deep verdigris with a faint khatim lattice and a brass keyline; the
+  countdown returns as a pill. The times list is calmer: highlighted next
+  prayer as a tinted pill with a small khatim star marker, sunrise visually
+  de-emphasised, animated show-more chevron.
+- **Mosque search promoted.** The search is now a filled primary button with
+  an icon (it was a quiet text link), under an Amiri screen headline; result
+  rows gained a tinted pin medallion. Map markers were re-inked to the
+  identity: patina for the user, brass for mosques.
+- **Qibla & settings refined.** The compass needle uses brass, alignment
+  locks to the scheme's teal (theme-aware in dark mode); settings sections
+  gained circular icon medallions in the same stroke-icon language.
+- **Custom icon set.** Bottom navigation and settings use hand-drawn
+  architecture-inspired stroke icons (mihrab arch with hanging lamp, dome
+  with minarets, compass rose, sliders) instead of stock Material glyphs.
+- **New brand mark.** The launcher icon, splash, notification silhouette and
+  site favicon are now the *khatim* (eight-pointed star of two overlapping
+  squares) in brass over verdigris — rendered as adaptive-icon vectors and
+  regenerated legacy PNGs for every density.
+- **Landing page redesigned (Arabic + English, gh-pages).** Unified with the
+  app: same palette, same Amiri/Plex pairing, the same khatim mark. The Hero
+  now shows the actual product — a CSS phone mockup of the redesigned home
+  screen framed by a brass mihrab arch — with a three-feature strip that
+  leads with prayer times, qibla and the nearby-mosque search (visually
+  flagged as the flagship card). Mosque-search is likewise the emphasized
+  card in the features grid. Copy was reviewed for accuracy against the
+  shipped feature set: no new claims, no marketing filler. The fixed download
+  link, `release.json` metadata script, JSON-LD (SoftwareApplication + FAQ),
+  hreflang alternates and sitemap are preserved byte-for-byte where they
+  encode facts. Verified in a headless browser at 1440px and 390px with no
+  horizontal overflow or clipped sections.
+- **Docs.** NOTICE.md documents the two bundled font families and their OFL
+  license texts; the READMEs' feature lists were re-checked against the code
+  and gain a note on the bundled fonts. Version bumped to 1.0.20 / versionCode 21.
 ## [1.0.19] — 2026-10-29
 
 Diagnoses why the in-app update from v1.0.17 to v1.0.18 failed on a real
@@ -219,12 +280,6 @@ audio defect. Nothing below is claimed without the evidence linked in the reposi
 
 - **App Size Optimization (>62% reduction).** Compressed all bundled adhan audio files (`MP3`) for all reciters and Fajr using 64kbps mono encoding, reducing total raw audio asset footprint from ~40.5 MB down to ~15.1 MB.
 - **Landing Page & Metadata Sync.** Updated landing page, repository docs, and version badges to v1.0.11.
-
-# Changelog
-
-All notable changes to Noor Al-Sabeel are documented here. The format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
-[Semantic Versioning](https://semver.org/).
 
 ## [1.0.10] — 2026-10-26
 

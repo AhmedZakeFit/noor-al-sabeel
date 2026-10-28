@@ -23,9 +23,10 @@ No ads. No subscriptions. No accounts. No tracking.
 - **Mosque tuning** — shift any individual time by ±30 minutes to match your local mosque.
 - **Qibla compass** with magnetic declination correction and calibration guidance.
 - **Nearby mosques** on an OpenStreetMap map, with distance, direction and one-tap navigation
-  handoff to any installed navigation app. Two independent search sources (Nominatim first,
-  Overpass mirrors as fallback), one overall time budget, and instant cancellation when you
-  leave the screen keep the search fast and reliable on mobile networks.
+  handoff to any installed navigation app. Two independent primary search sources are queried
+  in parallel (Nominatim and Photon — different organizations, datacenters and stacks), with
+  the Overpass mirrors as a last-resort fallback, one overall time budget, and instant
+  cancellation when you leave the screen keep the search fast and reliable on mobile networks.
 - **Customizable notifications** — per-prayer toggles, a pre-prayer reminder with a **live
   countdown** that hands over to the prayer alert (or the adhan) when the time arrives,
   sound and vibration choices, exact alarms, and a test button.
@@ -45,6 +46,9 @@ No ads. No subscriptions. No accounts. No tracking.
 - **Offline-first** — all prayer-time, qibla and calendar math runs locally. A bundled catalog
   of ~4,300 cities (2,088 with Arabic names) works with no internet at all.
 - **Light & dark themes** following the system or forced manually.
+- **Bundled Arabic typography** — Amiri for display text and IBM Plex Sans Arabic for the UI,
+  embedded as offline font files (SIL OFL 1.1, see [NOTICE](NOTICE.md)) so the app never
+  needs a network connection to render its identity.
 
 ## Install
 

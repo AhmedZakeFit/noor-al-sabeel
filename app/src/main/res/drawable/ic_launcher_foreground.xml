@@ -4,13 +4,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Crescent (even-odd subtraction of two offset circles) -->
+    <!-- Khatim star (two overlapping squares) in polished brass,
+         centred inside the adaptive-icon safe zone -->
     <path
-        android:fillColor="#F5C242"
-        android:fillType="evenOdd"
-        android:pathData="M 26,54 a28,28 0 1 0 56,0 a28,28 0 1 0 -56,0 Z M 44,54 a18,18 0 1 0 36,0 a18,18 0 1 0 -36,0 Z" />
-    <!-- Four-point star inside the crescent opening -->
+        android:fillColor="#DDB85E"
+        android:pathData="M54,27.5 L80.5,54 L54,80.5 L27.5,54 Z" />
     <path
-        android:fillColor="#F5C242"
-        android:pathData="M 74,36 l 3,7 l 7,3 l -7,3 l -3,7 l -3,-7 l -7,-3 l 7,-3 Z" />
+        android:fillColor="#DDB85E"
+        android:pathData="M38.5,38.5 L69.5,38.5 L69.5,69.5 L38.5,69.5 Z" />
+    <!-- Centre seal -->
+    <path
+        android:fillColor="#11564E"
+        android:pathData="M50.2,54 a3.8,3.8 0 1,0 7.6,0 a3.8,3.8 0 1,0 -7.6,0 Z" />
+    <path
+        android:fillColor="#DDB85E"
+        android:pathData="M52.7,54 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z" />
 </vector>

@@ -51,9 +51,23 @@ All runtime dependencies are Apache-2.0 licensed, which is why Noor Al-Sabeel sh
 ## Assets
 
 - Launcher icons, splash icon, notification icon and the compass artwork were drawn for this
-  project and are covered by the repository's Apache-2.0 license.
-- No fonts are bundled; Noor Al-Sabeel uses system fonts. Regular (non-adhan) notifications
-  use system notification sounds chosen by the user.
+  project and are covered by the repository's Apache-2.0 license. Since v1.0.20 the brand mark
+  is the *khatim* — the eight-pointed star of two overlapping squares — rendered in brass over
+  a verdigris-teal field.
+
+### Bundled fonts (since v1.0.20)
+
+The app bundles two Arabic font families (in `app/src/main/res/font/`) so the identity renders
+identically offline on every device, with no downloadable-fonts service and no network access:
+
+| Font | Files | License | Use |
+|---|---|---|---|
+| [Amiri](https://github.com/aliftype/amiri) (The Amiri Project) | `noor_amiri_regular.ttf`, `noor_amiri_bold.ttf` | SIL Open Font License 1.1 — see [`third_party/fonts/OFL-Amiri.txt`](third_party/fonts/OFL-Amiri.txt) | Display typography: prayer names, headings, Hijri dates |
+| [IBM Plex Sans Arabic](https://github.com/IBM/plex) (IBM Corp.) | `noor_ui_regular.ttf`, `noor_ui_medium.ttf`, `noor_ui_semibold.ttf`, `noor_ui_bold.ttf` | SIL Open Font License 1.1 — see [`third_party/fonts/OFL-IBMPlexSansArabic.txt`](third_party/fonts/OFL-IBMPlexSansArabic.txt) | UI text and labels, Arabic and Latin |
+
+The landing page loads the same two families from Google Fonts' CSS API; the app embeds
+static copies instead, keeping its offline-first promise. Regular (non-adhan) notifications
+use system notification sounds chosen by the user.
 
 ### Adhan audio
 

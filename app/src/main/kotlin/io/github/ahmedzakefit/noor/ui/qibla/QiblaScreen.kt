@@ -72,7 +72,8 @@ fun QiblaScreen() {
                     R.string.qibla_bearing_value,
                     Formatters.formatDegrees(bearing, arabicDigits),
                 ),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
         }
         state.distanceKm?.let { km ->
@@ -130,7 +131,7 @@ private fun CompassDial(state: QiblaViewModel.CompassState, onDelta: () -> Doubl
     val textColor = MaterialTheme.colorScheme.onSurface
     val accent = MaterialTheme.colorScheme.primary
     val gold = MaterialTheme.colorScheme.tertiary
-    val alignedColor = Color(0xFF2E7D32)
+    val alignedColor = MaterialTheme.colorScheme.primary
 
     val cardinalLabels = listOf(
         stringResource(R.string.dir_n), stringResource(R.string.dir_ne),
@@ -285,11 +286,15 @@ private fun AccuracyBadge(state: QiblaViewModel.CompassState) {
 
 @Composable
 private fun CalibrationCard(state: QiblaViewModel.CompassState) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+    ) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 stringResource(R.string.compass_calibration_title),
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
             )
             Spacer(Modifier.height(4.dp))
             Text(

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash_background">#0B6E4F</color>
-    <color name="ic_launcher_background">#0B6E4F</color>
-    <color name="icon_gold">#F5C242</color>
+    <!-- Verdigris patina of aged copper domes — the brand background. -->
+    <color name="splash_background">#11564E</color>
+    <color name="ic_launcher_background">#11564E</color>
+    <!-- Polished brass for the khatim star mark. -->
+    <color name="icon_gold">#DDB85E</color>
 </resources>

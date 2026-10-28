@@ -32,9 +32,11 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -93,10 +95,10 @@ fun MosquesScreen() {
         io.github.ahmedzakefit.noor.data.DigitSetting.FOLLOW_LOCALE, locale,
     )
     val userMarkerIcon = remember {
-        BitmapDrawable(context.resources, circleBitmap(0xFF1565C0.toInt(), 0xFFFFFFFF.toInt()))
+        BitmapDrawable(context.resources, circleBitmap(0xFF11564E.toInt(), 0xFFF6F1E4.toInt()))
     }
     val mosqueMarkerIcon = remember {
-        BitmapDrawable(context.resources, circleBitmap(0xFF2E7D32.toInt(), 0xFFFFFFFF.toInt()))
+        BitmapDrawable(context.resources, circleBitmap(0xFFB08A2E.toInt(), 0xFFFFFFFF.toInt()))
     }
 
     // Location permission flow, wired into the MAIN search button (same
@@ -159,6 +161,13 @@ fun MosquesScreen() {
             .fillMaxSize()
             .statusBarsPadding(),
     ) {
+        // Screen headline in the display voice of the identity.
+        Text(
+            stringResource(R.string.nav_mosques),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
         // Radius chips + search button
         val distancePattern = stringResource(R.string.mosque_distance_km)
         Row(
@@ -193,8 +202,11 @@ fun MosquesScreen() {
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
             )
-            TextButton(
+            // The search is the primary action of this screen: a filled
+            // button, not a quiet text link.
+            Button(
                 onClick = {
                     // The grant is read at the moment of the tap: with it, a
                     // current-location search; without it, the in-context
@@ -205,6 +217,12 @@ fun MosquesScreen() {
                 },
                 enabled = !inFlight,
             ) {
+                Icon(
+                    Icons.Filled.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
                 Text(stringResource(R.string.search_nearby_mosques))
             }
         }
@@ -533,18 +551,31 @@ private fun MosqueRow(
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            Icons.Filled.Place,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(22.dp),
-        )
+        // Mosque pin in a tinted circle: echoes the identity without noise.
+        androidx.compose.material3.Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = androidx.compose.foundation.shape.CircleShape,
+            modifier = Modifier.size(38.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Filled.Place,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.titleMedium)
+            Text(
+                name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            )
             Text(
                 "$distanceLabel • $dirLabel",
                 style = MaterialTheme.typography.bodySmall,
