@@ -1,5 +1,8 @@
 package io.github.ahmedzakefit.noor
 
+import io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy
+import io.github.ahmedzakefit.noor.data.UpdateVerifier
+import io.github.ahmedzakefit.noor.data.UpdateVerifier.Verdict
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -19,58 +22,51 @@ import org.junit.Test
  */
 class UpdateDownloadPolicyTest {
 
-    private val V = io.github.ahmedzakefit.noor.data.UpdateVerifier.Verdict
-
     @Test
     fun `checksum-family verdicts retry exactly once`() {
-        val p = io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy
         // First attempt failed -> one retry is allowed …
-        assertTrue(p.shouldRetry(V.CHECKSUM_MISMATCH, attemptsDone = 1))
-        assertTrue(p.shouldRetry(V.CHECKSUM_UNKNOWN, attemptsDone = 1))
+        assertTrue(UpdateDownloadPolicy.shouldRetry(Verdict.CHECKSUM_MISMATCH, attemptsDone = 1))
+        assertTrue(UpdateDownloadPolicy.shouldRetry(Verdict.CHECKSUM_UNKNOWN, attemptsDone = 1))
         // … but never a third pass.
-        assertFalse(p.shouldRetry(V.CHECKSUM_MISMATCH, attemptsDone = 2))
-        assertFalse(p.shouldRetry(V.CHECKSUM_UNKNOWN, attemptsDone = 2))
-        assertFalse(p.shouldRetry(V.CHECKSUM_MISMATCH, attemptsDone = 3))
-        assertEquals(2, io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy.MAX_ATTEMPTS)
+        assertFalse(UpdateDownloadPolicy.shouldRetry(Verdict.CHECKSUM_MISMATCH, attemptsDone = 2))
+        assertFalse(UpdateDownloadPolicy.shouldRetry(Verdict.CHECKSUM_UNKNOWN, attemptsDone = 2))
+        assertFalse(UpdateDownloadPolicy.shouldRetry(Verdict.CHECKSUM_MISMATCH, attemptsDone = 3))
+        assertEquals(2, UpdateDownloadPolicy.MAX_ATTEMPTS)
     }
 
     @Test
     fun `package version and signature verdicts never retry`() {
-        val p = io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy
         // These describe the bytes themselves, not a fetch race; re-fetching
         // the checksum cannot change them, so retrying would only burn data.
-        assertFalse(p.shouldRetry(V.PACKAGE_MISMATCH, attemptsDone = 1))
-        assertFalse(p.shouldRetry(V.NOT_NEWER, attemptsDone = 1))
-        assertFalse(p.shouldRetry(V.SIGNATURE_MISMATCH, attemptsDone = 1))
+        assertFalse(UpdateDownloadPolicy.shouldRetry(Verdict.PACKAGE_MISMATCH, attemptsDone = 1))
+        assertFalse(UpdateDownloadPolicy.shouldRetry(Verdict.NOT_NEWER, attemptsDone = 1))
+        assertFalse(UpdateDownloadPolicy.shouldRetry(Verdict.SIGNATURE_MISMATCH, attemptsDone = 1))
         // OK never retries (there is nothing to fix).
-        assertFalse(p.shouldRetry(V.OK, attemptsDone = 1))
+        assertFalse(UpdateDownloadPolicy.shouldRetry(Verdict.OK, attemptsDone = 1))
     }
 
     @Test
     fun `served size different from the release asset proves an asset swap`() {
-        val p = io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy
         // The release document says 24554033 bytes; the server answering a
         // different size is provably NOT the release the check resolved.
-        assertTrue(p.sizeProvesAssetSwap(servedContentLength = 24554073, releaseAssetSizeBytes = 24554033))
-        assertTrue(p.sizeProvesAssetSwap(servedContentLength = 24554033, releaseAssetSizeBytes = 24554073))
+        assertTrue(UpdateDownloadPolicy.sizeProvesAssetSwap(servedContentLength = 24554073, releaseAssetSizeBytes = 24554033))
+        assertTrue(UpdateDownloadPolicy.sizeProvesAssetSwap(servedContentLength = 24554033, releaseAssetSizeBytes = 24554073))
     }
 
     @Test
     fun `unknown sizes prove nothing`() {
-        val p = io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy
         // Chunked transfer (no Content-Length) and releases without a size
         // (API-free fallback path) must never trigger the early abort.
-        assertFalse(p.sizeProvesAssetSwap(servedContentLength = -1, releaseAssetSizeBytes = 24554033))
-        assertFalse(p.sizeProvesAssetSwap(servedContentLength = 24554033, releaseAssetSizeBytes = 0))
-        assertFalse(p.sizeProvesAssetSwap(servedContentLength = -1, releaseAssetSizeBytes = 0))
+        assertFalse(UpdateDownloadPolicy.sizeProvesAssetSwap(servedContentLength = -1, releaseAssetSizeBytes = 24554033))
+        assertFalse(UpdateDownloadPolicy.sizeProvesAssetSwap(servedContentLength = 24554033, releaseAssetSizeBytes = 0))
+        assertFalse(UpdateDownloadPolicy.sizeProvesAssetSwap(servedContentLength = -1, releaseAssetSizeBytes = 0))
     }
 
     @Test
     fun `matching size proves nothing either`() {
-        val p = io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy
         // Same size does NOT mean same bytes — the real proof is always the
         // SHA-256 comparison; the size check only detects provable swaps.
-        assertFalse(p.sizeProvesAssetSwap(servedContentLength = 24554033, releaseAssetSizeBytes = 24554033))
+        assertFalse(UpdateDownloadPolicy.sizeProvesAssetSwap(servedContentLength = 24554033, releaseAssetSizeBytes = 24554033))
     }
 }
 
@@ -89,43 +85,36 @@ class UpdateDownloadPolicyTest {
  */
 class UpdateSwapRaceSimulationTest {
 
-    private val V = io.github.ahmedzakefit.noor.data.UpdateVerifier.Verdict
-
     /** Verifiable update as published for real: checksum matches bytes. */
     private val goodSha = "11".repeat(32)
     private val installed = "io.github.ahmedzakefit.noor"
-    private val facts = io.github.ahmedzakefit.noor.data.UpdateVerifier.ArchiveFacts(installed, 18, goodSha)
+    private val facts = UpdateVerifier.ArchiveFacts(installed, 18, goodSha)
 
     private fun loop(
-        publishedChecksums: MutableList<String?>,   // what each checksum fetch returns (mutated per attempt)
-        servedApkHashes: MutableList<String?>,     // what each APK download yields (mutated per attempt)
-    ): Pair<io.github.ahmedzakefit.noor.data.UpdateVerifier.Verdict, Int> {
+        publishedChecksums: MutableList<String?>,   // what each checksum fetch returns (consumed per attempt)
+        servedApkHashes: MutableList<String?>,       // what each APK download yields (consumed per attempt)
+    ): Pair<Verdict, Int> {
         var attempts = 0
-        var verdict: io.github.ahmedzakefit.noor.data.UpdateVerifier.Verdict = V.CHECKSUM_UNKNOWN
+        var verdict: Verdict = Verdict.CHECKSUM_UNKNOWN
         var onDisk: String? = null
-        val p = io.github.ahmedzakefit.noor.data.UpdateDownloadPolicy
         while (true) {
             attempts++
             val published = publishedChecksums.removeAt(0)
             if (published == null) {
-                verdict = V.CHECKSUM_UNKNOWN
-                if (!p.shouldRetry(verdict, attempts)) break
+                verdict = Verdict.CHECKSUM_UNKNOWN
+                if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) break
                 continue
             }
             if (onDisk != null && onDisk == published) {
                 // The release was swapped between our two requests; the file
                 // we already hold IS what the release publishes now.
-                verdict = io.github.ahmedzakefit.noor.data.UpdateVerifier.verdict(
-                    published, onDisk, facts, installed, 17, goodSha,
-                )
-                if (!p.shouldRetry(verdict, attempts)) break
+                verdict = UpdateVerifier.verdict(published, onDisk, facts, installed, 17, goodSha)
+                if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) break
                 continue
             }
             onDisk = servedApkHashes.removeAt(0)
-            verdict = io.github.ahmedzakefit.noor.data.UpdateVerifier.verdict(
-                published, onDisk, facts, installed, 17, goodSha,
-            )
-            if (!p.shouldRetry(verdict, attempts)) break
+            verdict = UpdateVerifier.verdict(published, onDisk, facts, installed, 17, goodSha)
+            if (!UpdateDownloadPolicy.shouldRetry(verdict, attempts)) break
         }
         return verdict to attempts
     }
@@ -136,10 +125,15 @@ class UpdateSwapRaceSimulationTest {
         // the CDN served the SECOND build's APK. Re-fetching the (now updated)
         // published checksum matches the file already on disk: verified.
         val verdict = loop(
-            publishedChecksums = mutableListOf("17cddeb5b54660063479abb5c7b36fc41f47bd3223fbec1720440529ebe0dac7", "370a4deb6dd8d13df834070ece224cf1dacf0f3092069e7e3441c39150bebcff"),
-            servedApkHashes = mutableListOf("370a4deb6dd8d13df834070ece224cf1dacf0f3092069e7e3441c39150bebcff"),
+            publishedChecksums = mutableListOf(
+                "17cddeb5b54660063479abb5c7b36fc41f47bd3223fbec1720440529ebe0dac7",
+                "370a4deb6dd8d13df834070ece224cf1dacf0f3092069e7e3441c39150bebcff",
+            ),
+            servedApkHashes = mutableListOf(
+                "370a4deb6dd8d13df834070ece224cf1dacf0f3092069e7e3441c39150bebcff",
+            ),
         )
-        assertEquals(V.OK, verdict.first)
+        assertEquals(Verdict.OK, verdict.first)
         assertEquals("no re-download needed — the checksum re-fetch resolved it", 2, verdict.second)
     }
 
@@ -152,7 +146,7 @@ class UpdateSwapRaceSimulationTest {
             publishedChecksums = mutableListOf(goodSha, goodSha),
             servedApkHashes = mutableListOf("ff".repeat(32), goodSha),
         )
-        assertEquals(V.OK, verdict.first)
+        assertEquals(Verdict.OK, verdict.first)
         assertEquals(2, verdict.second)
     }
 
@@ -165,7 +159,7 @@ class UpdateSwapRaceSimulationTest {
             publishedChecksums = mutableListOf(goodSha, goodSha, goodSha),
             servedApkHashes = mutableListOf("ff".repeat(32), "ee".repeat(32)),
         )
-        assertEquals(V.CHECKSUM_MISMATCH, verdict.first)
+        assertEquals(Verdict.CHECKSUM_MISMATCH, verdict.first)
         assertEquals(2, verdict.second)
     }
 
@@ -176,7 +170,7 @@ class UpdateSwapRaceSimulationTest {
             publishedChecksums = mutableListOf(null, null, null),
             servedApkHashes = mutableListOf(goodSha),
         )
-        assertEquals(V.CHECKSUM_UNKNOWN, verdict.first)
+        assertEquals(Verdict.CHECKSUM_UNKNOWN, verdict.first)
         assertEquals(2, verdict.second)
     }
 }
