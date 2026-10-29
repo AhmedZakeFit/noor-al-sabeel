@@ -42,7 +42,7 @@ jobs:
           fi
 
       - name: Setup Gradle (caching)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Decode signing keystore
         env:
